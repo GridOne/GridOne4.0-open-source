@@ -1,0 +1,284 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+//	This program is free software: you can redistribute it and/or modify
+//	it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or
+//	(at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+////////////////////////////////////////////////////////////////////////////////
+package kr.co.actsone.itemRenderers
+{
+	import flash.display.DisplayObject;
+	import flash.geom.Rectangle;
+	
+	import kr.co.actsone.common.Global;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+	
+	import mx.controls.Alert;
+	import mx.core.IUITextField;
+	import mx.core.UITextField;
+
+	public class ComboDynamicRenderer extends ExUIComponent
+	{
+		protected var label:IUITextField;
+		[Bindable]
+		private var items:Array;
+		
+		public function ComboDynamicRenderer()
+		{
+			super();
+			tabEnabled = false;
+			this.setStyle('verticalAlign','middle');
+		}
+		
+		override protected function createChildren():void
+		{
+			super.createChildren();
+			
+			if (!label)
+			{
+				label = IUITextField(createInFontContext(UITextField));
+				label.styleName = this;
+				
+				addChild(DisplayObject(label));
+			}
+		}
+		
+		override protected function commitProperties():void
+		{
+			super.commitProperties();
+			if(this.listData)
+			{
+				items=[];
+				if(data[dataField+Global.COMBO_KEY_CELL]!=null && data[dataField+Global.COMBO_KEY_CELL]!=undefined)
+				{
+				    items=this.column.listCombo[this.column.indexComboKeyArr[data[dataField+Global.COMBO_KEY_CELL]]];
+				}
+				else
+				{
+					items=this.column.listCombo[this.column.comboKey];						
+				}
+				var activation:String=this.listOwner.getCellProperty('activation',data[Global.ACTSONE_INTERNAL],dataField);
+				if(activation == null)
+					activation = column.cellActivation;
+				if(activation != null && activation == Global.ACTIVATE_DISABLE)
+				{
+					label.enabled = false;
+				} 
+				else
+				{					
+					label.enabled = true;
+				}
+				
+				if (this.data[dataField] == null)
+				{
+					this.data[dataField]="";
+				}
+				if (data[dataField + Global.SELECTED_COMBO_INDEX] == null)
+				{
+					if (data[dataField] != null && items != null)
+					{
+						var i:int;
+						for (i=0; i < items.length; i++)
+						{
+							if (data[dataField] == items[i]["value"])
+							{
+								data[dataField]=label.text=items[i].value;
+								data[dataField + Global.SELECTED_COMBO_INDEX]=i;
+								break;
+							}
+						}
+						
+						if(i == items.length)
+						{
+							data[dataField]=label.text;
+							data[dataField + Global.SELECTED_COMBO_INDEX]=-1;
+						}
+					}
+					else
+					{
+						label.text=data[dataField];
+						data[dataField + Global.SELECTED_COMBO_INDEX]=-1;
+					}
+				}
+				else
+				{
+					var index:int = parseInt(data[dataField + Global.SELECTED_COMBO_INDEX]);
+					if (items!=null && items[index] !=null)
+					{
+						data[dataField]=label.text=items[index].value;
+					}
+					else  
+					{
+						
+						if(data[dataField] !=null && data[dataField] != "")
+						{
+							label.text= data[dataField];
+						}
+						else 
+						{
+							if (label.text !="")
+							{
+								data[dataField]=label.text;
+							}
+							
+						}
+					}
+					 
+				}
+				
+				var dataTips:Boolean = listOwner.showDataTips;
+				if (column.showDataTips == true)
+					dataTips = true;
+				if (column.showDataTips == false)
+					dataTips = false;
+				if (dataTips)
+				{
+					if (!(data is ExAdvancedDataGridColumn) && (column.dataTipFunction || column.dataTipField 
+						|| listOwner.dataTipFunction || listOwner.dataTipField))
+					{
+						toolTip = column.itemToLabel(data,true);
+					}
+					else
+					{
+						toolTip = null;
+					}
+				}
+				else if (listOwner.toolTipData !="" && column.toolTipData !="")
+				{
+					toolTip = listOwner.toolTipData;
+				}
+				else
+				{
+					toolTip = null;
+				}
+			}
+			invalidateDisplayList();
+		}
+		
+		override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+		{
+			var truncated:Boolean;
+			truncated = label.truncateToFit();				
+			
+			if (!toolTipSet)
+				super.toolTip = truncated ? this.label.text : null;
+			
+			super.updateDisplayList(unscaledWidth, unscaledHeight);
+			
+			this.label.move(0,0);
+			var startX:Number = 0;
+			if(this.listOwner && this.listOwner.nCellPadding)
+			{
+				startX += this.listOwner.nCellPadding;
+			}
+			var t:String = getMinimumText(label.text);
+			
+			var textFieldBounds:Rectangle = measureTextFieldBounds(t);
+			label.height = textFieldBounds.height;
+			
+			this.label.setActualSize(unscaledWidth - startX, textFieldBounds.height);
+			
+			var textAlign:String = getStyle("textAlign");
+			if (textAlign == "left")
+			{
+				label.x = startX;
+			}
+			else if (textAlign == "right")
+			{
+				label.x = unscaledWidth - startX - label.width + 2; // 2 for gutter
+			}
+			else
+			{
+				label.x = (unscaledWidth - label.width) / 2  - startX;
+			}
+			
+			var verticalAlign:String = getStyle("verticalAlign");
+			if (verticalAlign == "top")
+			{
+				label.y = 0;
+			}
+			else if (verticalAlign == "bottom")
+			{
+				label.y = unscaledHeight - label.height + 2; // 2 for gutter
+			}
+			else
+			{
+				label.y = (unscaledHeight - label.height) / 2;
+			}
+			drawStrikeThrough(this.label);
+			
+			//because some reason, this style is cleaned. We need to re-set it again.
+			this.setStyle('textDecoration',column.getStyle('textDecoration'));
+		}
+		
+		/******************************************************************************************
+		 * Apply color of cell
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override public function validateNow():void
+		{
+			if (data && parent)
+			{
+				var newColor:Number = getCurentColor();
+				var oldColor:* = label.textColor;
+				if (oldColor != newColor)
+				{
+					label.setColor(newColor);
+					invalidateDisplayList();
+				}
+			}
+			super.validateNow();
+		}
+		
+		/******************************************************************************************
+		 * Get accessibility name for screen reader
+		 * @author Thuan
+		 ******************************************************************************************/
+		override public function getAccessibilityName():String
+		{
+			var strReader:String = this.column.strAccessReader;
+			
+			if (strReader && strReader.length > 0) // Parse value in strAccessReader 
+			{
+				if (strReader.indexOf(Global.ACCESS_READER_CONTROLTYPE) > -1)
+				{
+					strReader = strReader.replace(Global.ACCESS_READER_CONTROLTYPE, Global.ACCESS_READER_LABEL);
+					if (strReader.indexOf(Global.ACCESS_READER_CELLVALUE) > -1)
+						strReader = strReader.replace(Global.ACCESS_READER_CELLVALUE, this.label.text);
+				}
+				else // don't have control type in strAccessReader
+				{
+					if (strReader.indexOf(Global.ACCESS_READER_CELLVALUE) > -1)
+						strReader = strReader.replace(Global.ACCESS_READER_CELLVALUE, this.label.text);
+				}
+				//				trace("Label Renderer strReader != null: " + strReader);
+			}
+			else // make column default information
+			{
+				strReader = Global.ACCESS_READER_COLUMN_DEFAULT + " " + Global.ACCESS_READER_CONTROL + " " + 
+					Global.ACCESS_READER_LABEL + " " + Global.ACCESS_READER_CELL + " " + this.label.text;
+				//				trace("Label Renderer strReader == null: " + strReader);
+			}
+			return strReader;
+		}
+ 		
+		//
+//		override public function set visible(value:Boolean):void
+//		{
+//			super.visible = value;
+//		}
+	}
+}

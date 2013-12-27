@@ -1,0 +1,318 @@
+/* CSS file */
+@namespace s "library://ns.adobe.com/flex/spark";
+@namespace mx "library://ns.adobe.com/flex/mx";
+@namespace controls "kr.co.actsone.controls.*";
+@namespace advancedDataGridClasses "kr.co.actsone.controls.advancedDataGridClasses.*";
+@namespace listClasses "kr.co.actsone.controls.listClasses.*";
+@namespace custom "kr.co.actsone.custom.*";
+
+
+/*
+//------------------------------
+//  ExAdvancedDataGrid
+//------------------------------
+*/
+controls|ExAdvancedDataGrid
+{
+	alternatingItemColors: #F7F7F7, #FFFFFF;
+	columnDropIndicatorSkin: ClassReference("mx.skins.halo.DataGridColumnDropIndicator");
+	columnResizeSkin: ClassReference("mx.skins.halo.DataGridColumnResizeSkin");
+	headerColors: #FFFFFF, #E6E6E6;
+	headerDragProxyStyleName: "headerDragProxyStyle";
+	headerBackgroundSkin: ClassReference("mx.skins.halo.DataGridHeaderBackgroundSkin");
+	headerSeparatorSkin: ClassReference("mx.skins.halo.DataGridHeaderSeparator");
+	headerHorizontalSeparatorSkin: ClassReference("mx.skins.halo.AdvancedDataGridHeaderHorizontalSeparator");
+	headerStyleName: "advancedDataGridStyles";
+	sortArrowSkin: ClassReference("mx.skins.halo.DataGridSortArrow");
+	stretchCursor: Embed(source="Assets.swf",symbol="cursorStretch");
+	verticalGridLines:true;
+	verticalGridLineColor: #CCCCCC;
+	horizontalGridLines:true;
+	horizontalGridLineColor: #CCCCCC;
+	disclosureClosedIcon: Embed(source="Assets.swf",symbol="TreeDisclosureClosed");
+	disclosureOpenIcon: Embed(source="Assets.swf",symbol="TreeDisclosureOpen");
+	defaultLeafIcon: Embed(source="Assets.swf",symbol="TreeNodeIcon");
+	folderClosedIcon: Embed(source="Assets.swf",symbol="TreeFolderClosed");
+	folderOpenIcon: Embed(source="Assets.swf",symbol="TreeFolderOpen");
+	paddingLeft: 2;
+	paddingRight: 0;
+	/* sort item renderer's font styles */
+	sortFontFamily: "Verdana";
+	sortFontSize: 10;
+	sortFontStyle: "normal";
+	sortFontWeight: "normal";
+
+}
+
+/*
+//------------------------------
+//  ExAdvancedDataGridItemRenderer
+//------------------------------
+*/
+advancedDataGridClasses|ExAdvancedDataGridItemRenderer
+{
+	paddingLeft: 5;
+}
+
+/*
+//------------------------------
+//  ExAdvancedDataGridSortItemRenderer
+//------------------------------
+*/
+advancedDataGridClasses|ExAdvancedDataGridSortItemRenderer
+{
+	paddingTop: 0;
+	paddingBottom: 0;
+	paddingLeft: 0;
+	paddingRight: 0;
+	horizontalGap: 0;
+	
+	color: #0B333C;
+	icon: ClassReference("mx.skins.halo.DataGridSortArrow");
+}
+
+/*
+//------------------------------
+//  ExAdvancedDataGridHeaderRenderer
+//------------------------------
+*/
+advancedDataGridClasses|ExAdvancedDataGridHeaderRenderer
+{
+	paddingTop: 0;
+	paddingBottom: 0;
+	paddingLeft: 2;
+	paddingRight: 2;
+	horizontalGap: 0;
+	horizontalAlign:center;
+	verticalAlign:middle;
+	
+	color: #0B333C;
+	
+	backgroundColor: #FFFFFF;
+	backgroundAlpha: 0.0;
+}
+
+/*
+//------------------------------
+//  .advancedDataGridStyles
+//------------------------------
+*/
+
+.advancedDataGridStyles
+{
+	fontWeight: "bold";
+}
+
+/*
+//------------------------------
+//  ExAdvancedListBase
+//------------------------------
+*/
+listClasses|ExAdvancedListBase
+{
+	borderStyle: "solid";
+	_creationPolicy: "auto";
+	dropIndicatorSkin: ClassReference("mx.skins.halo.ListDropIndicator");
+	paddingBottom: 2;
+	paddingLeft: 2;
+	paddingRight: 0;
+	paddingTop: 2;
+}
+/*
+//------------------------------
+//  DataGrid
+//------------------------------
+*/
+mx|DataGrid{
+	fontFamily:					'dotum';
+	fontSize:					 12;
+	borderColor:				 #cacaca;
+	verticalGridLineColor:		 #cacaca;
+	horizontalGridLineColor:	 #cacaca;
+	horizontalGridLines:		 true;
+	useRollOver:				 true;
+	verticalAlign:			     middle;
+	rollOverColor:				 #ccd4e1;
+	selectionColor:				 #384d75;
+	selectionDisabledColor:		 #dddddd;
+	alternatingItemColors:		 #ffffff, #ffffff;
+	color:	 					 #666666;
+	textRollOverColor:			 #666666;
+	textSelectedColor:			 #ffffff;
+	sortArrowSkin:				 Embed("../assets/images/DateGridSortArrowUpSkin.png");
+	headerStyleName:			 "dateGridHeader";
+	headerBackgroundSkin:        Embed("../assets/images/containers/DateheaderBackgroundSkin.png",scaleGridTop="2", scaleGridBottom="34", scaleGridLeft="1", scaleGridRight="63");
+	horizontalScrollBarStyleName:"dateGridScorollBar";
+	verticalScrollBarStyleName:"dateGridScorollBar";	
+}
+
+/*
+//------------------------------
+//  Button style
+//------------------------------
+*/
+.buttonRendererStyle{
+	cornerRadius: 2;
+	textIndent: 0;
+	paddingLeft: 0;
+	paddingRight: 0;
+	paddingTop: 0;
+	paddingBottom: 0;
+	letterSpacing: 0;
+	highlightAlphas: 0.56, 0;
+	fillAlphas: 1, 0.78, 1, 1;
+	fillColors: #fffdff, #f2f2f2, #fffdff, #f2f2f2;
+	color: #2c9acc;
+	textRollOverColor: #004687;
+	textSelectedColor: #004687;
+	borderColor: #52a9d6;
+	themeColor: #52a9d6;
+	fontSize: 12;
+	fontWeight: normal;
+}
+
+/*
+//------------------------------
+//  Combobox
+//------------------------------
+*/
+mx|ComboBox
+{
+	corner-radius: 0;	
+	font-weight: normal;
+	
+	padding-left: 0;
+	padding-top: 0;
+	padding-right: 0;
+	padding-bottom: 0;
+	
+	upSkin: Embed(source="../assets/images/combo_btn.png", 
+		scaleGridTop="1", 
+		scaleGridBottom="19", 
+		scaleGridLeft="1", 
+		scaleGridRight="43");
+	
+	overSkin: Embed(source="../assets/images/combo_btn.png", 
+		scaleGridTop="1", 
+		scaleGridBottom="19", 
+		scaleGridLeft="1", 
+		scaleGridRight="43");
+	
+	downSkin: Embed(source="../assets/images/combo_btn.png", 
+		scaleGridTop="1", 
+		scaleGridBottom="19", 
+		scaleGridLeft="1", 
+		scaleGridRight="43");	
+}
+
+custom|ExComboBox
+{
+	arrowButtonWidth: 18;
+	dropdownStyleName: "comboDropdown";
+	editableSkin: ClassReference("mx.skins.spark.EditableComboBoxSkin");
+	leading: 0;
+	paddingBottom: 0;
+	paddingLeft: 0;
+	paddingRight: 0;
+	paddingTop: 0;
+	skin: ClassReference("mx.skins.spark.ComboBoxSkin");
+	
+	corner-radius: 0;	
+	font-weight: normal;
+	
+	upSkin: Embed(source="../assets/images/combo_btn.png", 
+		scaleGridTop="1", 
+		scaleGridBottom="19", 
+		scaleGridLeft="1", 
+		scaleGridRight="43");
+	
+	overSkin: Embed(source="../assets/images/combo_btn.png", 
+		scaleGridTop="1", 
+		scaleGridBottom="19", 
+		scaleGridLeft="1", 
+		scaleGridRight="43");
+	
+	downSkin: Embed(source="../assets/images/combo_btn.png", 
+		scaleGridTop="1", 
+		scaleGridBottom="19", 
+		scaleGridLeft="1", 
+		scaleGridRight="43");	
+}
+/*
+//------------------------------
+//  Popup menu button
+//------------------------------
+*/
+mx|PopUpMenuButton
+{
+	corner-radius: 0;	
+	font-weight: normal;
+	
+	padding-left: 0;
+	padding-top: 0;
+	padding-right: 0;
+	padding-bottom: 0;
+	
+	upSkin: Embed(source="../assets/images/combo_btn.png", 
+		scaleGridTop="1", 
+		scaleGridBottom="19", 
+		scaleGridLeft="1", 
+		scaleGridRight="43");
+	
+	overSkin: Embed(source="../assets/images/combo_btn.png", 
+		scaleGridTop="1", 
+		scaleGridBottom="19", 
+		scaleGridLeft="1", 
+		scaleGridRight="43");
+	
+	downSkin: Embed(source="../assets/images/combo_btn.png", 
+		scaleGridTop="1", 
+		scaleGridBottom="19", 
+		scaleGridLeft="1", 
+		scaleGridRight="43");	
+}
+
+/*
+//------------------------------
+//TitleWindow
+//------------------------------
+*/
+mx|TitleWindow {
+	resizeCornerColor:#005992;       
+	backgroundAlpha: 1;
+	borderAlpha: 1;
+	border-color: #526D8C; /*659dc7*/
+	borderThicknessLeft: 10;
+	borderThicknessRight: 10;
+	borderThicknessBottom: 10;	
+	borderThicknessTop: 10;	
+	footerColors: #88bbe2, #88bbe2;
+	footerAlpha: 0.68;
+	highlightAlphas: 0.48, 0.22;
+	headerColors: #4280b3, #659dc7;
+	background-size:"100%";
+	backgroundColor: #ffffff;
+	fontWeight:normal;
+	header-Height: 22;
+	padding-bottom: 10;
+	padding-left: 10;
+	padding-right: 10;
+	padding-top: 10;
+	roundedBottomCorners: false;
+	verticalGap : 0;
+	cornerRadius: 6;
+	borderThickness: 1;
+	borderStyle: solid;	
+	shadowDistance: 4;
+	shadowDirection: right;
+	dropShadowColor: #b3b3b3;
+	titleStyleName: "mytitlewindowTitle";
+}
+.mytitlewindowTitle {
+	letterSpacing: 0;
+	color: #ffffff;
+	textAlign: left;
+	fontSize: 11;
+	fontWeight: normal;
+	leading : 0;
+}

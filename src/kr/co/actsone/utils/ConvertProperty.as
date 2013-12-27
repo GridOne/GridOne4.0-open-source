@@ -1,0 +1,74 @@
+/********************************************************************************
+ *
+ *  ACTSONE COMPANY
+ *  Copyright 2012 Actsone 
+ *  All Rights Reserved.
+ *
+ *	This program is free software: you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation, either version 3 of the License, or
+ *	(at your option) any later version.
+ *
+ *	This program is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ ***********************************************************************************/
+
+package kr.co.actsone.utils
+{
+	public class ConvertProperty
+	{
+		
+		public static var headerStyleObj:Object={
+			strHDFontName:"fontFamily",
+			nHDFontSize:"fontSize",
+			bHDFontBold:"fontWeight",
+			bHDFontItalic:"fontStyle",
+			bHDFontULine:"textDecoration",
+			strHDFgColor:"color",
+			strGroupHDColor:"groupHDColor",
+			strHDBorderStyle:"borderStyle",
+			nHDLetterSpacing:"letterSpacing",
+			headerPaddingRight:"paddingRight"
+		};
+		
+		
+		public static var proObj:Object={
+			//strRowBorderStyle:"horizontalGridLineColor",
+			strActiveRowBgColor:"selectionColor",
+			strAlternateRowsBgColor:"alternatingItemColors",
+			//strBgImage:"backgroundImage",
+			strCellFontName:"fontFamily",
+			nHDLineSize:"headerHeight",
+			nHDLines:"headerHeight",
+			nRowHeight:"rowHeight",
+			nCellFontSize:"fontSize",			
+			strSelectedCellBgColor:"selectionColor",
+			strGridBgColor:"backgroundColor",
+			strGridBorderColor:"borderColor",
+			strGridBorderStyle:"borderStyle",
+			strCellFgColor:"color",
+			strHDBgColor:"headerBackgroundColor",
+			strHDSizing:"resizableColumns",
+			bHDMoving:"draggableColumns",
+			bCellFontBold:"fontWeight",
+			bCellFontItalic:"fontStyle",
+			bCellFontULine:"textDecoration",
+			strActiveRowFgColor:"textSelectedColor",
+			strSelectedCellFgColor:"textSelectedColor",
+			strBorderWidth:"borderWidth",
+			strRowSelectorBgColor:"selectionColor",
+			bCellFontCLine:"bCellFontCLine",
+			strHDAlign:"headerTextAlign",
+			bHDFontCLine:"bHDFontCLine"
+		 
+		};
+	}
+}
+
+ 

@@ -1,0 +1,246 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.protocol
+{
+	import kr.co.actsone.common.ColumnType;
+	import kr.co.actsone.common.DataGridManager;
+	import kr.co.actsone.common.Global;
+	import kr.co.actsone.common.GridOneImpl;
+	import kr.co.actsone.common.GridOneManager;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+	
+	import mx.controls.Alert;
+	import mx.utils.ObjectUtil;
+	
+	public class ColumnProtocol extends ProtocolBase
+	{
+		private static const TYPE:String="type";
+		
+		private static const MAX_LENGTH:String="maxLength";
+		
+		private static const SIZE:String="size";
+		
+		private static const EDITABLE:String="editable";
+		
+		private static const OBJECT_TYPE:String="objectType";
+		
+		private static const IMAGES:String="images";
+		
+		private static const COMBOS:String="combos";
+
+		public function ColumnProtocol(app:Object)
+		{
+			super(app);
+		}
+		
+		public function get gridoneImpl():GridOneImpl
+		{
+			return gridOne.gridoneImpl;
+		}
+
+		public function get gridoneManager():GridOneManager
+		{
+			return gridOne.gridoneManager;
+		}
+		
+		public function get dgManager ():DataGridManager
+		{
+			return gridOne.dgManager;
+		}
+		
+		override public function decode(value:String):Object
+		{
+			var result:Array=new Array();
+			try
+			{
+				if (value != null && value.length > 0)
+				{
+					var item:ExAdvancedDataGridColumn;
+					var fieldArray:Array;
+					var itemArr:Array=value.split(ProtocolDelimiter.ROW);
+					var obj:Object;
+					var row:String;
+					for (var j:int=0; j < itemArr.length-1; j++)
+					{
+						row=itemArr[j];
+						fieldArray=row.split(ProtocolDelimiter.CELL);
+						obj=new Object();
+						for (var i:int=0; i < fieldArray.length - 1; )
+						{
+							obj[fieldArray[i]]=fieldArray[i + 1];
+							i=i + 2;
+						}
+						item=createHeader(obj);
+						result.push(item);
+
+					}
+				}
+			}
+			catch (error:Error)
+			{
+				Alert.show("column"+error.message);
+			}
+			return result;
+		}
+
+		protected function createHeader(obj:Object):ExAdvancedDataGridColumn
+		{
+			var editable:Boolean=(obj["editable"].toString() == "1"||obj["editable"].toString() == "true") ? true : false;
+			var col:ExAdvancedDataGridColumn;
+			if(gridoneManager.gridProtocol.drawType=="D")
+				col=ExAdvancedDataGridColumn(dgManager.getColumnByDataField(obj["id"]));
+			else
+			{
+				col=gridoneImpl.createHeader(obj["id"], obj["text"], ColumnType.parseType(obj["type"]), obj["maxLength"], obj["size"], editable);
+			}
+				
+			var i:int=0;
+			if(obj["treeInfo"]!=null)
+			{
+				this.gridOne.datagrid.isTree=true;
+				this.gridOne.datagrid.treeDataField=col.dataField;
+				
+				this.gridOne.datagrid.treeInfo=obj["treeInfo"].toString().split(ProtocolDelimiter.ITEM);
+			}
+			if (obj["parent"] != null)
+			{
+				col.parent=obj["parent"];
+				//gridOne.appendHeader(obj["parent"], obj["id"]);
+			}
+			if (obj["images"] != null)
+			{
+				var imageArr:Array=obj["images"].toString().split(ProtocolDelimiter.ITEM);
+				if (col.imageList == null)
+					col.imageList=new Array();
+				for (i=0; i < imageArr.length - 1; i++)
+				{
+					var imgchk:Boolean = true;
+					for each(var img:Object in col.imageList){
+						if(img.toString() == imageArr[i])
+							imgchk = false;
+					}
+					if(imgchk)
+						col.imageList.push(imageArr[i]);
+				}
+			}
+			if (obj["combos"] != null)
+			{
+				var comboStr:String;
+				var comboArr:Array=obj["combos"].toString().split(ProtocolDelimiter.ITEM_GROUP);
+				var itemArray:Array;
+				var comboItem:Object;
+				for (i=0; i < comboArr.length - 1; i++)
+				{
+					comboStr=comboArr[i];
+					itemArray=comboStr.split(ProtocolDelimiter.ITEM);
+					if (itemArray.length > 1)
+					{	
+						if(obj["type"]=="L")//combobox type					
+							col.comboKey=itemArray[0];
+						if (col.listCombo[itemArray[0]] == null)
+						{
+							col.listCombo[itemArray[0]]=new Array();
+							col.indexComboKeyArr.push(itemArray[0]);
+						}
+						for (var j:int=2; j < itemArray.length - 1; )
+						{
+							comboItem=new Object();
+							comboItem["label"]=itemArray[j];
+							comboItem["value"]=itemArray[j + 1];
+							
+							var combochk:Boolean = true;
+							for each(var combo:Object in (col.listCombo[itemArray[0]] as Array)){
+								if(combo["value"] == comboItem["value"])
+								{
+									combochk = false;
+									break;
+								}
+							}
+							if(combochk)							
+								(col.listCombo[itemArray[0]] as Array).push(comboItem);
+								
+							j=j + 2;
+						}
+					}
+				}
+			}
+			return col;
+		}
+
+		override public function encode(columns:Object):String
+		{
+			var result:String="";
+			var editable:String;
+			var parentStr:String="";
+			var width:String="";
+			
+			for each (var col:ExAdvancedDataGridColumn in columns)
+			{
+				if(col.dataField == this.gridOne.datagrid.treePIDField || col.dataField == this.gridOne.datagrid.treeIDField)
+					continue;
+				editable=(col.cellActivation==Global.ACTIVATE_EDIT)?"1":"0";
+				width=(col.visible==false)?"0":col.width.toString();
+				parentStr=(col.parent!=null)?(PARENT+ProtocolDelimiter.CELL+col.parent+ProtocolDelimiter.CELL):"";
+				result=result+
+				ID+ProtocolDelimiter.CELL+col.dataField+ProtocolDelimiter.CELL+
+				TYPE+ProtocolDelimiter.CELL+ColumnType.convertType(col.type.toUpperCase())+ProtocolDelimiter.CELL+
+				parentStr+
+				TEXT+ProtocolDelimiter.CELL+col.headerText+ProtocolDelimiter.CELL+
+				SIZE+ProtocolDelimiter.CELL+width+ProtocolDelimiter.CELL+
+				EDITABLE+ProtocolDelimiter.CELL+editable+ProtocolDelimiter.CELL+
+				MAX_LENGTH+ProtocolDelimiter.CELL+col.orginalMaxLength+ProtocolDelimiter.CELL;
+				if(col.type==ColumnType.COMBOBOX)
+				{
+					var comboLength:int=col.listCombo[col.comboKey]!=null?col.listCombo[col.comboKey].length:0;
+					result=result+COMBOS+ProtocolDelimiter.CELL+"default"+ProtocolDelimiter.ITEM+comboLength.toString()+ProtocolDelimiter.ITEM;
+					for each(var combo:Object in col.listCombo[col.comboKey])
+					{
+						result=result+combo["label"]+ProtocolDelimiter.ITEM+combo["value"]+ProtocolDelimiter.ITEM;
+					}
+					result=result+ProtocolDelimiter.ITEM_GROUP+ProtocolDelimiter.CELL;
+				}else if(col.type==ColumnType.MULTICOMBO)
+				{
+					result=result+COMBOS+ProtocolDelimiter.CELL;
+					for(var index:int=0; index < col.indexComboKeyArr.length; index++)
+					{
+						var comboArr:Array=col.listCombo[col.indexComboKeyArr[index]]; 
+						result=result+col.indexComboKeyArr[index]+ProtocolDelimiter.ITEM+comboArr.length+ProtocolDelimiter.ITEM;
+						for each(var item:Object in comboArr)
+						{
+							result=result+item["label"]+ProtocolDelimiter.ITEM+item["value"]+ProtocolDelimiter.ITEM;
+						}
+						result=result+ProtocolDelimiter.ITEM_GROUP;
+					}
+					result=result+ProtocolDelimiter.CELL;
+				}else if(col.type==ColumnType.IMAGETEXT)
+				{
+					result=result+IMAGES+ProtocolDelimiter.CELL;
+					for each(var image:String in col.imageList)
+					{
+						result+=image+ProtocolDelimiter.ITEM;	
+					}
+					result+=ProtocolDelimiter.CELL;
+				}
+				else if(col.type==ColumnType.TREE)
+				{
+					result=result+IMAGES+ProtocolDelimiter.CELL;
+					for each(var icon:String in col.imageList)
+					{
+						result+=icon+ProtocolDelimiter.ITEM;	
+					}
+					result+=ProtocolDelimiter.CELL + "treeInfo" + ProtocolDelimiter.CELL + this.gridOne.datagrid.treeInfo[0] +
+						ProtocolDelimiter.ITEM+ this.gridOne.datagrid.treeInfo[1]+ProtocolDelimiter.ITEM+ProtocolDelimiter.CELL;
+					
+				}
+				result=result+ProtocolDelimiter.ROW;
+			}
+			return result;
+		}
+	}
+}

@@ -1,0 +1,225 @@
+/********************************************************************************
+ *
+ *  ACTSONE COMPANY
+ *  Copyright 2012 Actsone 
+ *  All Rights Reserved.
+ *
+ *	This program is free software: you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation, either version 3 of the License, or
+ *	(at your option) any later version.
+ *
+ *	This program is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ ***********************************************************************************/
+
+package kr.co.actsone.itemRenderers
+{
+	import flash.display.DisplayObject;
+	
+	import kr.co.actsone.common.Global;
+	
+	import mx.controls.Image;
+	
+	public class ImageRenderer extends ExUIComponent
+	{
+		protected var img:Image;
+		
+		public function ImageRenderer()
+		{
+			super();
+			tabEnabled = false;
+			this.setStyle('verticalAlign','middle');
+		}
+		
+		/******************************************************************************************
+		 * create children
+		 ******************************************************************************************/
+		override protected function createChildren():void
+		{
+			super.createChildren();
+			
+			if(!img)
+			{
+				img = new Image();
+				img.setStyle('horizontalAlign',"center");
+				img.setStyle('verticalAlign',"middle");
+				img.styleName = this;
+				img.scaleContent = true;
+				addChild(DisplayObject(img));
+			}
+		}
+		
+		/******************************************************************************************
+		 * set data
+		 ******************************************************************************************/
+		override public function set data(value:Object):void
+		{
+			if (value !=null)
+			{
+				super.data=value;
+			}
+		}
+		
+		/******************************************************************************************
+		 * update data
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override protected function commitProperties():void
+		{
+			super.commitProperties();
+			if(img==null)	return;
+			
+			if(data != null && dataField != "")
+			{	 
+				if(data[dataField]!=null)
+					img.source = data[dataField];
+				else
+				{
+					data[dataField] = "";
+					img.source = "";
+				}
+				img.width = column.width;
+				img.height = listOwner.rowHeight;
+				this.img.scaleContent = column.imageScaleContent;
+				
+				var activation:String=this.listOwner.getCellProperty('activation',data[Global.ACTSONE_INTERNAL],dataField);
+				if(activation == null)
+					activation = column.cellActivation;				
+				if(activation != null)
+				{
+					if (activation == Global.ACTIVATE_DISABLE)
+					{
+						this.img.enabled = false;
+					}
+					else
+					{					
+						this.img.enabled = true;
+					}
+				}
+				else if(!this.img.enabled)
+					this.img.enabled = true;
+			}
+			else
+				img.source = "";
+			var dataTips:Boolean = listOwner.showDataTips;
+			if (column.showDataTips == true)
+				dataTips = true;
+			if (column.showDataTips == false)
+				dataTips = false;
+			if (dataTips)
+			{
+				toolTip = column.itemToDataTip(data);
+			}
+			else if (listOwner.toolTipData !="" && column.toolTipData !="")
+			{
+				toolTip = listOwner.toolTipData;
+			}
+			else
+			{
+				toolTip = null;
+			}
+			
+			invalidateDisplayList();
+		}
+		
+		/******************************************************************************************
+		 * Update width and height of image
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override protected function measure():void
+		{
+			super.measure();
+			if(! this.listOwner.variableRowHeight)
+			{
+				if(measuredWidth == 0)
+					measuredWidth = 10;
+				measuredHeight = this.listOwner.rowHeight - 4;
+			}
+			else
+			{
+				if(measuredWidth == 0)
+					measuredWidth = 10 + getStyle('paddingLeft') - getStyle('paddingRight') - 1;
+				if(measuredHeight == 0)
+					measuredHeight = 16 + getStyle('paddingTop') + getStyle('paddingBottom');
+			}
+		}
+		
+		/******************************************************************************************
+		 * Processes the properties set on the component
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override protected function updateDisplayList(unscaledWidth:Number,
+													  unscaledHeight:Number):void
+		{
+			super.updateDisplayList(unscaledWidth,unscaledHeight);
+			if(this.img)
+			{
+				var startX:Number = 0;
+				if(this.listOwner && this.listOwner.nCellPadding)
+				{
+					startX += this.listOwner.nCellPadding;
+				}
+				
+				var textAlign:String=textAlign = getStyle("textAlign");
+				if(column.getStyle('textAlign') != undefined)
+					textAlign = column.getStyle('textAlign');
+				else if(listOwner.getStyle('textAlign') != undefined)
+						textAlign = listOwner.getStyle('textAlign');
+				this.img.setStyle('horizontalAlign',textAlign);
+					
+				var verticalAlign:String = getStyle("verticalAlign");
+				if (verticalAlign == "top")
+				{
+					img.y = 0;
+				}
+				else if (verticalAlign == "bottom")
+				{
+					img.y = unscaledHeight - img.height + 2; // 2 for gutter
+				}
+				else
+				{
+					img.y = (unscaledHeight - img.height) / 2;
+				}
+			}
+		}
+
+		/******************************************************************************************
+		 * Get accessibility name for screen reader
+		 * @author Thuan
+		 ******************************************************************************************/
+		override public function getAccessibilityName():String
+		{
+			var strReader:String = this.column.strAccessReader;
+			
+			if (strReader && strReader.length > 0) // Parse value in strAccessReader 
+			{
+				if (strReader.indexOf(Global.ACCESS_READER_CONTROLTYPE) > -1)
+				{
+					strReader = strReader.replace(Global.ACCESS_READER_CONTROLTYPE, Global.ACCESS_READER_IMAGE);
+					if (strReader.indexOf(Global.ACCESS_READER_CELLVALUE) > -1)
+						strReader = strReader.replace(Global.ACCESS_READER_CELLVALUE, "Image");
+				}
+				else // don't have control type in strAccessReader
+				{
+					if (strReader.indexOf(Global.ACCESS_READER_CELLVALUE) > -1)
+						strReader = strReader.replace(Global.ACCESS_READER_CELLVALUE, "Image");
+				}
+				//				trace("Label Renderer strReader != null: " + strReader);
+			}
+			else // make column default information
+			{
+				strReader = Global.ACCESS_READER_COLUMN_DEFAULT + " " + Global.ACCESS_READER_CONTROL + " " + 
+					Global.ACCESS_READER_IMAGE + " " + Global.ACCESS_READER_CELL + " " + "Image";
+				//				trace("Label Renderer strReader == null: " + strReader);
+			}
+			return strReader;
+		}
+	}
+}

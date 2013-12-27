@@ -1,0 +1,174 @@
+/********************************************************************************
+ *
+ *  ACTSONE COMPANY
+ *  Copyright 2012 Actsone 
+ *  All Rights Reserved.
+ *
+ *	This program is free software: you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation, either version 3 of the License, or
+ *	(at your option) any later version.
+ *
+ *	This program is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ ***********************************************************************************/
+
+package kr.co.actsone.controls.advancedDataGridClasses
+{
+
+import mx.core.mx_internal;
+
+use namespace mx_internal;
+
+/**
+ *  The ExAdvancedDataGridBaseSelectionData class defines a data structure 
+ *  used by the advanced data grid classes to track selected cells in the ExAdvancedDataGrid control.
+ *  Each selected cell is represented by an instance of this class.
+ *
+ *  @see kr.co.actsone.controls.ExAdvancedDataGrid
+ *  
+ *  @langversion 3.0
+ *  @playerversion Flash 9
+ *  @playerversion AIR 1.1
+ *  @productversion Flex 3
+ */
+public class ExAdvancedDataGridBaseSelectionData
+{
+    include "../../core/Version.as";
+
+    //--------------------------------------------------------------------------
+    //
+    //  Constructor
+    //
+    //--------------------------------------------------------------------------
+
+    /**
+     *  Constructor.
+     *
+     *  @param data The data Object that represents the selected cell.
+     *
+     *  @param rowIndex The index in the data provider of the selected item. 
+     *  This value may be approximate. 
+     *
+     *  @param columnIndex The column index of the selected cell.
+     *
+     *  @param approximate If <code>true</code>, the <code>index</code> property 
+     *  contains an approximate value and not the exact value.
+     *  
+     *  @langversion 3.0
+     *  @playerversion Flash 9
+     *  @playerversion AIR 1.1
+     *  @productversion Flex 3
+     */
+    public function ExAdvancedDataGridBaseSelectionData(data:Object,
+                                                    rowIndex:int,
+                                                    columnIndex:int,
+                                                    approximate:Boolean)
+    {
+        super();
+
+        this.data        = data;
+        this.rowIndex    = rowIndex;
+        this.columnIndex = columnIndex;
+        this.approximate = approximate;
+    }
+    
+    //--------------------------------------------------------------------------
+    //
+    //  Variables
+    //
+    //--------------------------------------------------------------------------
+
+    /**
+     *  @private
+     *  The next ExAdvancedDataGridBaseSelectionData in a linked list
+     *  of ExAdvancedDataGridBaseSelectionData.
+     *  ExAdvancedDataGridBaseSelectionData instances are linked together and keep track
+     *  of the order in which the user selects items.
+     *  This order is reflected in selectedIndices, selectedItems, selectedCells.
+     */
+    mx_internal var nextSelectionData:ExAdvancedDataGridBaseSelectionData;
+
+    /**
+     *  @private
+     *  The previous ExAdvancedDataGridBaseSelectionData in a linked list
+     *  of ExAdvancedDataGridBaseSelectionData.
+     *  ExAdvancedDataGridBaseSelectionData instances are linked together and keep track
+     *  of the order in which the user selects items.
+     *  This order is reflected in selectedIndices, selectedItems, selectedCells.
+     */
+    mx_internal var prevSelectionData:ExAdvancedDataGridBaseSelectionData;
+
+    //--------------------------------------------------------------------------
+    //
+    //  Properties
+    //
+    //--------------------------------------------------------------------------
+
+    //----------------------------------
+    //  approximate
+    //----------------------------------
+
+    /**
+     *  If <code>true</code>, the <code>rowIndex</code> and <code>columnIndex</code> 
+     *  properties contain approximate values, and not the exact value.
+     *  
+     *  @langversion 3.0
+     *  @playerversion Flash 9
+     *  @playerversion AIR 1.1
+     *  @productversion Flex 3
+     */
+    public var approximate:Boolean;
+
+    //----------------------------------
+    //  data
+    //----------------------------------
+
+    /**
+     *  The data Object from the data provider that represents the selected cell.
+     *  
+     *  @langversion 3.0
+     *  @playerversion Flash 9
+     *  @playerversion AIR 1.1
+     *  @productversion Flex 3
+     */
+    public var data:Object;
+
+    //----------------------------------
+    //  rowIndex
+    //----------------------------------
+
+    /**
+     *  The row index in the data provider of the selected cell. 
+     *  This value is approximate if the <code>approximate</code> property is <code>true</code>. 
+     *  
+     *  @langversion 3.0
+     *  @playerversion Flash 9
+     *  @playerversion AIR 1.1
+     *  @productversion Flex 3
+     */
+    public var rowIndex:int;
+
+    //----------------------------------
+    //  columnIndex
+    //----------------------------------
+
+    /**
+     *  The column index in the data provider of the selected cell.
+     *  This value is approximate if the <code>approximate</code> property is <code>true</code>. 
+     *  
+     *  @langversion 3.0
+     *  @playerversion Flash 9
+     *  @playerversion AIR 1.1
+     *  @productversion Flex 3
+     */
+    public var columnIndex:int;
+}
+
+}

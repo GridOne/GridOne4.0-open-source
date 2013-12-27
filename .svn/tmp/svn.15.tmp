@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Demo Ajax with GridOne</title> 
+<script type="text/javascript" src="GridOne.js"></script>
+<script type="text/javascript">
+
+var rowSelIndex;  
+var columnSelKey;
+var getArrMerge;
+var gridOne;
+/*get gridone*/
+function getGrid() {	
+    return document.GridOne;	 
+}
+
+/*********************************************init grid*********************************************/
+/*init for grid one. This function is called by GridOne internally */
+function FristinitializeHandler() 
+{
+	gridOne = getGrid();
+ 
+ //	registerExFuntion();
+	 
+	
+	gridOne.createEvent("boundHeaderComplete","FristboundHeaderCompleteHandler");
+	setHeader(gridOne);	
+	
+}
+
+function registerExFuntion()
+{
+	var arr=new Array();
+	arr[0]="setColHide";
+	arr[1]="setHeaderContent";
+	arr[2]="getCheckBoxValue";
+	arr[3]="addComboList";
+	arr[4]="addDynamicComboList";
+	gridOne.registerFunc(arr,"");
+}
+ 
+/*This function is called automatically after headers and columns are created.*/
+function FristboundHeaderCompleteHandler()
+{ 
+	  setData(gridOne);
+}
+var textString="A|B|com|C|D%%" +
+	           "A01refreshGrid|B01|AS|C01|20120908%%" +
+		       "A01|B01|AS|C01|20120908%%" +
+			   "A01 sfsdfjskajfjsdj fksdf|B01|AS|C02|20120908%%" +
+			   "A01|B01|AS|C02|20120908%%" +
+			   "A01|B01|AS|C02|20120908%%" +
+			   "A01|B01|AS|C03|20130904%%" +
+			   "A01|B02|AS|C03|20130904%%" +
+		       "A01|B02|AS|C03|20130904%%" +
+			   "A01|B02|AM|C04|20130904%%" +
+			   "A01|B02|AM|C04|20130904%%" +
+			   "A01|B03|AM|C05|20130904%%" +
+			   "A01|B01|AM|C02|20130904%%" +
+			   "A01|B01|AM|C02|20130904%%" +
+			   "A01|B01|AM|C02|20130904%%" +
+			   "A01|B01|EU|C03|20130705%%" +
+			   "A01|B02|EU|C03|20130705%%" +
+		       "A01|B02|EU|C03|20130705%%" +
+			   "A01|B02|EU|C04|20130705%%" +
+			   "A01|B02|EU|C04|20130705%%" +
+			   "A01|B03|EU|C05|20130705%%" +
+			   "A01|B03|EU|C05|20130705";
+
+//=======================================================
+var jsonData=[
+	              {"label":'COM',
+	               "value":'C'
+	              },
+	              {"label":"AMS",
+	               "value":"A"
+	              },
+	              {"label":"BOM",
+	               "value":"B"
+	              },
+	              {"label":"DDD",
+		           "value":"D"
+		          },
+		          {"label":"FME",
+		           "value":"E"
+		          }
+	              ];
+
+var comboArr=[  
+              {label:"Korea",value:"KR",children:([ {label:"Seoul",value:"Seoul"},{label:"Busan",value:"Busan"}, {label:"Wangi",value:"Wangi"}])},    {label:"Japan",value:"JP",children:([ {label:"Tokyo",value:"Tokyo"},{label:"Kyoto",value:"Kyoto"}])},    {label:"Vietnam",value:"VN",children:([                   {label:"Hanoi",value:"Hanoi"},{label:"HCM",value:"HCM"},{label:"Danang",value:"DN"}])},    {label:"America",value:"America",children:([ {label:"Newyork",value:"Newyork"},{label:"Ohio",value:"Ohio"},{label:"Washington",value:"Washington"},  {label:"California",value:"California"}])},    {label:"Euro",value:"Euro",children:([{label:"Paris",value:"Paris"},{label:"London",value:"London"},{label:"Berlin",value:"Berlin"}])} ];
+ //set header in dataGrid
+//========================================================
+ function setHeader(gridOne)
+ {
+	gridOne.addHeader("check","Checkbox","checkbox",50,50,true);
+	gridOne.addHeader("A","A", "text", 50, 150, true);
+ 	gridOne.addHeader("com","Combo","combo",50,150,true);
+	gridOne.addHeader("multicombox","multicombobox","multicombobox",50,150,true);
+	gridOne.addHeader("comdy","Combodynamic","combodynamic",50,150,true);
+ 	gridOne.addHeader("multicom","multicombo","multicombo",50,150,true);
+	gridOne.addHeader("B","B","text",20,150,true);
+	gridOne.addHeader("C","C","text",50,150,true);
+	gridOne.addHeader("D","D", "text",20, 150, true);
+	gridOne.addHeader("image","hideimagetextright", "text",20, 150, true);
+	
+	
+	gridOne.boundHeader();	
+	
+	gridOne.addComboListValue("com","Asia","AS");  
+	gridOne.addComboListValue("com","America","AM"); 
+	gridOne.addComboListValue("com","Euro","EU");
+	
+	gridOne.addComboListValue("multicom","Asia","AS");  
+	gridOne.addComboListValue("multicom","America","AM"); 
+	gridOne.addComboListValue("multicom","Euro","EU");
+////	
+	gridOne.setProperty("bExternalScroll",true);
+	//gridOne.addImageList("image","");
+
+ }
+  
+
+ //set data
+ //==========================================================
+ function setData(gridOne)
+ {
+ //set data into dataGrid
+   gridOne.addComboList("multicombox",comboArr);
+   gridOne.addDynamicComboList('comdy','label','value',jsonData);
+   gridOne.setTextData(textString);
+   gridOne.setGroupMerge("A,D,B,com");
+//    gridOne.refreshGrid();
+ 
+ //  gridOne.refresh();
+  
+ }
+function refreshHandler()
+{
+	 gridOne.refresh();
+}
+
+function test()
+{
+	gridone=getGrid();
+	gridone.setColHide("A",true);
+}
+
+</script>
+</head>
+<body>
+		<center>
+		<input type="button" onclick="test();" value="test">
+		<div>
+		  <script type="text/javascript">
+		   initGridOne(1000,400,'GridOne','flash','','A0B0C0C6-000148-156641','false','fast','Frist');
+		  </script>
+		</div>
+		</center>
+</body>
+</html>

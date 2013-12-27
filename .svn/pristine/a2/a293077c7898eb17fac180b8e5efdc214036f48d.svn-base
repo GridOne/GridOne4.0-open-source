@@ -1,0 +1,190 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+package kr.co.actsone.common
+{
+	import flash.external.ExternalInterface;
+	
+	import mx.controls.Alert;
+	
+	public class Global
+	{
+		public static const CURRENT_VERSION:String="3.0.5";
+		
+		//For Developer:
+     //   public static const BUILD_VERSION:String="developer";
+		
+		//For Release:
+ 	    public static const BUILD_VERSION:String="release";
+		
+	 	public static const DEVELOPER_VERSION:String="developer";
+		public static const RELEASE_VERSION:String="release";
+		
+		public static var grioneHomeURL:String="http://www.actsone.co.kr/menu010101.cfm";
+		
+		public static const STR_ENTER_NAVIGATE_NEXT: String = "nextcell";
+		public static const STR_ENTER_NAVIGATE_BELOW: String = "belowcell";
+		
+		public static const ACTSONE_INTERNAL:String = "actsone_internal_uid";
+		
+		public static const TREE_ROOT_CHAR: String = "*";
+		public static const TREE_ROOT_STRING: String = "root";
+		public static const ACCESS_READER_GRIDONE_NAME: String = "GridOne3";
+		public static const ACCESS_READER_COLUMN_DEFAULT: String = "[...]";
+		public static const ACCESS_READER_HEADER:String = "Header text is ";
+		public static const ACCESS_READER_COLUMN:String = "Column type is ";
+		public static const ACCESS_READER_CONTROL:String = "Control type is ";
+		public static const ACCESS_READER_CELLLABEL:String = "Label is ";
+		public static const ACCESS_READER_CELL:String = "Value is ";
+		
+		public static const ACCESS_READER_HEADERTEXT:String = "%HEADERTEXT%";
+		public static const ACCESS_READER_COLUMNTYPE:String = "%COLUMNTYPE%";
+		public static const ACCESS_READER_CONTROLTYPE:String = "%CONTROLTYPE%";
+		public static const ACCESS_READER_CELLVALUE:String = "%CELLVALUE%";
+		
+		public static const ACCESS_READER_LABEL:String = "Label";
+		public static const ACCESS_READER_DATEFIELD:String = "DateField";
+		public static const ACCESS_READER_BUTTON:String = "Button";
+		public static const ACCESS_READER_COMBOBOX:String = "ComboBox";
+		public static const ACCESS_READER_MULTICOMBOBOX:String = "MultiComboBox";
+		public static const ACCESS_READER_CHECKBOX:String = "CheckBox";
+		public static const ACCESS_READER_RADIOBUTTON:String = "RadioButton";
+		public static const ACCESS_READER_CALENDAR:String = "Calendar";
+		public static const ACCESS_READER_LINKBUTTON:String = "LinkButton";
+		public static const ACCESS_READER_IMAGE:String = "Image";
+		public static const ACCESS_READER_IMAGETEXT:String = "ImageText";
+		public static const ACCESS_READER_MASKEDINPUT:String = "MaskedInput";
+		public static const ACCESS_READER_NUMBER:String = "Number";
+		public static const ACCESS_READER_SUBTOTAL:String = "Subtotal";
+		public static const ACCESS_READER_TOTAL:String = "Total";
+		public static const ACCESS_READER_COLUMNTOTAL:String = "ColumnTotal";
+
+		
+		public static const HIDDEN_VALUE:String = "HIDDENVALUE";
+		public static const TREE_SUM_NODE:String = "SUM";
+		public static const TREE_COUNT_NODE:String = "COUNT";
+		public static const TREE_AVERAGE_NODE:String = "AVERAGE";
+		public static const DEFAULT_COMBO_KEY:String="default";
+		public static const MODE:String="MODE";
+		public static const INSERT_MODE:String="I";
+		public static const UPDATE_MODE:String="U";
+		public static const DELETE_MODE:String="D";
+		public static const WISEGRIDDATA_ALL:String ='WISEGRIDDATA_ALL';
+		
+		public static const SELECTED_IMAGE_INDEX:String="_index";
+		
+		public static const SELECTED_COMBO_INDEX:String="_index";		
+		
+		public static const SELECTED_BUTTON_INDEX:String="_index";
+
+		public static const SELECTED_CHECKBOX_INDEX:String="_index";
+		
+		public static const COMBO_KEY_CELL:String="_comboKey";
+
+		//for strMouseWheelAction
+		public static const MOUSE_WHEEL_DEFAULT:String="default";
+		public static const MOUSE_WHEEL_PAGE:String="page";
+
+		//for strCellClickAction
+
+		public static const EDIT:String="edit";
+		public static const ROWSELECT:String="rowselect";
+		public static const CELLSELECT:String="cellselect";
+
+		//for cell activation
+		public static const ACTIVATE_EDIT:String="edit";		
+		public static const ACTIVATE_ONLY:String="activateonly";		
+		public static const ACTIVATE_DISABLE:String="disable";
+				
+		//context menu
+
+		public static const MENU_ADDROW:String="menuAddRow";
+		public static const MENU_EDITROW:String="menuEditRow";
+		public static const MENU_DELETEROW:String="menuDeleteRow";
+
+		public static const ROW_HIDE:String = "_isRowHide";
+		//live scrolling
+		public static const LIVE_SCROLL_DEFAULT:String="default";		
+		public static const LIVE_SCROLL_SYNCSCREEN:String="syncscreen";
+		
+		//Alert warning for setCellValue
+
+		public static const CHECKBOX_WARNING:String="wrong type value, just accept values: true|false|1|0";
+
+		public static const COMBOBOX_WARNING:String="wrong data, check data in combo list";
+
+		public static const NUMBER_WARNING:String="wrong data type entered, be sure value is a number type";
+
+		public static const DATE_WARNING:String="wrong data type entered, be sure value is a date type";
+
+		public static const TEXT_WARNING:String="length of text is too large";
+
+		public static const SET_CELL_FUNCTION:String="setCell";
+		
+		public static var DEFAULT_LANG:String = 	"KR"; //"EN";
+		
+		public static const GRIDDATA_ALL:String = "GRIDDATA_ALL";
+		
+		public static const CRUD_KEY:String="_crudKey";
+		
+		public static const TOTAL_DATAFIELD:String="_totalField";
+		
+		//version for customers
+
+		public static const BUSAN_BANK:String="BusanBank";
+
+		public static const ICOMPIA_WISEGRID:String="IcompiaWisegrid";
+		
+		public static const CRUD_UPDATE:String="U";
+		public static const CRUD_DELETE:String="D";
+		public static const CRUD_INSERT:String="C";	
+		
+		
+		
+		public static const MODAL_MODE = "ModalMode";
+		
+		public static const EXPORT_EXCEL_TITLE:Object = {EN:"Export excel",KR:"Export excel"};
+		
+		public static const EXPORT_EXCEL_MESSAGE:Object = {EN:"Are you sure you want to save excel file?",KR:"엑셀파일로 저장하시겠습니까?"};
+		
+		public static const IMPORT_EXCEL_TITLE:Object = {EN:"Import excel",KR:"Import excel"};
+		
+		public static const IMPORT_EXCEL_MESSAGE:Object = {EN:"Do you want to access local computer?",KR:"엑셀파일을 불러오시겠습니까?"};
+        
+		public static function getMessageLang(msg:Object,lang:String):String
+		{
+			if(msg.hasOwnProperty(lang))
+				return msg[lang];
+			else
+				return msg[Global.DEFAULT_LANG];
+		}
+		
+ 
+		public static function initCallback(flex:GridOne):void
+		{			
+			if (ExternalInterface.available)
+			{	
+				ExternalInterface.addCallback("setProperty", flex.setProperty);
+				ExternalInterface.addCallback("setDataGridProperty", flex.setDataGridProperty);
+				ExternalInterface.addCallback("addHeader", flex.addHeader);
+				ExternalInterface.addCallback("boundHeader", flex.boundHeader);
+				ExternalInterface.addCallback("addTextData", flex.addTextData);
+				ExternalInterface.addCallback("setTextData", flex.setTextData);
+				ExternalInterface.addCallback("setGridData", flex.setGridData);
+				ExternalInterface.addCallback("createEvent", flex.createEvent);
+				ExternalInterface.addCallback("registerFunc",flex.registerFunc);
+				ExternalInterface.addCallback("handleWheel",flex.handleWheel);
+				ExternalInterface.addCallback("setJSonData", flex.setJSonData);
+				ExternalInterface.addCallback("setColumnProperty", flex.setColumnProperty);
+				ExternalInterface.addCallback("refresh", flex.refresh);
+ 
+			}			
+		}
+
+	}
+}
+

@@ -1,0 +1,20 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.summarybar
+{
+	public class SummaryBarStyle
+	{
+		public var subTotalFontCLine : Boolean;
+		public var totalFontCLine : Boolean;
+		
+		public function SummaryBarStyle()
+		{
+		}
+	}
+}

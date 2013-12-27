@@ -1,0 +1,203 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.export
+{
+	import kr.co.actsone.controls.ExAdvancedDataGrid;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+	
+	import mx.formatters.CurrencyFormatter;
+	import mx.formatters.NumberFormatter;
+	
+	public class FunctionLibrary
+	{
+		public static var useThousandsSeparator:Boolean=true;
+		public static var precision:int=2;
+		public static var decimalSeparatorTo: String =".";
+
+		public function FunctionLibrary()
+		{
+		}
+
+		//util function library	for datagrid 	
+		public static function asTotalFunc(Arr:Object, column:ExAdvancedDataGridColumn):String
+		{
+			if (Arr == null)
+				return "0";
+
+			var total:Number=0;
+			for (var i:int=0; i < Arr.length; i++)
+			{
+				var item:Number=Number(Arr[i][column.dataField]);
+				total+=item;
+			}
+
+			return total.toString();
+		}
+
+		//util function library	for datagrid 	
+		public static function asTotalFuncFormated(Arr:Object, column:ExAdvancedDataGridColumn):String
+		{						
+			//2011.04.08 added by ma
+			//return zero when data is ''
+			if (Arr == null || Arr == '')
+				return "0"; 
+			var total:Number=0;
+			for (var i:int=0; i < Arr.length; i++)
+			{								
+				//2011.04.08 modified by ma
+				//if inputed data use useThousandsSeparator,
+				//can't add to total.
+				//',' is replaced to ''
+				var str:String="0";
+				
+				if(Arr[i][column.dataField]!=null){
+					str = Arr[i][column.dataField].toString().replace(/,/g,"");
+				} 
+				var item:Number=Number(str);
+				total+=item;
+			}
+
+			var numberFormatter:NumberFormatter =new NumberFormatter();
+			numberFormatter.useThousandsSeparator=",";
+			numberFormatter.decimalSeparatorTo = ".";
+			numberFormatter.precision=2;
+			return numberFormatter.format(total).toString();
+			//return total.toString();
+		}
+
+		public static function totalLabelFunc(Arr:Object, column:ExAdvancedDataGridColumn):String
+		{
+			return '총계';
+		}
+
+		public static function subTotalLabelFunc(Arr:Object, column:ExAdvancedDataGridColumn):String
+		{
+			return "소계";
+		}
+		public static function totalRow(Arr:Object, column:ExAdvancedDataGridColumn):String
+		{
+			if (Arr == null || Arr == '')
+				return "총 0건";
+			else				
+				return '총 ' + Arr.length + '건';
+		}
+		
+		public static function setNumberFormat(total : Number) : String
+		{
+			var numberFormatter:NumberFormatter =new NumberFormatter();
+			numberFormatter.useThousandsSeparator=FunctionLibrary.useThousandsSeparator;
+			numberFormatter.decimalSeparatorTo = FunctionLibrary.decimalSeparatorTo;
+			numberFormatter.precision= 2 ;
+			return numberFormatter.format(total); 
+		}
+		
+//		public static function getItemFromTreeKey(strTreeKey:String, dp : ArrayCollection): Object
+//		{
+//			var dgManager : DataGridManager = new DataGridManager();
+//			var rs : Object;
+//			for each (var item : Object in dp)
+//			{
+//				if(item[dgManager.treeIDField] == strTreeKey)
+//				{
+//					rs = item;
+//					break;
+//				}
+//			}
+//			return rs;
+//		}
+		
+		/*************************************************************
+		 * check type of format
+		 * @param dataprovier : ArrayCollection, colFunc : String
+		 * @return value : true if keep full else return false
+		 * author: Hoang Pham
+		 * ***********************************************************/
+		public static function setDefaultNumberFormat(column:ExAdvancedDataGridColumn, total : Number): String
+		{
+			var currencyFormatter : CurrencyFormatter = new CurrencyFormatter();
+			currencyFormatter.precision = column.precision;
+			currencyFormatter.currencySymbol = (column.symbolPrecision.length == 0)? column.symbolPrecision : '';
+			return currencyFormatter.format(total);
+		}
+		
+		/*************************************************************
+		 * check type of format
+		 * @param dataprovier : ArrayCollection, colFunc : String
+		 * @return value : true if keep full else return false
+		 * author: Hoang Pham
+		 * ***********************************************************/
+		public static function removeZeroNumber(total : String): String
+		{
+			var rs  : String;
+			var indexSymbol : int =-1;
+			var symbol : String = "";
+			if(total.length == 0)
+				rs ='0';
+			else
+			{
+				indexSymbol = total.indexOf(' ');
+				if( indexSymbol >= 0) // if has currency symbol
+				{
+					symbol = total.split(' ')[1];
+					for (var i:int = indexSymbol -1; i >= 0 ; i--) 
+					{
+						if(total.charAt(i) == '0' ||total.charAt(i)=='.')
+							total = total.slice(0,i);
+						else
+							break;
+					}
+					rs = total.slice(0,indexSymbol) + " " + symbol;
+				}
+				else
+				{
+					for (var j:int = total.length -1; j >= 0 ; j--) 
+					{
+						if(total.charAt(j) == '0')
+							total = total.slice(0,j);
+						else
+							break;
+					}
+					if(total.charAt(total.length-1) == '.')
+						rs = total.slice(0,total.length-1);
+					else
+						rs = total;;
+						
+				}
+			}
+			return rs;
+		}
+
+		/*************************************************************
+		 * get first visible column of datagrid
+		 * @param datagrid : ExAdvancedDataGrid
+		 * @return value : ExAdvancedDataGridColumn
+		 * author: Hoang Pham
+		 * ***********************************************************/
+		public static function getFirstVisibleColumn(datagrid : ExAdvancedDataGrid): ExAdvancedDataGridColumn
+		{
+			var firstVisibleCol : ExAdvancedDataGridColumn;
+			var lstCol : Array = datagrid.columns;
+			if(lstCol != null && lstCol.length >0)
+			{
+				for each (var col : ExAdvancedDataGridColumn in lstCol) 
+				{
+					if(col.visible)
+					{
+						firstVisibleCol = col;
+						break;
+					}
+				}
+			}
+			return firstVisibleCol;
+		}
+		
+		
+		
+	}
+}

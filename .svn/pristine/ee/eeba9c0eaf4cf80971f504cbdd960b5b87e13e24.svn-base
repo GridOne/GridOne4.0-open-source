@@ -1,0 +1,880 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+-->
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" 
+	creationComplete="onCreationComplete(event)"
+	horizontalScrollPolicy="off" 
+	verticalScrollPolicy="off" 
+	layout="absolute" 
+	title="엑셀편집기" 
+	width="100%"
+	paddingLeft="10" 
+	paddingRight="10" 
+	xmlns:controls="com.controls.*" 
+	xmlns:dataGridClasses="com.controls.dataGridClasses.*">
+	<mx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.events.DataGridEvent;
+			import mx.events.FlexEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.events.ListEvent;
+			import mx.events.ResizeEvent;
+			import mx.events.ScrollEvent;
+			import mx.formatters.NumberFormatter;
+			
+			import kr.co.actsone.common.ColumnType;
+			import kr.co.actsone.common.DataGridManager;
+			import kr.co.actsone.common.GridOneImpl;
+			import kr.co.actsone.controls.ExAdvancedDataGrid;
+			import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+			import kr.co.actsone.events.SAEvent;
+			import kr.co.actsone.utils.ConvertProperty;
+	
+			
+			private var _secColumns:Array;	//grid column
+			
+			private var _firColumns:Array;	//titleGrid column
+			
+			private var _rowCnt:int;		//현재 사용안함.
+			
+			private var _importData:String;	//메인에서 받아온 가공되지않은 데이터
+			
+			private var _rowHeight:Number=22;	//row height
+			
+			private var _fontSize:Number=11;	//font size
+			
+			private var _fontFamily:String = '굴림체';	//font name
+			
+			public var dgManager:DataGridManager;	//setProperty할때 필요
+			
+			public var gridOneImpl:GridOneImpl;
+			private var _parentGrid:ExAdvancedDataGrid;		//GridOne.mxml -> datagrid (스타일줄때 필요)
+			[Bindable]
+			private var _totalCnt:Number;			//total row count		
+			
+			public var gridData:ArrayCollection=new ArrayCollection();	//부모에서 ExternalInterface.call('validationChk', ac);할때
+																		//콤보데이터가공전 데이터
+			
+			private var _cutIndex:Number;			//상단에 필요없는 데이터의 수 looping시에 필요.
+			
+			private var _specialRegChar:String;		//text파일타입중 첫줄이 #GIB_APPLET으로 시작하는 splitChar 특수문자가 as파일에 입력이 안되서
+													//웹페이지단에서 setSpecialRegChar('특수문자')를 호출받아서 넘겨받은 값
+
+			private var beforSelectedIdx:Number = -1;
+			
+			/**
+			 * getter, setter
+			 * 20110516 Ma Yong Ho add
+			 */				
+			public function set cutIndex(cutIndex:Number):void
+			{
+				_cutIndex = cutIndex;
+			}
+				
+			public function set fontSize(size:Number):void
+			{
+				_fontSize = size;
+			}
+						
+			public function set fontFamily(str:String):void
+			{
+				_fontFamily = str;
+			}
+						
+			public function set secColumns(columns:Array):void
+			{
+				_secColumns = columns;
+			}
+						
+			public function set firColumns(columns:Array):void
+			{
+				_firColumns = columns;
+			}
+			
+			public function set rowCnt(val:int):void
+			{
+				_rowCnt = val;
+			}
+			
+			public function set importData(str:String):void
+			{
+				_importData = str;
+			}
+			
+			public function set rowHeight(height:Number):void
+			{
+				_rowHeight = height;
+			}
+			
+			public function set parentGrid(grid:ExAdvancedDataGrid):void
+			{
+				_parentGrid = grid;
+			}
+			
+			public function get parentGrid():ExAdvancedDataGrid
+			{
+				return _parentGrid;
+			}
+			
+			public function set totalCnt(total:Number):void
+			{
+				_totalCnt = total;
+			}
+			
+			public function set specialRegChar(char:String):void
+			{
+				_specialRegChar=char;
+			}
+			
+ 			private function onCreationComplete(event:FlexEvent):void
+ 			{
+ 				Application.application.addEventListener(ResizeEvent.RESIZE,onResize);
+ 			}
+ 			private function onResize(event:ResizeEvent):void
+ 			{
+ 				this.width =Application.application.width;
+ 			}
+ 					
+			/**
+			 * titleGrid's initialize event
+			 * 20110413 Ma Yong Ho add
+			 */					
+			private function titleGridInit(evelt:FlexEvent):void
+			{
+//				titleGrid.columns = _firColumns;
+				titleGrid.setStyle('fontSize',_fontSize);
+				titleGrid.setStyle('fontFamily',_fontFamily);	
+
+				// Header Color
+				if(getDataGridProperty('headerColors')!=null)
+					setDataGridProperty("strHDBgColor",getDataGridProperty('headerColors'),titleGrid); // Header 배경색상 설정, 사용 형태가 다름
+				
+				setDataGridProperty("strHDFgColor","#000000",titleGrid); // Header 폰트색상 설정							
+				setDataGridProperty("bHDFontBold",getDataGridProperty('fontWeight'),titleGrid); // Header Font의 Bold 적용여부
+			}
+			
+			/**
+			 * grid의 헤더위치변경시 발생하는 이벤트
+			 * 20110413 Ma Yong Ho add
+			 */
+			 private function headerShiftHandler(event:IndexChangedEvent):void
+			 {
+			 	for(var i:int=0;i<titleGrid.columns.length;i++)
+			 	{
+			 		var titleGridCol:ExAdvancedDataGridColumn = titleGrid.columns[i] as ExAdvancedDataGridColumn; 
+			 		var col:ExAdvancedDataGridColumn = grid.columns[i] as ExAdvancedDataGridColumn;
+			 		
+					if(titleGridCol.type.toUpperCase() == ColumnType.NUMBER)
+					{
+						col.labelFunction = numberLabelFunction;
+						col.setStyle('textAlign','right');
+					}
+					else
+					{
+						col.labelFunction = strLabelFunction;
+						col.setStyle('textAlign',titleGridCol.getStyle('textAlign'));
+					}
+			 		col.width = titleGridCol.width; 
+			 	}
+		 	}						
+
+			/**
+			 * trim 함수
+			 * 20110413 Ma Yong Ho add
+			 */
+			private function trim(str:String):String
+			{  
+				return str.replace( /(\s*)/g, "" );  
+			}  
+
+			/**
+			 * grid's initialize
+			 * 20110413 Ma Yong Ho add
+			 */
+			private function gridInit(event:FlexEvent):void
+			{
+				gridDataProvide();
+				
+				gridStyle();
+				
+//				grid.columns = _secColumns;
+				grid.rowHeight = _rowHeight;
+				
+				if(grid.dataProvider!=null)
+					_totalCnt=grid.dataProvider.length;							 				
+			}
+			
+			/**
+			 * import data to grid
+			 * 20110413 Ma Yong Ho add
+			 */
+			private function gridDataProvide():void
+			{				
+ 				var arr:Array = _importData.split("\n");
+				
+				var sumStr:String = '';
+				
+				var excelType:Boolean = false;
+				
+				var changedData:String="";
+				var i:int;
+				var j:int;
+				var k:int;
+				var tempStr:String;
+				var eCol:ExAdvancedDataGridColumn;
+				var eCol2:ExAdvancedDataGridColumn;
+				if(trim(arr[0].toString())=="#GIB_APPLET")
+				{
+					for(i=0;i<arr.length;i++)
+					{
+						tempStr=arr[i].toString();
+						
+						tempStr=trim(tempStr);
+						
+						var tempArr:Array=tempStr.split(_specialRegChar);
+						
+						tempStr="";
+						
+						for(k=1;k<tempArr.length;k++)
+						{
+							tempStr=tempStr+tempArr[k]+',';
+						}
+						sumStr=sumStr+tempStr+'\n';
+					}	
+				}
+				else
+				{
+					var bool:Boolean = false;
+					
+					for(j=_cutIndex;j<arr.length;j++)
+					{
+						tempStr=arr[j].toString();
+						if(j!=arr.length-1)
+						{
+							if(isNaN(Number(tempStr.substr(9,3)))&&trim(tempStr.substr(9,3))!='') //은행코드 2자리인지 3자리인지 체크
+							{
+								bool=true;	//2자리면 bool값 true		
+							}
+							if(tempStr.search(',')!= -1)
+//							if(isNaN(Number(tempStr.substr(0,2))))
+							{
+								excelType=true;
+							}
+						}
+					}
+					if(!excelType)
+					{
+						for(k=_cutIndex;k<arr.length;k++)
+						{
+							tempStr=arr[k].toString();
+							var idxArr:Array=new Array();
+							
+							for(var m:int=0;m<tempStr.length;m++)
+							{
+								if(tempStr.charAt(m)==" "&&tempStr.charAt(m-1)!=" ")
+								{
+									idxArr.push(m);
+								}
+							}
+							for(var n:int=0;n<idxArr.length;n++)
+							{
+								tempStr=tempStr.substr(0,idxArr[n])+","+tempStr.substr(idxArr[n]+1,tempStr.length-1);
+							}
+							if(tempStr.substr(0,2)!="33"&&trim(tempStr)!=""&&tempStr.substr(0,2)!="11")
+							{
+								var subSumStr:String = '';
+								if(bool)
+								{
+									subSumStr = trim("0" + tempStr.substr(9,2) + "," + tempStr.split(",")[1] + "," + tempStr.split(",")[2]) + "\n";	
+								}
+								else
+								{
+									subSumStr = trim(tempStr.substr(9,3) + "," + tempStr.split(",")[1] + "," + tempStr.split(",")[2]) + "\n";	
+								}
+								sumStr = sumStr + subSumStr;
+								if(subSumStr.search('undefined')!=-1){
+									excelType = true;
+								}
+							}
+						}
+					}
+					else
+					{
+						sumStr =_importData;
+					}
+				}
+				if(excelType)
+				{ 
+					sumStr =_importData;
+				}
+				
+				var totalStrArr:Array=sumStr.split("\n"); //전체 스트링에서 로우 뽑기
+
+				for (i=0; i < totalStrArr.length; i++)
+				{
+						var totalStr:String=totalStrArr[i];
+						var eachStrArr:Array=totalStr.split(",");
+						var addFlag:Boolean=false;
+
+						for (j=0; j < eachStrArr.length; j++)
+						{
+							if (eachStrArr[j] != "")
+								addFlag=true;
+
+							if (j == 0)
+								totalStr=eachStrArr[j];
+							else
+								totalStr=totalStr + "," + eachStrArr[j];
+						}
+
+						if (addFlag == true) // 데이터가 공백이 아닐 경우만 추가 
+						{
+ 							for each (var colItem:ExAdvancedDataGridColumn in _secColumns)
+							{
+								if (colItem.type == "CHECKBOX")
+									totalStr="CHECKBOX" + "," + totalStr;
+								// 맨앞에 CHECK 컬럼을 추가하면 첫번째 컬럼 데이터가 표시되지 않으므로 이것을 해결하기 위해 의미없는값(CHECKBOX)을 넣음
+
+								if (colItem.type == ColumnType.AUTONUMBER)
+									totalStr="AUTONUMBER" + "," + totalStr;
+								// 맨앞에 순번 컬럼을 추가하면 첫번째 컬럼 데이터가 표시되지 않으므로 이것을 해결하기 위해 의미없는값(NUMBER)을 넣음
+								if (colItem.type == "RADIOBUTTON")
+									totalStr="RADIOBUTTON" + "," + totalStr;
+							} 
+
+							// 아래의  한줄 코드는 현재 데이터 그리드의 버그 때문에 추가됨 , 추후 라이브러리 수정 필요
+							changedData=changedData + totalStr + "\n"; // 추가
+						}
+				}		
+				var rowsArr:Array=changedData.split('\n');
+				var maxLength:Number=0;
+				
+				for(j=0;j<rowsArr.length;j++)
+				{
+					var colArr:Array=rowsArr[j].toString().split(',');
+					if(maxLength<colArr.length)
+						maxLength=colArr.length;
+				}
+				var idx:Number=_secColumns.length;
+				var secLen:Number=_secColumns.length;
+				
+				
+				
+				if(maxLength>_secColumns.length+3)
+				{
+					for(k=0;k<maxLength-secLen;k++)
+					{
+						eCol=new ExAdvancedDataGridColumn();
+						eCol.headerText=(idx + 1) + '열';
+						eCol.type=ColumnType.TEXT;
+						eCol.width=120;
+						eCol.dataField = (idx + 1) + '열';
+						
+						_secColumns.push(eCol);
+						
+						eCol2=new ExAdvancedDataGridColumn();
+						eCol2.type=ColumnType.TEXT;
+						eCol2.width=eCol.width;
+						
+						_firColumns.push(eCol2);
+						
+						idx++;						
+					}
+				}
+				else
+				{
+					for(k=0;k<3;k++)
+					{
+						eCol=new ExAdvancedDataGridColumn();
+						eCol.headerText=(idx + 1) + '열';
+						eCol.type=ColumnType.TEXT;
+						eCol.width=120;
+						eCol.dataField = (idx + 1) + '열';
+						
+						_secColumns.push(eCol);
+						
+						eCol2=new ExAdvancedDataGridColumn();
+						eCol2.type=ColumnType.TEXT;
+						eCol2.width=eCol.width;
+						
+						_firColumns.push(eCol2);
+						
+						idx++;						
+					}
+				}
+				titleGrid.columns = _firColumns;
+				grid.columns = _secColumns;
+				grid.importData(changedData); 
+//				grid.importData(_importData);				
+			}
+
+			/**
+			 * grid style setting
+			 * 20110413 Ma Yong Ho add
+			 */				
+			private function gridStyle():void
+			{
+				for(var i:int = 0 ; i < titleGrid.columns.length ; i++)
+				{
+					var col:ExAdvancedDataGridColumn = titleGrid.columns[i] as ExAdvancedDataGridColumn;
+					
+					if(col.type.toUpperCase() == ColumnType.NUMBER)
+					{
+						(grid.columns[i] as ExAdvancedDataGridColumn).setStyle('textAlign','right');
+						(grid.columns[i] as ExAdvancedDataGridColumn).labelFunction = numberLabelFunction;
+					}
+				}
+			
+				grid.setStyle('fontSize',_fontSize);
+				grid.setStyle('fontFamily',_fontFamily);
+				
+				setDataGridProperty("headerTextAlign","center",grid);
+				
+				if(getDataGridProperty('itemSelectBorderColor')!=null)
+					setDataGridProperty("itemSelectBorderColor",getDataGridProperty("itemSelectBorderColor"),grid);
+				if(getDataGridProperty('itemSelectBorderThickness')!=null)
+					setDataGridProperty("itemSelectBorderThickness",getDataGridProperty("itemSelectBorderThickness"),grid);				
+				// Header Color
+				if(getDataGridProperty('headerColors')!=null)
+					setDataGridProperty("strHDBgColor","[#ffccff,#ffccff]",grid); // Header 배경색상 설정, 사용 형태가 다름
+				
+				setDataGridProperty("strHDFgColor","#000000",grid); // Header 폰트색상 설정
+				  
+				// Cell Color
+				if(getDataGridProperty('color')!=null)
+					setDataGridProperty("strCellFgColor",getDataGridProperty("color"),grid); // Cell의 폰트색상 설정
+				  
+				// Border Style
+				if(getDataGridProperty('borderColor')!=null)
+					setDataGridProperty("strGridBorderColor",getDataGridProperty("borderColor"),grid); // Grid 테두리 선의 색상 설정
+				if(getDataGridProperty('borderStyle')!=null)
+					setDataGridProperty("strGridBorderStyle",getDataGridProperty("borderStyle"),grid); // Grid 테두리 선 모양 설정, 셀의 테두리 모양을 변경해야하는데 전체 그리드의 모양을 변경하게 되어 있음. 
+				  
+				// ETC Color
+				if(getDataGridProperty('itemSelectColor')!=null)
+					setDataGridProperty("strSelectedCellBgColor",getDataGridProperty("itemSelectColor"),grid); // 선택된 Cell의 배경색상 설정
+				if(getDataGridProperty('selectedCellTextColor')!=null)
+					setDataGridProperty("strSelectedCellFgColor",getDataGridProperty("selectedCellTextColor"),grid); // 선택된 Cell의 폰트색상 설정 
+		
+				// 데이터 그리드의 가로선 사용 여부 설정
+				if(getDataGridProperty('horizontalGridLines')!=null)
+					setDataGridProperty("horizontalGridLines",getDataGridProperty("horizontalGridLines"),grid);
+				if(getDataGridProperty('horizontalGridLineColor')!=null)
+					setDataGridProperty("horizontalGridLineColor",getDataGridProperty("horizontalGridLineColor"),grid);
+					
+				setDataGridProperty("bHDFontBold",getDataGridProperty('fontWeight'),grid); // Header Font의 Bold 적용여부				
+			}
+
+			/**
+			 * grid column stretch 이벤트
+			 * 20110413 Ma Yong Ho add
+			 */				
+			private function onGridColumnStretch(event:DataGridEvent):void
+			{
+				for(var i:int=0;i<grid.columns.length;i++)
+				{
+					var col:ExAdvancedDataGridColumn = grid.columns[i] as ExAdvancedDataGridColumn;	
+					var tcol:ExAdvancedDataGridColumn = titleGrid.columns[i] as ExAdvancedDataGridColumn;
+					
+					tcol.width = col.width;	
+				}
+			}
+
+			/**
+			 * titlegrid column stretch 이벤트
+			 * 20110413 Ma Yong Ho add
+			 */							
+			private function onTGridColumnStretch(event:DataGridEvent):void
+			{
+				for(var i:int=0;i<grid.columns.length;i++)
+				{
+					var col:ExAdvancedDataGridColumn = grid.columns[i] as ExAdvancedDataGridColumn;	
+					var tcol:ExAdvancedDataGridColumn = titleGrid.columns[i] as ExAdvancedDataGridColumn;
+					
+					col.width = tcol.width;	
+				}
+			}
+			
+			/**
+			 * 넘버 라벨 function
+			 * 20110413 Ma Yong Ho add
+			 */				
+			private function numberLabelFunction(item:Object, column:ExAdvancedDataGridColumn):String
+			{
+				if(item[column.dataField]==null||item[column.dataField]=='')
+				{
+					return '';
+				}
+				else if(Number(item[column.dataField]).toString()=="NaN")
+				{
+					return item[column.dataField].toString();
+				}
+				else
+				{
+					var numberFormatter:NumberFormatter=new NumberFormatter();
+					numberFormatter.useThousandsSeparator=FunctionLibrary.useThousandsSeparator;
+					
+					return numberFormatter.format(item[column.dataField]).toString();
+				}
+			}
+			
+			/**
+			 * 문자열 라벨 function
+			 * 20110413 Ma Yong Ho add
+			 */							
+			private function strLabelFunction(item:Object, column:ExAdvancedDataGridColumn):String
+			{
+				if(item[column.dataField]==null||item[column.dataField]=='')
+				{
+					return '';
+				}
+				else if(Number(item[column.dataField].toString().replace(/,/g,"")).toString()=="NaN")
+				{
+					return item[column.dataField].toString();
+				}
+				else if(item[column.dataField].toString().replace(/,/g,"")=='')
+				{
+					return item[column.dataField].toString();
+				}
+				else
+				{
+					return item[column.dataField].toString().replace(/,/g,"");					
+				}
+			}
+			
+			/**
+			 * submit button click event
+			 * 20110413 Ma Yong Ho add
+			 */								
+			private function submitBtnClick(event:MouseEvent):void
+			{
+				gridData = new ArrayCollection();
+				 
+				var sNum:Number=Number(sRowTI.text)-1;
+				var eNum:Number=Number(eRowTI.text)-1;
+				var totalRowNum:Number = grid.dataProvider.length;
+				if(sNum > eNum)
+				{
+					Alert.show('행범위를 다시 설정해주세요.');
+					return;
+				}
+				
+				if(sNum < 0)
+					sNum = 0;	
+				if(eNum > totalRowNum-1)
+					eNum = totalRowNum-1;	
+				
+				for(var i:int = sNum ; i <= eNum ; i ++)
+				{
+					var obj:Object = grid.dataProvider[i];
+					gridData.addItem(obj);
+				}
+				
+				dispatchEvent(new SAEvent(SAEvent.DATAPROVIDE_TO_PARENT));
+			}
+			
+			/**
+			 * close button click event
+			 * 20110413 Ma Yong Ho add
+			 */								
+			private function closeBtnClick(event:MouseEvent):void
+			{
+				dispatchEvent(new SAEvent(SAEvent.CLOSE_EXCEL_POPUP));
+			}
+			
+			/**
+			 * scroll event
+			 * 20110413 Ma Yong Ho add
+			 */								
+			private function scrollHandler(event:ScrollEvent):void
+			{
+				grid.verticalScrollPosition=event.currentTarget.scrollPosition;
+			}
+			
+			/**
+			 * thumb mouse up event
+			 * 20110413 Ma Yong Ho add
+			 */								
+			private function thumbMouseUpHandler():void
+			{
+				grid.verticalScrollPosition=vScroll.scrollPosition;
+			}	
+			
+			/**
+			 * mouse wheel event
+			 * 20110413 Ma Yong Ho add
+			 */								
+			public function mouseWheelDGHandler(event:MouseEvent):void
+			{
+				var num:int=event.delta / Math.abs(event.delta) * grid.mouseWheelPageSize;
+
+				if (num == 0 || (num < 0 && grid.verticalScrollPosition >= vScroll.maxScrollPosition))
+					return;
+
+				if (grid.verticalScrollPosition - num > vScroll.maxScrollPosition)
+				{
+					grid.verticalScrollPosition=vScroll.maxScrollPosition;
+					vScroll.scrollPosition=vScroll.maxScrollPosition;
+					return;
+				}
+				if (vScroll.scrollPosition - num >= 0)
+					vScroll.scrollPosition-=num;
+				else
+					vScroll.scrollPosition=0;
+
+				grid.verticalScrollPosition=vScroll.scrollPosition;
+			}
+				
+			/**
+			 * add row
+			 * 20110413 Ma Yong Ho add
+			 */			
+			public function addRow():void
+			{
+				var row:Object=new Object();
+
+				for (var i:int=0; i < grid.columns.length; i++)
+				{
+					if (grid.columns[i] != null && grid.columns[i].dataField != null)
+						row[grid.columns[i].dataField]=null;
+				}
+
+				if (grid.dataProvider == null)
+					grid.dataProvider=new ArrayCollection([]);
+
+				grid.dataProvider.addItem(row);
+
+//				this.grid.verticalScrollPosition=this.vScroll.scrollPosition=this.grid.maxVerticalScrollPosition + 1;
+				this.grid.selectedItem=row;
+//				this.grid.invalidateList();
+				invalidScroll(true);
+			}
+			
+			/**
+			 * delete rows
+			 * 20110413 Ma Yong Ho add
+			 */	
+			public function deleteRows():void
+			{
+				var chkDataFieldName:String;
+				
+				for(var i:int=0; i < grid.columns.length ; i++)
+				{
+					var col:ExAdvancedDataGridColumn = new ExAdvancedDataGridColumn();
+					
+					col = grid.columns[i];
+					if(col.type.toUpperCase() == "CHECKBOX" || col.type.toUpperCase() == "RADIOBUTTON")
+					{
+						chkDataFieldName=col.dataField;
+					}
+				} 
+				for(var j:int=grid.dataProvider.length-1; j >=0 ; j--)
+				{
+					var obj:Object = grid.dataProvider[j];
+	
+					if(obj[chkDataFieldName] !=null)
+					{
+						if(obj[chkDataFieldName].toString()=='true'||obj[chkDataFieldName].toString()=='1')
+						{
+							(grid.dataProvider).removeItemAt(j); 
+						}
+					}
+				}
+
+				if(obj[chkDataFieldName] == null && grid.selectedItem!=null)
+				{
+					(grid.dataProvider).removeItemAt(grid.selectedIndex);
+				}
+
+				invalidScroll(false);							
+			}
+			
+			/**
+			 * setDataGridProperty
+			 * 20110413 Ma Yong Ho add
+			 */				
+			public function setDataGridProperty(name:String, value:Object,grid:ExAdvancedDataGrid):void
+			{
+				if (ConvertProperty.proObj.hasOwnProperty(name))
+				{
+					name=ConvertProperty.proObj[name];
+				}
+				if (grid.hasOwnProperty(name))
+					gridOneImpl.setDataGridProperty(name, value);
+//					this.gridOneImpl.setPropertyForObject(grid, name, value); 123
+				else
+					gridOneImpl.setDataGridProperty(name, value);
+//					this.gridOneImpl.setStyleForObject(grid, name, value); 123
+			}
+
+			/**
+			 * getDataGridProperty
+			 * 20110413 Ma Yong Ho add
+			 */				
+			public function getDataGridProperty(property:String):Object
+			{
+				if (_parentGrid.hasOwnProperty(property))
+					return _parentGrid[property];
+				else
+					return _parentGrid.getStyle(property);
+			}
+
+			/**
+			 * getDataGridProperty
+			 * 20110413 Ma Yong Ho add
+			 */			
+			private function invalidScroll(bottomFocusBool:Boolean=true):void
+			{
+				if(this.grid.dataProvider.length>=this.grid.rowCount)
+				{
+					if(bottomFocusBool)
+						this.grid.verticalScrollPosition=this.vScroll.scrollPosition=this.grid.maxVerticalScrollPosition + 1;
+				}
+				else
+				{
+					//this.vScroll.scrollPosition=0;
+					//this.datagrid.verticalScrollPosition=0;
+					this.vScroll.maxScrollPosition=this.grid.maxVerticalScrollPosition=0;
+				}
+				
+				this.grid.invalidateList();				
+			}		
+			
+			/**
+			 * item click event
+			 * 20110413 Ma Yong Ho add
+			 */			
+			private function itemClickHandler(event:ListEvent):void
+			{
+				var selectedIndex:Number = this.grid.selectedIndex;
+				var dataField:String = '';
+				
+				for each (var colItem:ExAdvancedDataGridColumn in grid.columns)
+				{
+					if (colItem.type == "RADIOBUTTON")
+					{ 
+						dataField=colItem.dataField;
+					}					
+				}
+				
+				if(dataField == '')return;
+				
+				if(beforSelectedIdx != -1)
+				{
+					try{
+						grid.dataProvider[beforSelectedIdx][dataField] = false;
+					}
+					catch(e:Error)
+					{
+						
+					}
+				}
+				 	
+				if(beforSelectedIdx != selectedIndex)
+					grid.dataProvider[selectedIndex][dataField] = true;
+
+				grid.invalidateList();
+				grid.invalidateDisplayList();
+				
+				beforSelectedIdx = selectedIndex;
+			}	
+
+			/**
+			 * override updataDisplayList
+			 * 20110413 Ma Yong Ho add
+			 */
+			protected override function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+			{
+				super.updateDisplayList(unscaledWidth,unscaledHeight);
+			}															
+		]]>
+	</mx:Script>
+	<mx:VBox verticalGap="0" height="100%" width="100%" horizontalScrollPolicy="off">
+		<mx:VBox verticalGap="2">
+			<mx:Label text="이체와 관계 없는 줄을 선택하시고 '삭제'버튼을 선택하여 삭제하여 주십시오." color="#318ACE"
+				fontSize="12" fontFamily="dotum"/>
+			<mx:Label text="(*)는 필수로 입력되어야 하는 항목입니다." fontSize="12" fontFamily="dotum"/>
+			<mx:Label text="'1열,2열,3열...'을 끌어서 기준열과 일치하도록 이동하여 주십시오." color="#FF3333"
+				fontSize="12" fontFamily="dotum"/>
+			<mx:HBox verticalAlign="middle">
+				<mx:Label text="행범위" fontSize="12" fontFamily="dotum"/>
+				<mx:TextInput height="22" width="80" fontSize="12" fontFamily="dotum"
+					restrict="0-9" text="1" textAlign="right"
+					id="sRowTI"/>
+				<mx:Label text="~" fontSize="12" fontFamily="dotum"/>
+				<mx:TextInput height="22" width="80" fontSize="12" fontFamily="dotum"
+					restrict="0-9" text="{_totalCnt}" textAlign="right"
+					id="eRowTI"/>
+				<mx:Label text="읽어들일 데이터의 범위를 지정하여 주십시오." fontSize="12" fontFamily="dotum"/>
+			</mx:HBox>	
+		</mx:VBox>
+		
+		<mx:Spacer height="5"/>
+		<mx:HBox horizontalGap="1" horizontalScrollPolicy="off"
+			borderThickness="1" borderStyle="solid" width="100%" height="100%">
+			
+			<mx:VBox verticalGap="0" height="100%" width="100%">
+			
+				<mx:HBox width="{vScroll.visible?this.width-40:this.width-22}" 
+					horizontalScrollPosition="{scrollBox.horizontalScrollPosition}" 
+					horizontalScrollPolicy="off"
+					id="headerHBox" 
+					horizontalGap="-1">
+			
+					<controls:ExAdvancedDataGrid id="titleGrid" initialize="titleGridInit(event)"
+						rowCount="0" height="{titleGrid.headerHeight}"
+						borderThickness="0"
+						columnStretch="onTGridColumnStretch(event)"
+						draggableColumns="false"/>
+				</mx:HBox>
+
+				<mx:HBox height="100%" id="scrollBox" 
+					width="{vScroll.visible?this.width-40:this.width-22}" 
+					horizontalGap="-1"
+					verticalScrollPolicy="off"
+					horizontalScrollPolicy="auto">
+					<controls:ExAdvancedDataGrid id="grid"
+						height="100%"
+						headerShift="headerShiftHandler(event)"
+						columnStretch="onGridColumnStretch(event)"
+						itemClick="itemClickHandler(event)"
+						horizontalScrollPolicy="off" 
+						verticalScrollPolicy="off"
+						borderThickness="0"
+						editable="true" 
+						mouseWheel="mouseWheelDGHandler(event)"
+						initialize="gridInit(event)"/>
+				</mx:HBox>
+			</mx:VBox>
+			<controls:ExVScrollBar id="vScroll" 
+				width="16"
+				height="100%" 
+				minScrollPosition="0"
+				maxScrollPosition="{grid.maxVerticalScrollPosition==0?0:grid.maxVerticalScrollPosition+1}"
+				lineScrollSize="1"
+				pageScrollSize="1"
+				pageSize="1"
+				thumbMouseUp="thumbMouseUpHandler()"
+				scroll="scrollHandler(event);"/>
+		</mx:HBox>
+		
+		<mx:Spacer height="8"/>
+		
+		<mx:HBox width="100%" horizontalAlign="center">
+			<mx:Button label="추가" click="addRow()"/>
+			<mx:Button label="삭제" click="deleteRows()"/>
+			<mx:Button label="확인" click="submitBtnClick(event)"/>
+			<mx:Button label="취소" click="closeBtnClick(event)"/>
+		</mx:HBox>
+	</mx:VBox>
+</mx:TitleWindow>

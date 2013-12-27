@@ -1,0 +1,211 @@
+/********************************************************************************
+ *
+ *  ACTSONE COMPANY
+ *  Copyright 2012 Actsone 
+ *  All Rights Reserved.
+ *
+ *	This program is free software: you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation, either version 3 of the License, or
+ *	(at your option) any later version.
+ *
+ *	This program is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ ***********************************************************************************/
+
+package kr.co.actsone.itemRenderers
+{
+	import flash.display.DisplayObject;
+	import flash.events.MouseEvent;
+	import flash.geom.Rectangle;
+	import flash.net.URLRequest;
+	import flash.net.navigateToURL;
+	
+	import kr.co.actsone.common.Global;
+	
+	import mx.controls.LinkButton;
+	
+	public class LinkButtonRenderer extends ExUIComponent
+	{
+		protected var linkbt:LinkButton;
+		
+		public function LinkButtonRenderer()
+		{
+			super();
+			tabEnabled = false;
+			this.setStyle('verticalAlign','middle');
+		}
+
+		/******************************************************************************************
+		 * create children
+		 ******************************************************************************************/
+		override protected function createChildren():void
+		{
+			super.createChildren();
+			
+			if(!linkbt)
+			{
+				linkbt = new LinkButton();
+				this.linkbt.styleName = this;
+				this.linkbt.addEventListener(MouseEvent.CLICK,linkbt_clickHandler);
+				addChild(DisplayObject(linkbt));
+			}
+		}		
+		
+		/******************************************************************************************
+		 * commit properties
+		 ******************************************************************************************/
+		override protected function commitProperties():void
+		{
+			super.commitProperties();
+			if(data && column)
+			{
+				if(linkbt==null)
+					return;
+
+				var activation:String=this.listOwner.getCellProperty('activation',data[Global.ACTSONE_INTERNAL],dataField);
+				if(activation == null)
+					activation = column.cellActivation;				
+				if(activation != null)
+				{
+					if (activation == Global.ACTIVATE_DISABLE)
+					{
+						this.linkbt.enabled = false;
+					}
+					else
+					{					
+						this.linkbt.enabled = true;
+					}
+				}
+				else if(!this.linkbt.enabled)
+					this.linkbt.enabled = true;
+				
+				if(data!=null && dataField != "")
+				{
+					linkbt.label =	data[dataField];
+					linkbt.toolTip = data[dataField].toString();
+				}
+			}
+			invalidateDisplayList();
+		}
+		
+		/******************************************************************************************
+		 * click handler
+		 ******************************************************************************************/
+		protected function linkbt_clickHandler(event:MouseEvent):void
+		{
+			navigateToURL( new URLRequest(String(linkbt.toolTip)));
+		}
+		
+		/******************************************************************************************
+		 * update display list
+		 ******************************************************************************************/
+		override protected function updateDisplayList(unscaledWidth:Number,
+													  unscaledHeight:Number):void
+		{
+			super.updateDisplayList(unscaledWidth, unscaledHeight);
+			
+			this.linkbt.move(0,0);
+			
+			var startX:Number = 0;
+			if(this.listOwner && this.listOwner.nCellPadding)
+			{
+				startX += this.listOwner.nCellPadding;
+			}
+			
+			var t:String = getMinimumText(linkbt.label);
+			var textFieldBounds:Rectangle = measureTextFieldBounds(t);
+			linkbt.height = textFieldBounds.height;
+			linkbt.setActualSize(unscaledWidth - startX, linkbt.height);
+			
+			var textAlign:String = getStyle("textAlign");
+			if (textAlign == "left")
+			{
+				linkbt.x = startX;
+			}
+			else if (textAlign == "right")
+			{
+				linkbt.x = unscaledWidth - startX - linkbt.width + 2; // 2 for gutter
+			}
+			else
+			{
+				linkbt.x = (unscaledWidth - linkbt.width) / 2  - startX;
+			}
+			
+			var verticalAlign:String = getStyle("verticalAlign");
+			if (verticalAlign == "top")
+			{
+				linkbt.y = 0;
+			}
+			else if (verticalAlign == "bottom")
+			{
+				linkbt.y = unscaledHeight - linkbt.height + 2; // 2 for gutter
+			}
+			else
+			{
+				linkbt.y = (unscaledHeight - linkbt.height) / 2;
+			}
+			
+		}
+		
+		/******************************************************************************************
+		 * Apply color of cell
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override public function validateNow():void
+		{
+			super.validateNow();
+//			applyColor(this.linkbt,this.getStyle('color'));
+			if (data && parent)
+			{
+				var newColor:Number = getCurentColor();
+				var oldColor:* = linkbt.getStyle('color');
+				if (oldColor != newColor)
+				{
+					linkbt.setStyle('color',newColor);
+					invalidateDisplayList();
+				}
+			}
+		}
+		
+		/******************************************************************************************
+		 * Get accessibility name for screen reader
+		 * @author Thuan
+		 ******************************************************************************************/
+		override public function getAccessibilityName():String
+		{
+			//return "Component is LinkButton. Label is " + this.linkbt.label;
+			
+			var strReader:String = this.column.strAccessReader;
+			
+			if (strReader && strReader.length > 0) // Parse value in strAccessReader 
+			{
+				if (strReader.indexOf(Global.ACCESS_READER_CONTROLTYPE) > -1)
+				{
+					strReader = strReader.replace(Global.ACCESS_READER_CONTROLTYPE, Global.ACCESS_READER_LINKBUTTON);
+					if (strReader.indexOf(Global.ACCESS_READER_CELLVALUE) > -1)
+						strReader = strReader.replace(Global.ACCESS_READER_CELLVALUE, this.linkbt.label);
+				}
+				else // don't have control type in strAccessReader
+				{
+					if (strReader.indexOf(Global.ACCESS_READER_CELLVALUE) > -1)
+						strReader = strReader.replace(Global.ACCESS_READER_CELLVALUE, this.linkbt.label);
+				}
+				//				trace("Label Renderer strReader != null: " + strReader);
+			}
+			else // make column default information
+			{
+				strReader = Global.ACCESS_READER_COLUMN_DEFAULT + " " + Global.ACCESS_READER_CONTROL + " " + 
+					Global.ACCESS_READER_LINKBUTTON + " " + Global.ACCESS_READER_CELL + " " + this.linkbt.label;
+				//				trace("Label Renderer strReader == null: " + strReader);
+			}
+			return strReader;
+		}
+	}
+}

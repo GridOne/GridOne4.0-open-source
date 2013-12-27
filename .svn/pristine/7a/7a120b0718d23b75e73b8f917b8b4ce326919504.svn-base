@@ -1,0 +1,439 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+package kr.co.actsone.itemRenderers
+{
+	import flash.display.DisplayObject;
+	import flash.events.Event;
+	import flash.events.FocusEvent;
+	import flash.events.KeyboardEvent;
+	import flash.events.MouseEvent;
+	import flash.text.TextLineMetrics;
+	import flash.ui.Keyboard;
+	
+	import kr.co.actsone.common.Global;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridListData;
+	import kr.co.actsone.custom.ExComboBox;
+	import kr.co.actsone.events.ExAdvancedDataGridEvent;
+	import kr.co.actsone.events.SAEvent;
+	
+	import mx.controls.listClasses.BaseListData;
+	import mx.core.FlexGlobals;
+	import mx.core.IUITextField;
+	import mx.core.UITextField;
+	import mx.events.DropdownEvent;
+	import mx.events.FlexEvent;
+	import mx.events.ListEvent;
+	
+	public class ComboRendrerer extends ExUIComponent
+	{
+		protected var combo:ExComboBox;
+		protected var label:IUITextField;
+		[Bindable]
+		private var items:Array;
+		private var _maxRowCount:int = 0;
+		
+		private var _isfirstOpen:Boolean = true;
+		private var _dropdownRealHeight:int;	//save dropdown height at first open combo
+		
+		public function ComboRendrerer()
+		{
+			super();
+			tabEnabled = false;
+			this.addEventListener(FlexEvent.CREATION_COMPLETE,createCompleteHandler);
+		}
+		
+		/******************************************************************************************
+		 * handler create complete event
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		protected function createCompleteHandler(event:FlexEvent):void
+		{
+//			this.addEventListener(FocusEvent.FOCUS_IN,onFocusInHandler);
+		}
+		
+		/******************************************************************************************
+		 * handler focus in event to draw border item renderer
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		protected function onFocusInHandler(event:FocusEvent):void
+		{
+//			this.graphics.lineStyle(0.2,listOwner.getStyle('focusColor'));
+//			this.graphics.drawRect(-1,-1,this.width,this.height+2);
+		}
+		
+		/******************************************************************************************
+		 * Create child objects of the component.
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override protected function createChildren():void
+		{
+			super.createChildren();
+			if (!combo)
+			{
+				combo = ExComboBox(createInFontContext(ExComboBox));
+				combo.editable=false;
+				this.combo.styleName = this;
+ 			 //	combo.addEventListener(DropdownEvent.OPEN,openComboHandler);
+				addChild(DisplayObject(combo));
+			}
+			
+			if (!label)
+			{
+				label = IUITextField(createInFontContext(UITextField));
+				label.styleName = this;
+				label.includeInLayout = false;
+				label.visible = false;
+				addChild(DisplayObject(label));
+			}
+		}
+		
+		/******************************************************************************************
+		 * Processes the properties set on the component
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override protected function commitProperties():void
+		{
+			super.commitProperties();
+			if(this.listData)
+			{
+				items=[];
+				if(data[dataField+Global.COMBO_KEY_CELL]!=null && data[dataField+Global.COMBO_KEY_CELL]!=undefined)
+				{
+					items=this.column.listCombo[this.column.indexComboKeyArr[data[dataField+Global.COMBO_KEY_CELL]]];
+				}
+				else
+				{
+					items=this.column.listCombo[this.column.comboKey];						
+				}
+				combo.dataProvider = items;
+				
+				var activation:String=this.listOwner.getCellProperty('activation',data[Global.ACTSONE_INTERNAL],dataField);
+				if(activation == null)
+					activation = column.cellActivation;
+				if(activation != null)
+				{
+					if (activation == Global.ACTIVATE_ONLY)
+					{
+						this.combo.includeInLayout = false;
+						this.combo.visible = false;
+						label.visible=true;
+						label.includeInLayout=true;
+						label.enabled = true;
+					}
+					else if(activation == Global.ACTIVATE_DISABLE)
+					{
+						this.combo.includeInLayout = false;
+						this.combo.visible = false;
+						label.visible=true;
+						label.includeInLayout=true;
+						label.enabled = false;
+					}
+					else if (activation == Global.ACTIVATE_EDIT)
+					{					
+						var showCombo:Boolean = (this.listOwner.strCellClickAction != Global.ROWSELECT);
+						this.combo.includeInLayout = showCombo;
+						this.combo.visible = showCombo;
+						label.visible=!showCombo;
+						label.includeInLayout=!showCombo;
+					}
+				}
+				else
+				{
+					this.combo.includeInLayout = true;
+					this.combo.visible = true;
+					label.visible=false;
+					label.includeInLayout=false;
+				}
+				
+				if (this.data[dataField] == null)
+				{
+					this.data[dataField]="";
+				}
+				if (data[dataField + Global.SELECTED_COMBO_INDEX] == null)
+				{
+					if (data[dataField] != null && items != null)
+					{
+						for (var i:int=0; i < items.length; i++)
+						{
+							if (data[dataField] == items[i]["value"])
+							{
+								combo.selectedIndex=i;
+								label.text=items[i].label;
+								data[dataField + Global.SELECTED_COMBO_INDEX]=i;
+								break;
+							}
+						 
+						}
+						
+						if (i == items.length)
+						{
+							combo.selectedIndex=-1;
+						}
+					}
+				}
+				else
+				{
+					var index:int = parseInt(data[dataField + Global.SELECTED_COMBO_INDEX]);
+					if(index >= combo.dataProvider.length)
+						combo.selectedIndex= -1;
+					else
+					{
+						combo.selectedIndex = index;
+						data[dataField]=combo.selectedItem!=null?combo.selectedItem["value"]:"";
+						label.text=combo.selectedLabel;
+					}
+				}
+					
+				if(this.column.comboRowCount<0){
+					_maxRowCount =(items!=null?items.length:0); 
+				}else{
+					_maxRowCount = this.column.comboRowCount>(items!=null?items.length:0)?(items!=null?items.length:0):this.column.comboRowCount;
+				}
+				combo.rowCount = _maxRowCount;
+				
+				var dataTips:Boolean = listOwner.showDataTips;
+				if (column.showDataTips == true)
+					dataTips = true;
+				if (column.showDataTips == false)
+					dataTips = false;
+				if (dataTips)
+				{
+					if (!(data is ExAdvancedDataGridColumn) && (column.dataTipFunction || column.dataTipField 
+						|| listOwner.dataTipFunction || listOwner.dataTipField))
+					{
+						toolTip = column.itemToLabel(data,true);
+					}
+					else
+					{
+						toolTip = null;
+					}
+				}
+				else
+				{
+					toolTip = null;
+				}
+			}
+			invalidateDisplayList();
+		}
+		
+		/******************************************************************************************
+		 * Draws the object and/or sizes and positions its children.
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+		{
+			super.updateDisplayList(unscaledWidth, unscaledHeight);
+			
+			this.combo.height=20;
+			
+			if(combo.visible && combo.includeInLayout)
+			{
+				
+				this.combo.setActualSize(unscaledWidth-1,this.combo.height);
+				
+				if (this.height > this.combo.height)
+				{
+					this.combo.move(0,(this.height-this.combo.height)/2);
+				}
+				else
+				{
+					this.combo.move(0,0);
+				}
+				if(this.getStyle("fontWeight") == this.combo.getStyle(this.getStyle("fontWeight")))
+					return;
+				else
+					this.combo.setStyle("fontWeight",this.getStyle("fontWeight"));	//font weight does not apply if this line does not have
+				
+				drawStrikeThrough(this.combo);
+				
+			}
+			 
+			if(label.visible && label.includeInLayout)
+			{
+				this.label.move(0,0);
+				var startX:Number = 0;
+				if(this.listOwner && this.listOwner.nCellPadding)
+				{
+					startX += this.listOwner.nCellPadding;
+				}
+				
+				this.label.setActualSize(unscaledWidth - startX-1, unscaledHeight-1);
+				
+				var textAlign:String = getStyle("textAlign");
+				if (textAlign == "left")
+				{
+					label.x = startX;
+				}
+				else if (textAlign == "right")
+				{
+					label.x = unscaledWidth - startX - label.width + 2; // 2 for gutter
+				}
+				else
+				{
+					label.x = (unscaledWidth - label.width) / 2  - startX;
+				}
+
+				drawStrikeThrough(this.label);
+				
+			}
+			//because some reason, this style is cleaned. We need to re-set it again.
+			this.setStyle('textDecoration',column.getStyle('textDecoration'));
+			
+		}
+		
+		/******************************************************************************************
+		 * Apply color of cell
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override public function validateNow():void
+		{
+			super.validateNow();
+			if(combo.visible && combo.includeInLayout)
+			{
+				applyColor(this.combo,this.getStyle('color'));
+			}
+			if(label.visible && label.includeInLayout)
+			{
+				if (data && parent)
+				{
+					var newColor:Number = getCurentColor();
+					var oldColor:* = label.textColor;
+					if (oldColor != newColor)
+					{
+						label.setColor(newColor);
+						invalidateDisplayList();
+					}
+				}
+			}
+		}
+		
+		/******************************************************************************************
+		 * override to draw strike through text in case combobox
+		 * in case label still keeps parent method to draw 
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override public function drawStrikeThrough(appObj:*):void
+		{
+			if(!strike.parent)
+				this.addChild(strike);
+			this.strike.graphics.clear();
+			var align:String=this.getStyle("textAlign");
+			var y:int=0;
+			var x:int=0;
+			var i:int=0;
+			var metrics:TextLineMetrics;
+			if(combo.visible && combo.includeInLayout)
+			{
+				if (_isStrikeThrough && this.label.text != "" && this.label)
+				{
+					this.strike.graphics.moveTo(0, 0);
+					this.strike.graphics.lineStyle(1, this.getStyle("color"), 1);
+					if(align=="center")
+					{
+						x=this.width/2-this.label.textWidth/2+1;
+					}
+					else if(align=="right")
+					{
+						x=this.width-this.label.textWidth-2;
+					}
+					else
+					{
+						x = 2;
+					}
+					for (i=0; i < this.label.numLines; i++)
+					{
+						metrics=this.label.getLineMetrics(i);
+						if (i == 0)
+						{
+							y+=(metrics.ascent * 0.66) + 2 + 2;
+						}
+						else
+						{
+							y+=metrics.height+2;
+						}
+						this.strike.graphics.moveTo(x, y);
+						this.strike.graphics.lineTo(x+metrics.width-1, y);
+					}
+				}
+			}
+			else if (label.visible && label.includeInLayout)
+			{
+				super.drawStrikeThrough(this.label);
+			}
+		}
+		
+		/******************************************************************************************
+		 * get index of a value in combo
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		private function getIndexComboItem(value:Object):int
+		{
+			for (var i:int=0; i < this.combo.dataProvider.length; i++)
+			{
+				if (combo.dataProvider[i]!=null && combo.dataProvider[i].value == value)
+					return i;
+			}
+			return -1;
+		}
+		
+		/******************************************************************************************
+		 * dispatch event on combo change 
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		private function dispatchComboEvent(event:SAEvent):void
+		{
+			this.listOwner.dispatchEvent(event);
+		}
+		
+		/******************************************************************************************
+		 * Handler of drop down event when opening combobox
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		private function openComboHandler(event:DropdownEvent):void
+		{
+		//	combo.dropdown.visible = false;
+		//	event.preventDefault();
+		//	event.stopImmediatePropagation();
+		}
+		
+		/******************************************************************************************
+		 * Get accessibility name for screen reader
+		 * @author Thuan
+		 ******************************************************************************************/
+		override public function getAccessibilityName():String
+		{
+			//return "Component is ComboBox. Value is " + this.label.text;
+			var strReader:String = this.column.strAccessReader;
+			
+			if (strReader && strReader.length > 0) // Parse value in strAccessReader 
+			{
+				if (strReader.indexOf(Global.ACCESS_READER_CONTROLTYPE) > -1)
+				{
+					strReader = strReader.replace(Global.ACCESS_READER_CONTROLTYPE, Global.ACCESS_READER_COMBOBOX);
+					if (strReader.indexOf(Global.ACCESS_READER_CELLVALUE) > -1)
+						strReader = strReader.replace(Global.ACCESS_READER_CELLVALUE, this.label.text);
+				}
+				else // don't have control type in strAccessReader
+				{
+					if (strReader.indexOf(Global.ACCESS_READER_CELLVALUE) > -1)
+						strReader = strReader.replace(Global.ACCESS_READER_CELLVALUE, this.label.text);
+				}
+				//				trace("Label Renderer strReader != null: " + strReader);
+			}
+			else // make column default information
+			{
+				strReader = Global.ACCESS_READER_COLUMN_DEFAULT + " " + Global.ACCESS_READER_CONTROL + " " + 
+					Global.ACCESS_READER_COMBOBOX + " " + Global.ACCESS_READER_CELL + " " + this.label.text;
+				//				trace("Label Renderer strReader == null: " + strReader);
+			}
+			return strReader;
+		}
+		
+	}
+}

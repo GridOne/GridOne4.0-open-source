@@ -1,0 +1,63 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.export
+{
+	public final class StylesInfor
+	{
+		private var _headerRowStyles:String;
+		private var _headerColumnStyles:String;
+		private var _dataRowStyles:String;
+		private var _dataColumnStyles:String;
+		
+		public function StylesInfor()
+		{
+			
+		}
+		
+		public function get headerRowStyles():String
+		{
+			return _headerRowStyles;
+		}
+
+		public function set headerRowStyles(value:String):void
+		{
+			_headerRowStyles = value;
+		}
+
+		public function get headerColumnStyles():String
+		{
+			return _headerColumnStyles;
+		}
+
+		public function set headerColumnStyles(value:String):void
+		{
+			_headerColumnStyles = value;
+		}
+
+		public function get dataRowStyles():String
+		{
+			return _dataRowStyles;
+		}
+
+		public function set dataRowStyles(value:String):void
+		{
+			_dataRowStyles = value;
+		}
+
+		public function get dataColumnStyles():String
+		{
+			return _dataColumnStyles;
+		}
+
+		public function set dataColumnStyles(value:String):void
+		{
+			_dataColumnStyles = value;
+		}
+	}
+}

@@ -1,0 +1,16 @@
+package
+{
+	import mx.modules.ModuleBase;
+	
+	public class TestModule extends ModuleBase
+	{
+		public function TestModule()
+		{
+			super();
+		}
+		
+		public function computeAnswer(a:Number, b:Number):Number {
+			return a + b;
+		}
+	}
+}

@@ -1,0 +1,408 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+//	This program is free software: you can redistribute it and/or modify
+//	it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or
+//	(at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+////////////////////////////////////////////////////////////////////////////////
+package kr.co.actsone.common
+{
+	import flash.external.ExternalInterface;
+	
+	import kr.co.actsone.controls.ExAdvancedDataGrid;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+	import kr.co.actsone.footer.FooterBar;
+	import kr.co.actsone.summarybar.SummaryBar;
+	import kr.co.actsone.summarybar.SummaryBarConstant;
+	import kr.co.actsone.summarybar.SummaryBarManager;
+	import kr.co.actsone.utils.UtilFunc;
+	
+	import mx.collections.ArrayCollection;
+	import mx.controls.Alert;
+	import mx.formatters.CurrencyFormatter;
+	import mx.formatters.NumberFormatter;
+
+	public class LabelFunctionLib
+	{
+		protected var gridone:GridOne;
+		
+		public function LabelFunctionLib(app:Object)
+		{
+			gridone=app as GridOne;
+		}
+		
+		public function get datagrid():ExAdvancedDataGrid
+		{
+			return gridone.datagrid;
+		}							
+		
+		/*************************************************************
+		 * support for auto number column
+		 * @param value Object data
+		 * @param column ExAdvancedDataGridColumn
+		 * @author Duong Pham
+		 * ***********************************************************/
+		public function autoSeqLabelFunc(value:Object, column:ExAdvancedDataGridColumn):String
+		{	
+			if (column && this.datagrid && this.datagrid._bkDP.length > 0)
+			{	
+				if(value[SummaryBarConstant.SUB_TOTAL] == true || value[SummaryBarConstant.TOTAL] == true)
+					return "" ;
+				var rowIndex:int=this.datagrid._bkDP.getItemIndex(value);				
+				return ((rowIndex + 1).toString());
+			}			
+			return "";
+		}
+		
+		/*************************************************************
+		 * make a label function bridge for a column  from Flex to Java Script and vice versa.
+		 * ***********************************************************/
+		public static function renderJSLabelFunc(value:Object, column:ExAdvancedDataGridColumn):String
+		{
+			return renderLabelFunctionFromJS("JSlabelFunction", value, column);
+		}
+		
+		/*************************************************************
+		 * make a function bridge from Flex to Java Script and vice versa.
+		 * ***********************************************************/
+		public static function renderLabelFunctionFromJS(JSFunctionName:String, value:Object, column:ExAdvancedDataGridColumn):String
+		{
+			var result:String;
+			
+			if (ExternalInterface.available)
+			{
+				try
+				{
+					if (value is XML)
+						result=ExternalInterface.call(column[JSFunctionName], XML(value).toXMLString(), column.dataField) as String;
+					else
+						result=ExternalInterface.call(column[JSFunctionName], value, column.dataField) as String;
+				}
+				catch (error:Error)
+				{
+					result=null;
+				}
+			}
+			return (result == null) ? "" : result;
+		}
+		
+		/*************************************************************
+		 * function support label function of column NUMBER type.
+		 * It will support 3 cases
+		 * - format for number column
+		 * - calculate in sub total
+		 * - calculate in total
+		 * @param item Object data
+		 * @param column ExAdvancedDataGridColumn
+		 * @author Duong Pham
+		 * ***********************************************************/
+		public function renderLabelFuncOfNumberColumn(item : Object, column:ExAdvancedDataGridColumn): String
+		{
+			var value : String;
+			if(item.hasOwnProperty(SummaryBarConstant.TOTAL) || item.hasOwnProperty(SummaryBarConstant.SUB_TOTAL))
+			{
+				//apply label function in total and sub total
+				totalAndSubTotalLabelFunction(item,column);
+			}
+			if(column.JSlabelFunction!="")
+			{
+				value=renderJSLabelFunc(item,column);
+			}
+			else
+			{
+				//apply label function when formating data in Number column type
+				value = numberLabelFunction(item,column);
+			}
+			
+			if(value == "0" && datagrid.bDisplayZeroToNull)
+				value = "";
+			return value;
+		}
+		
+		/*************************************************************
+		 * function support label function of column NUMBER type.
+		 * It will support 2 cases
+		 * - calculate in sub total
+		 * - calculate in total
+		 * @param item Object data
+		 * @param column ExAdvancedDataGridColumn
+		 * @author Duong Pham
+		 * ***********************************************************/
+		private function totalAndSubTotalLabelFunction(item : Object, column:ExAdvancedDataGridColumn): String
+		{
+			var rs : String ="";
+			//var value : Number = 0;
+			var value : String;
+			var count : int =0;
+			if(column.subToltalColumn || column.totalColumn)
+			{
+				var currentSummaryBarKey : String;
+				var currentSummaryBar : SummaryBar;
+				var strFunc : String;
+				var currentIndex : int = 0; 
+				
+				var typeSummarybar : String;
+				if(item[SummaryBarConstant.SUB_TOTAL] != null)  // sub total row
+				{
+					currentSummaryBarKey = item[SummaryBarConstant.SUMMARY_BAR_KEY];
+					currentIndex = (datagrid.dataProvider as ArrayCollection).getItemIndex(item);
+					var subTotalIndex : int = this.datagrid.summaryBarManager.getCurrentIndexofTotal(currentSummaryBarKey,currentIndex);
+					currentSummaryBar = this.datagrid.lstSummaryBar[currentSummaryBarKey] as SummaryBar;
+					typeSummarybar = currentSummaryBar.strFunction;
+					if(currentSummaryBar.functionList[column.dataField] != null)
+						strFunc = (currentSummaryBar.functionList[column.dataField]).toString().toLowerCase();
+					
+					if(column.positionTotalChange[currentSummaryBarKey + '_' +column.dataField + '_' + subTotalIndex] != null && typeSummarybar == 'custom')
+					{
+						value = column.positionTotalChange [currentSummaryBarKey + '_' + column.dataField + '_' +subTotalIndex].toString();
+					}
+					else
+					{
+						if(item[column.dataField] != null && isNaN(Number(item[column.dataField]))) // using for column that is label subtotal 
+						{
+							value =  item[column.dataField];
+						}
+						else
+						{
+							if(strFunc != SummaryBarConstant.FUNC_CUSTOM)
+								value = this.datagrid.summaryBarManager.calculateSubTotal(strFunc,currentIndex,currentSummaryBarKey,column).toString();
+							else
+								value = '0';
+						}
+					}
+					
+				}
+				else if (item[SummaryBarConstant.TOTAL] != null)  // total row
+				{
+					currentSummaryBarKey = item[SummaryBarConstant.SUMMARY_BAR_KEY];
+					currentSummaryBar  = this.datagrid.lstSummaryBar[currentSummaryBarKey] as SummaryBar;
+					if(currentSummaryBar.functionList[column.dataField] != null)
+						strFunc  = (currentSummaryBar.functionList[column.dataField]).toString().toLowerCase();
+					typeSummarybar = currentSummaryBar.strFunction;
+					
+					if(column.positionTotalChange[currentSummaryBarKey + '_' + column.dataField + '_' + 0] != null && typeSummarybar == SummaryBarConstant.FUNC_CUSTOM)
+					{
+						value = column.positionTotalChange [currentSummaryBarKey + '_' + column.dataField + '_' +0].toString();
+					}
+					else
+					{
+						if(strFunc != SummaryBarConstant.FUNC_CUSTOM)
+							value = this.datagrid.summaryBarManager.calculateTotal(strFunc,currentSummaryBarKey,column).toString();
+						else
+							value = '0';
+					}
+				}
+				else // data row
+				{
+					//value = Number(item[column.dataField].toString());
+					value = item[column.dataField].toString();
+				}
+				item[column.dataField] = value;
+			}
+//			return this.datagrid.summaryBarManager.formatBaseOnPatternTotal(column,value,item);
+			return value;
+		}
+		
+		/*************************************************************
+		 * function to be used for formatting number data in a column Number
+		 * @param item Object data
+		 * @param column ExAdvancedDataGridColumn
+		 * @author Duong Pham
+		 * ***********************************************************/
+		private function numberLabelFunction(item:Object, column:ExAdvancedDataGridColumn):String
+		{
+			var value:Object=item[column.dataField];
+			
+			
+			if (value == null || value == '')
+			{		
+				if(this.datagrid.bUpdateNullToZero)
+				{
+					item[column.dataField] = value = 0;
+				}
+				else
+				{
+					if(!this.datagrid.bNullValueNumberFormat)
+					{
+						return '';
+					}
+					value=0;
+				}
+			}
+
+			
+			if (Number(value).toString()== "NaN")
+			{
+				return value.toString();
+			}
+			else
+			{		
+				var numberFormatter:NumberFormatter=new NumberFormatter();
+				numberFormatter.useThousandsSeparator=column.useThousandsSeparator;
+				numberFormatter.precision=column.precision;
+				if (column.symbolPrecision == "#")
+				{
+					var itemArr:Array=value.toString().split(".");
+					if(itemArr.length == 1)
+						numberFormatter.precision=0;
+					else if(itemArr.length==2)
+					{
+						if(itemArr[1].toString().length < numberFormatter.precision)
+							numberFormatter.precision=itemArr[1].toString().length;
+					}
+				}
+				
+				/* if (!column.useCurrency)
+				{
+				numberFormatter.currencySymbol="";
+				} */
+				
+				var tempFormatter:NumberFormatter=new NumberFormatter();
+				tempFormatter.useThousandsSeparator=false;
+				
+				//return numberFormatter.format(item[column.dataField]);
+				if (column.maxValue != -1)
+				{
+					var temp:Number=Number(tempFormatter.format(value));
+					
+					if (temp < column.maxValue)
+						return column.strCurrencyBefore+numberFormatter.format(value)+column.strCurrencyAfter;
+					return "";
+				}
+				else
+				{
+					return column.strCurrencyBefore+numberFormatter.format(value)+column.strCurrencyAfter;
+				}
+			}
+		}
+		
+		/*************************************************************
+		 * label function is applied on footer
+		 * @param column ExAdvancedDataGridColumn
+		 * @author Duong Pham
+		 * ***********************************************************/
+		public function footerLabelFunction(column:ExAdvancedDataGridColumn): String
+		{
+			var value:Number=0;
+			var count:Number=0;
+			var strFunc:String = column.footerBarFunc;
+			if(strFunc == SummaryBarConstant.FUNC_COUNT || strFunc == SummaryBarConstant.FUNC_AVERAGE)
+			{
+				if(this.datagrid.hasTotal || this.datagrid.hasSubTotal)
+					count = this.datagrid._bkDP.length as Number;
+				else
+					count = this.datagrid.getLength() as Number;
+			}
+			if(strFunc != SummaryBarConstant.FUNC_COUNT)
+			{
+				var item:Object;
+				for (var i:int=0; i<this.datagrid.getLength(); i++)
+				{
+					item = this.datagrid.getItemAt(i);
+					if(item[SummaryBarConstant.SUB_TOTAL] == null && item[SummaryBarConstant.TOTAL] == null)
+						value += Number(item[column.dataField]);
+				}
+			}
+			if(strFunc == SummaryBarConstant.FUNC_COUNT)
+				value = count;
+			else if (strFunc == SummaryBarConstant.FUNC_AVERAGE)
+			{
+				value = value/count;
+			}
+			else if (strFunc ==  SummaryBarConstant.FUNC_CUSTOM) // not calculating 
+			{
+				value= 0;
+			}
+			var result:String = this.datagrid.summaryBarManager.formatBaseOnPatternFooter(column,value);
+			return result;
+		}
+		
+		/*************************************************************
+		 * label function is applied on datetime and percent column
+		 * @param column ExAdvancedDataGridColumn
+		 * @author Duong Pham
+		 * ***********************************************************/
+		public function renderLabelFuncOfTextColumn(item:Object, column:ExAdvancedDataGridColumn):String
+		{
+			var value:String ="";
+			if(item[column.dataField] == null || item[column.dataField] == "")
+			{
+				value = item[column.dataField] = "";
+			}
+			else
+			{
+				if(column.type==ColumnType.DATETIME)
+				{
+					value = UtilFunc.stringToDateTime(item[column.dataField].toString());
+				}
+				else if(column.type==ColumnType.PERCENT)
+				{
+					value=item[column.dataField].toString()+"%";	
+				}
+				else if(column.JSlabelFunction!="")
+				{
+					value=renderJSLabelFunc(item,column);
+				}
+				else
+					value = item[column.dataField];
+			}
+			return value;
+		}
+		
+		/*************************************************************
+		 * function support label function of column total type.
+		 * It will support 3 cases
+		 * - format for number column
+		 * - calculate in sub total
+		 * - calculate in total
+		 * @param item Object data
+		 * @param column ExAdvancedDataGridColumn
+		 * @author Duong Pham
+		 * ***********************************************************/
+		public function renderLabelFuncOfTotalColumn(item : Object, column:ExAdvancedDataGridColumn): String
+		{
+			var value : String;
+			if(column.JSlabelFunction!="")	//use javascript function in label function
+			{
+				value=renderJSLabelFunc(item,column);
+			}
+			else
+			{
+				var summaryBar:SummaryBar = column.summaryBar;
+				var currentSummaryBarKey:String = summaryBar.summaryBarKey;
+				var currentIndex:int = (datagrid.dataProvider as ArrayCollection).getItemIndex(item);
+				
+				if(column.positionTotalChange[currentSummaryBarKey + '_' + summaryBar.totalColDataField + '_' + currentIndex] != null && summaryBar.strFunction == SummaryBarConstant.FUNC_CUSTOM)
+				{
+					value = Number(column.positionTotalChange [currentSummaryBarKey + '_' + column.dataField + '_' +currentIndex].toString()).toString();
+				}
+				else
+				{
+					if(summaryBar.strFunction != SummaryBarConstant.FUNC_CUSTOM)
+						value = this.datagrid.summaryBarManager.calculateTotalColumn(item,column).toString();
+					else
+						value = '0'.toString();
+				}
+			}
+			item[column.dataField] = value;
+			//apply label function when formating data in total column type
+			value = numberLabelFunction(item,column);
+			
+			if(value == "0" && datagrid.bDisplayZeroToNull)
+				value = "";
+			return value;
+		}
+	}
+}

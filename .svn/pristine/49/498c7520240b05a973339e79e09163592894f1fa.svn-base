@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Module xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx" width="20" height="20">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import kr.co.actsone.common.ColumnType;
+			import kr.co.actsone.common.DataGridManager;
+			import kr.co.actsone.common.Global;
+			import kr.co.actsone.common.GridOneImpl;
+			import kr.co.actsone.common.GridOneManager;
+			import kr.co.actsone.common.MergeCellInfo;
+			import kr.co.actsone.common.RowStatus;
+			import kr.co.actsone.controls.ExAdvancedDataGrid;
+			import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+			import kr.co.actsone.filters.FilterDataWithRowHide;
+			import kr.co.actsone.utils.ErrorMessages;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.utils.UIDUtil;
+			
+			private var _gridoneInstance:Object;
+			public var _datagrid:ExAdvancedDataGrid;
+			public var _gridoneImp:GridOneImpl;
+			public var _gridoneManager:GridOneManager;
+			public var err:ErrorMessages;
+			
+			//	public var exfunc:ExternalFunctions;
+			public function get gridoneInstance():Object
+			{
+				return _gridoneInstance;
+			}
+			
+			public function set gridoneInstance(value:Object):void
+			{
+				_gridoneInstance = value;
+			}
+			
+			public function get datagrid():ExAdvancedDataGrid
+			{
+				return _datagrid;
+			}
+			public function set datagrid(obj:ExAdvancedDataGrid):void
+			{
+				_datagrid=obj;
+			}
+			
+			public function get dgManager():DataGridManager
+			{
+				return gridoneInstance.dgManager;
+			}	
+			
+			public function get gridoneManager():GridOneManager 
+			{
+				_gridoneManager=new GridOneManager(this.gridoneInstance);
+				return  _gridoneManager;
+			}
+			
+			public function get gridOneImp():GridOneImpl
+			{
+				_gridoneImp=new GridOneImpl(this.gridoneInstance);
+				return  _gridoneImp;
+			}
+			
+			protected function module_creationCompleteHandler(event:FlexEvent):void
+			{
+				// TODO Auto-generated method stub
+				//		exfunc=new ExternalFunctions(this);
+			}
+			
+			public function getCellGroupMergeInfo(columnKey:String, row:int):Array
+			{
+				var selItem:Array=new Array();
+				var item:int;
+				var colIndex:int=this.datagrid.dataFieldIndex[columnKey];
+				var col:ExAdvancedDataGridColumn   =  gridoneInstance.dgManager.getColumnByDataField(columnKey) as ExAdvancedDataGridColumn;
+				if (col.merge)
+				{
+					var mergedCell:MergeCellInfo   = this.datagrid.getMergeCell(row,colIndex);
+					if (!mergedCell)
+						selItem.push(row); 
+					else
+					{
+						var i:int=0;
+						for (i;i<mergedCell.mergeNum;i++)
+						{
+							selItem.push( mergedCell.mergeOwnerRow + i);
+						}
+					}
+				}
+				else
+				{
+					selItem.push(row);  
+				}
+				return selItem;
+			}
+			
+			public function getModuleName():String
+			{
+				var str:String="ModuleExFunctions";
+				return str;
+			}
+			
+			public function setModuleName(str:String):void
+			{
+				Alert.show(str);
+			}
+			
+		 
+ 
+		]]>
+	</fx:Script>
+</s:Module>

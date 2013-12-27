@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Demo GridOne</title> 
+<script type="text/javascript" src="GridOne.js"></script>
+<script type="text/javascript">
+ 
+var gridOne;
+/*get gridone*/
+function getGrid() {	
+    return document.GridOne;		//it may be customized again
+}
+
+/*********************************************init grid*********************************************/
+
+/*init for grid one. This function is called by GridOne internally */
+function initializeHandler() 
+{
+	gridOne = getGrid();
+	gridOne.createEvent("boundHeaderComplete","boundHeaderCompleteHandler");
+	gridOne.createEvent("onButtonClick","onButtonClickHandler");
+	gridOne.createEvent("onCellDblClick","onCellDblClickHandler");
+	setHeader(gridOne);	
+}
+
+/*This function is called automatically after headers and columns are created.*/
+function boundHeaderCompleteHandler()
+{ 
+	  setData(gridOne);
+}
+
+function onButtonClickHandler(event)
+{
+   gridOne.deleteRow(event.nRow);
+}
+
+ 
+function onCellDblClickHandler(event)
+{
+	 alert("Row index: " + event.nRow + " ,ColumnKey: " + event.columnKey);
+}
+ 
+//set second data as json format
+var flatJSONData2 = [{"nation": "Vietnam","startDate": "20130430","endDate": "20130503"},
+                    {"nation": "Cambodia","startDate": "20130815","endDate": "20130819"},
+                    {"nation": "Korea","startDate": "20130430","endDate": "20130503"},
+                    {"nation": "Malayia","startDate": "20130722","endDate": "20130729"},
+                    {"nation": "India","startDate": "20130815","endDate": "20130819"},
+                    {"nation": "Aubakistan","startDate": "20130430","endDate": "20130503"},
+                    {"nation": "Thailand","startDate": "20130611","endDate": "20130615"},
+                    {"nation": "Loa","startDate": "20130815","endDate": "20130819"},
+                    {"nation": "Loa","startDate": "20130815","endDate": "20130819"},
+                    {"nation": "China","startDate": "20130722","endDate": "20130729"},
+                    {"nation": "USA","startDate": "20130611","endDate": "20130615"},
+                    {"nation": "Vietnam","startDate": "20130430","endDate": "20130503"},
+                    {"nation": "Cambodia","startDate": "20130815","endDate": "20130819"},
+                    {"nation": "Korea","startDate": "20130430","endDate": "20130503"},
+                    {"nation": "Malayia","startDate": "20130722","endDate": "20130729"},
+                    {"nation": "India","startDate": "20130815","endDate": "20130819"},
+                    {"nation": "Aubakistan","startDate": "20130430","endDate": "20130503"},
+                    {"nation": "Thailand","startDate": "20130611","endDate": "20130615"},
+                    {"nation": "Loa","startDate": "20130815","endDate": "20130819"},
+                    {"nation": "Loa","startDate": "20130815","endDate": "20130819"},
+                    {"nation": "China","startDate": "20130722","endDate": "20130729"},
+                    {"nation": "USA","startDate": "20130611","endDate": "20130615"}
+                ];
+
+
+ //set header in dataGrid
+//========================================================
+ function setHeader(gridOne)
+ {
+	gridOne.addHeader("no","no.","autonumber",20,100,false);
+	gridOne.addHeader("nation", "Nation", "text", 20,400, false,"left");
+	gridOne.addHeader("startDate", "Start Date", "date", 20, 320, true,"right");
+	gridOne.addHeader("button","button","button",20,100,true,"center");
+	gridOne.addHeader("check","checkbox","checkbox",20,100,true);
+	gridOne.addHeader("radio","radio","radiobutton",20,100,true);
+    gridOne.addHeader("endDate", "End Date", "date", 20, 320, true);
+      
+    gridOne.addGroup("festivalData", "Festival Days");
+    gridOne.appendHeader("festivalData","startDate");
+    gridOne.appendHeader("festivalData","endDate");
+     
+    gridOne.boundHeader();
+    
+    gridOne.setProperty("selectCell",false);
+    gridOne.setColumnProperty("check","headerRenderer","checkbox");
+    gridOne.setColumnProperty("button","buttonText","Delet Row");
+    
+    gridOne.setProperty("headerTextAlign","center");
+    gridOne.setHeaderRightPadding(0); //value from 0 to 15
+    gridOne.setDataGridProperty("strHDClickAction","select");//sortmulti //sortsingle
+    gridOne.setProperty("showDataTips",false);
+    gridOne.setLanguage("KR");
+    gridOne.setDataGridProperty("strCellBgColor","#D60F41");
+
+
+ }
+ 
+ //set data
+ //==========================================================
+ function setData(gridOne)
+ {
+ //set data into dataGrid
+   gridOne.setGridData(flatJSONData2);
+ 
+ }
+ 
+ function setCellBorderStyle()
+ {
+	    gridOne=getGrid();
+        //setCellBorderColor(columnIndex:Number, rowIndex:int, color:uint,thickness:Number)
+//	    
+//	    gridOne.setCellBorderColor(1,0,0x00DE00,1);
+//	    gridOne.setCellBorderColor(2,3,0x00DE00,1);
+//	    gridOne.setCellBorderColor(3,4,0xE08B4C,3);
+//	    gridOne.setCellBorderColor(4,1,0x00DE00,2);
+//	    gridOne.setCellBorderColor(0,2,0x00DE00,5);
+//	    gridOne.setCellBorderColor(3,6,0x000000,1);
+//	    gridOne.setCellBorderColor(3,7,0x000000,1);
+        
+	    gridOne.setCellPaddingLeft("nation",1,10);
+ }
+ 
+</script>
+</head>
+<body>
+	 
+	 <table border=1>
+	 <tr>
+		 <td>
+		      <input type="button" onClick="setCellBorderStyle();" value="setCellBorderStyle">
+		 <td>
+		 <td>
+		      setCellBorderColor(columnIndex, rowIndex, color:uint,thickness)<br/>
+		      ==>columnIndex is column index <br/>
+		      ==>rowIndex is row index<br/>
+		      ==>color is color code of border<br/>
+		      ==>thickness is thickness of border<br/><br/>
+		      
+		      Ex:  gridOne.setCellBorderColor(1,0,0x00DE00,1);<br/>
+		 </td>
+	 </tr>
+	 <tr>
+	     <td>
+	 		  <input type="button" onClick="gridOne.removeCellBorderAll();" value="removeCellBorderAll">
+	     <td>
+	     <td>
+	            removeCellBorderAll() <br/>
+	            ==> this method will remove all border was setted from dataGrid.<br/><br/>
+	            
+	            Ex: gridOne.removeCellBorderAll();<br/>
+	     </td>
+	</tr>
+	<tr>
+	     <td>
+			  <input type="button" onClick="gridOne.removeCellBorder(0,2);" value="removeCellBorder">
+	     <td>
+	     <td>
+	           removeCellBorder(columnIndex,rowIndex)<br/>
+	           ==>columnIndex is column index which has setted border.<br/>
+	           ==>rowIndex is row index which has setted border.<br/><br/>
+	           
+	           Ex: gridOne.removeCellBorder(0,2);<br/>
+	     </td>
+	</tr>
+	<tr>
+    <td>
+		  <input type="button" onClick="gridOne.printPDF(0xDCDCDC,50,'',false,24,0x000000,'center',0xFFFFFF);" value="removeCellBorder">
+    <td>
+    <td>
+          Ex: gridOne.printPDF(0xDCDCDC,50,'',false,24,0x000000,'center',0xFFFFFF) 
+    </td>
+    </tr>
+	 </table><br/>
+       <div> 
+		  <script type="text/javascript">
+		   initGridOne(1000,350,'GridOne','flash','','A0B0C0C6-000148-156641','false','fast');
+		  </script>
+		</div>
+</body>
+</html>

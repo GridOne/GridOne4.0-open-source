@@ -1,0 +1,338 @@
+package kr.co.actsone.itemRenderers
+{
+	import flash.display.DisplayObject;
+	import flash.display.GradientType;
+	import flash.display.Sprite;
+	import flash.events.MouseEvent;
+	import flash.geom.Matrix;
+	import flash.geom.Point;
+	import flash.geom.Rectangle;
+	
+	import kr.co.actsone.common.Global;
+	import kr.co.actsone.controls.ExAdvancedDataGrid;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridListData;
+	import kr.co.actsone.filters.FilterDataWidthComboHeader;
+	
+	import mx.collections.ArrayCollection;
+	import mx.controls.ComboBox;
+	import mx.controls.listClasses.BaseListData;
+	import mx.controls.listClasses.IDropInListItemRenderer;
+	import mx.controls.listClasses.IListItemRenderer;
+	import mx.core.IDataRenderer;
+	import mx.core.IToolTip;
+	import mx.core.UIComponent;
+	import mx.events.FlexEvent;
+	import mx.events.ListEvent;
+	import mx.events.ToolTipEvent;
+	
+	[Event(name="dataChange", type="mx.events.FlexEvent")]
+	
+	public class ComboHeaderRenderer extends UIComponent implements IDataRenderer, IDropInListItemRenderer, IListItemRenderer
+	{
+		public var listOwner:ExAdvancedDataGrid;
+		private var _listData:ExAdvancedDataGridListData;
+		private var _data:Object;
+		public var toolTipSet:Boolean = false;
+		
+		private static var currentIndex:int=0;
+		
+		protected var background:Sprite;
+		protected var combo:ComboBox;
+		
+		public function ComboHeaderRenderer()
+		{
+			super();
+			tabEnabled = false;
+			mouseEnabled = true;
+			mouseChildren = true;
+			mouseFocusEnabled = true;
+			
+			this.setStyle('verticalAlign','center');
+			
+			addEventListener(ToolTipEvent.TOOL_TIP_SHOW, toolTipShowHandler);
+		}
+		
+		/**************************************************************************
+		 * The event handler to position the tooltip.
+		 * @param event The event object.
+		 * @author Duong Pham 
+		 **************************************************************************/
+		protected function toolTipShowHandler(event:ToolTipEvent):void
+		{
+			var toolTip:IToolTip = event.toolTip;
+			var xPos:int = DisplayObject(systemManager).mouseX + 11;
+			var yPos:int = DisplayObject(systemManager).mouseY + 22;
+			// Calculate global position of label.
+			var pt:Point = new Point(xPos, yPos);
+			pt = DisplayObject(systemManager).localToGlobal(pt);
+			pt = DisplayObject(systemManager.getSandboxRoot()).globalToLocal(pt);           
+			
+			toolTip.move(pt.x, pt.y + (height - toolTip.height) / 2);
+			
+			var screen:Rectangle = toolTip.screen;
+			var screenRight:Number = screen.x + screen.width;
+			if (toolTip.x + toolTip.width > screenRight)
+				toolTip.move(screenRight - toolTip.width, toolTip.y);
+		}
+		
+		override protected function createChildren():void
+		{
+			super.createChildren();
+			
+			if(!combo)
+			{
+				combo = new ComboBox();
+				combo.addEventListener(FlexEvent.CREATION_COMPLETE,comboCreateCompleteHandler);
+				combo.addEventListener(MouseEvent.MOUSE_DOWN,comboMouseDownHandler);
+				combo.addEventListener(ListEvent.CHANGE,comboChangeHandler);
+				this.combo.styleName = this;
+				addChild(DisplayObject(combo));
+			}
+			if (!background)
+			{
+				background = new UIComponent();
+				addChild(background);
+			}
+		}
+		
+		private function comboChangeHandler(event:ListEvent):void
+		{
+			currentIndex=this.combo.selectedIndex;
+			var condition:Object = new Object();
+			condition["selectedLabel"]=this.combo.selectedItem["label"].toString();
+			condition["selectedValue"]=this.combo.selectedItem["value"].toString();
+			condition["dataField"]=dataField;
+			this.listOwner.filter = new FilterDataWidthComboHeader(this.listOwner.filter,condition);
+			(this.listOwner.dataProvider as ArrayCollection).filterFunction = this.listOwner.filter.apply;
+			//				(this.grid.dataProvider as ArrayCollection).filterFunction=filterMyArrayCollection;
+			(this.listOwner.dataProvider as ArrayCollection).refresh();
+		}
+		
+		private function comboMouseDownHandler(event:MouseEvent):void
+		{
+			event.stopImmediatePropagation();
+		}
+		
+		private function comboCreateCompleteHandler(event:FlexEvent):void
+		{
+			this.combo.selectedIndex=currentIndex;
+		}
+		
+		/**************************************************************************
+		 * set tooltip value
+		 * @param value of tool tip
+		 * @author Duong Pham 
+		 **************************************************************************/
+		override public function set toolTip(value:String):void
+		{
+			super.toolTip = value;
+			
+			toolTipSet = value != null;
+		}
+		
+		[Bindable("dataChange")]
+		public function get data():Object
+		{
+			return _data;
+		}
+		
+		public function set data(value:Object):void
+		{
+			_data = value;
+			
+			invalidateProperties();
+			
+			dispatchEvent(new FlexEvent(FlexEvent.DATA_CHANGE));
+		}
+		
+		[Bindable("dataChange")]
+		public function get listData():BaseListData
+		{
+			return _listData;
+		}		
+		
+		/**************************************************************************
+		 * get datagrid and column from list data
+		 * @param value of list data
+		 * @author Duong Pham 
+		 **************************************************************************/
+		public function set listData(value:BaseListData):void
+		{
+			_listData = ExAdvancedDataGridListData(value);
+			if (listData)
+			{
+				listOwner=this.listData.owner as ExAdvancedDataGrid;	
+			}
+			invalidateProperties();
+		}
+		
+		/**************************************************************************
+		 * Get data field of column
+		 * @author Duong Pham 
+		 **************************************************************************/
+		public function get dataField():String
+		{
+			return data.dataField;
+		}
+		
+		/**************************************************************************
+		 * draw background color 
+		 * @author Duong Pham
+		 **************************************************************************/
+		private function drawBgColor():void
+		{
+			var bgColor:uint;
+			var _isDrawGradientBox:Boolean = false;
+			var listColors:Array;
+			if(data.getStyle("headerBackgroundColor") != undefined)				
+				bgColor = data.getStyle("headerBackgroundColor");				
+			else if (listOwner.getStyle("headerBackgroundColor") != undefined)
+				bgColor = listOwner.getStyle("headerBackgroundColor");
+			else
+			{
+				listColors = listOwner.getStyle("headerColors");
+				if(listColors[0] == listColors[1])
+					bgColor = listColors[0];
+				else
+				{
+					_isDrawGradientBox = true;
+				}															
+			}
+			var xPos:Number=0;
+			var yPos:Number=0;
+			if(!_isDrawGradientBox)
+			{							
+				background.graphics.clear();			
+				background.graphics.beginFill(bgColor);						
+				background.graphics.drawRect(xPos, yPos - 2, this.width, this.height + 3);	
+				background.graphics.endFill();
+			}
+			else
+			{					
+				background.graphics.clear();
+				var bgMatrix:Matrix=new Matrix();
+				bgMatrix.createGradientBox(this.width, this.height + 4, Math.PI / 2, 0, -2);
+				background.graphics.beginGradientFill(GradientType.LINEAR, listColors, [1, 1], [0, 60, 255], bgMatrix);
+				background.graphics.drawRect(xPos, yPos-2, this.width, this.height+4);	
+				background.graphics.endFill();
+			}
+			setChildIndex( DisplayObject(background), 0 );
+		}
+		
+		/******************************************************************************************
+		 * update data
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override protected function commitProperties():void
+		{
+			super.commitProperties();
+			if(combo)
+			{
+				if (data is ExAdvancedDataGridColumn)
+				{
+					this.width=data.width;
+					if(combo.dataProvider && combo.dataProvider.length == 0)
+					{
+						combo.dataProvider=(data as ExAdvancedDataGridColumn).comboHeaderProvider;
+					}
+				}
+			}
+			invalidateDisplayList();
+		}
+		
+		/******************************************************************************************
+		 * Processes the properties set on the component
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override protected function updateDisplayList(unscaledWidth:Number,
+													  unscaledHeight:Number):void
+		{
+			var paddingLeft:int   = getStyle("paddingLeft");
+			var paddingRight:int  = getStyle("paddingRight");
+			var paddingTop:int    = getStyle("paddingTop");
+			var paddingBottom:int = getStyle("paddingBottom");
+			var horizontalGap:Number = getStyle("horizontalGap");
+			var startx:Number = paddingLeft;
+//			
+			var comboWidth:Number = unscaledWidth - horizontalGap - paddingLeft - paddingRight;
+			var comboHeight:Number = combo.measuredMinHeight;
+//			combo.setActualSize(comboWidth,comboHeight);
+			combo.setActualSize(comboWidth,combo.measuredMinHeight);
+			var comboX:Number;
+			var headerTextAlign:String="center";
+			if(data.getStyle('headerTextAlign') != undefined)
+				headerTextAlign = data.getStyle('headerTextAlign');
+			else if(listOwner.getStyle('headerTextAlign') != undefined)
+				headerTextAlign = listOwner.getStyle('headerTextAlign');
+			if (headerTextAlign == "left")
+			{
+				comboX = startx;
+			}
+			else if (headerTextAlign == "right")
+			{
+				comboX = unscaledWidth - paddingRight - comboWidth;
+			}
+			else // if (headerTextAlign == "center")
+			{
+				comboX = (unscaledWidth - comboWidth - paddingLeft - paddingRight)/2 + paddingLeft;
+			}
+			comboX = Math.max(comboX, 0);
+			
+			var verticalAlign:String = getStyle("verticalAlign");
+			var comboY:Number;
+			if (verticalAlign == "top")
+			{
+				comboY= paddingTop;
+			}
+			else if (verticalAlign == "bottom")
+			{				
+				comboY = unscaledHeight - comboHeight - paddingBottom + 2; // 2 for gutter
+			}
+			else // if (verticalAlign == "middle")
+			{
+				comboY = (unscaledHeight - comboHeight - paddingBottom - paddingTop)/2 + paddingTop;
+			}
+			comboY = Math.max(comboY, 0);
+			
+			combo.x = Math.round(comboX);
+			combo.y = Math.round(comboY);
+			
+			super.updateDisplayList(unscaledWidth, unscaledHeight);;
+			
+			drawBgColor();
+		}
+		
+		//Accessibility:  =========================================================================================
+		/**************************************************************************
+		 * Get name and value of control in cell
+		 * @author Thuan 
+		 **************************************************************************/
+		public function getAccessibilityName(defaultHeaderReader: String):String
+		{
+			var strReader:String = data.strAccessReaderHeaderOrigin;
+			
+			if (strReader && strReader.length > 0) // Parse value in strAccessReader 
+			{
+				if (strReader.indexOf(Global.ACCESS_READER_CONTROLTYPE) > -1)
+				{
+					strReader = strReader.replace(Global.ACCESS_READER_CONTROLTYPE, Global.ACCESS_READER_COMBOBOX);
+					if (strReader.indexOf(Global.ACCESS_READER_HEADERTEXT) > -1)
+						strReader = strReader.replace(Global.ACCESS_READER_HEADERTEXT, this.combo.selectedLabel);
+				}
+				else // don't have control type in strAccessReader
+				{
+					if (strReader.indexOf(Global.ACCESS_READER_HEADERTEXT) > -1)
+						strReader = strReader.replace(Global.ACCESS_READER_HEADERTEXT, this.combo.selectedLabel);
+				}
+				//trace("Label Renderer strReader != null: " + strReader);
+			}
+			else // make column default information
+			{
+				strReader = defaultHeaderReader;
+				//trace("Label Renderer strReader == null: " + strReader);
+			}
+			return strReader;   
+		}
+	}
+}

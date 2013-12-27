@@ -1,0 +1,53 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.utils
+{
+	public final class UtilFunc
+	{
+		static public function stringToDateTime(sDate:String):String
+		{
+			try
+			{
+				if(sDate.length==12)
+					return sDate.substr(0, 4) +"/" +sDate.substr(4, 2) + "/" + sDate.substr(6, 2) + " " + sDate.substr(8, 2) + ":" + sDate.substr(10, 2) ;
+				return "";
+			}
+			catch(err:Error)
+			{
+				trace(err.message);
+			}
+			return "";
+		}
+		
+		/**
+		 * Make thousand separator in number
+		 * @author Thuan
+		 */
+		static public function makeThousandSeparator(sValue: String):String
+		{
+			if (sValue.length <= 3)
+				return sValue;
+			
+			var valueLen: int  = sValue.length;
+			var commaPosition: int = valueLen % 3;
+			var sResult: String;
+			
+			sResult = sValue.substring(0, commaPosition);
+			
+			do
+			{
+				sResult += ",";
+				sResult += sValue.substring(commaPosition, commaPosition + 3);
+				commaPosition += 3;
+			} while (commaPosition < valueLen);
+			
+			return sResult;
+		}
+	}
+}

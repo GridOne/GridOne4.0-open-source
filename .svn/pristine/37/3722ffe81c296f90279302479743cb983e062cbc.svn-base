@@ -1,0 +1,25 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.protocol
+{
+	public class ProtocolDelimiter
+	{
+		public static const JSON_RAW:String="*";
+		
+		public static const BASE:String="~";
+		
+		public static const ROW:String=":";
+		
+		public static const CELL:String="`";
+		
+		public static const ITEM:String=";";
+		
+		public static const ITEM_GROUP:String="|"; 
+	}
+}

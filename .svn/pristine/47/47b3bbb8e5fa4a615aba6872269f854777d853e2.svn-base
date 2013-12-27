@@ -1,0 +1,119 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+package kr.co.actsone.common
+{
+	public class ColumnType
+	{
+		public static const IMAGETEXT:String="IMAGETEXT";
+		public static const IMAGETEXTRIGHT:String="IMAGETEXTRIGHT"; //support asetec project
+		public static const HIDEIMAGETEXTRIGHT:String="HIDEIMAGETEXTRIGHT";//support asetec project
+		public static const IMAGE:String="IMAGE";
+		public static const CHECKBOX:String="CHECKBOX";
+		public static const DATE:String="DATE";		
+		public static const AUTONUMBER:String="AUTONUMBER";
+		public static const COMBOBOX:String="COMBO";
+		public static const COMBODYNAMIC:String="COMBODYNAMIC"; //support asetec project
+		public static const NUMBER:String="NUMBER";
+		public static const TEXT:String="TEXT";
+		public static const RADIOBUTTON:String="RADIOBUTTON";
+		public static const MULTICOMBO:String="MULTICOMBO";
+		public static const MULTICOMBOBOX:String="MULTICOMBOBOX";	//according to Mr. Oh's requirement
+		public static const CRUD:String="CRUD";
+		public static const TREE:String="TREE";
+		public static const BUTTON:String="BUTTON";
+		public static const TIME:String="TIME";
+		public static const DATETIME:String="DATETIME"
+		public static const LINK:String="LINK";
+		public static const PERCENT:String="PERCENT";
+		public static const COMBOHEADER:String="COMBOHEADER";
+		public static const HTML:String="HTML";
+		public static const HTMLHEADER:String="HTMLHEADER";
+		public static const TOTAL:String="TOTAL";
+		public static const TEXTAREA:String="TEXTAREA";
+		
+		public static function parseType(type:String):String
+		{
+			var columnType:String="";
+			switch (type.toUpperCase())
+			{
+				case "C":
+					columnType=ColumnType.CHECKBOX;
+					break;
+				case "L":
+					columnType=ColumnType.COMBOBOX;
+					break;
+				case "I":
+					columnType=ColumnType.IMAGETEXT;
+					break;
+				case "D":
+					columnType=ColumnType.DATE;
+					break;
+				case "T":
+					columnType=ColumnType.TEXT;
+					break;
+				case "N":
+					columnType=ColumnType.NUMBER;
+					break;
+				case "M":
+					columnType=ColumnType.IMAGE;
+					break;
+				case "H":
+					columnType=ColumnType.MULTICOMBO;
+					break;
+				case "U":
+					columnType=ColumnType.CRUD;
+					break;
+				 case "TREE":
+					columnType=ColumnType.TREE;
+					break;	 
+				case "E":
+					columnType=ColumnType.TREE;						
+					break;						
+			}
+			return columnType;
+		}
+		public static function convertType(type:String):String
+		{
+			switch(type)
+			{
+				case CHECKBOX:
+						return "C";
+						break;
+					case COMBOBOX:
+						return "L";
+						break;
+					case IMAGETEXT:
+						return "I";
+						break;
+					case DATE:
+						return "D";
+						break;
+					case TEXT:
+						return "T";
+						break;
+					case NUMBER:
+						return "N";
+						break;
+					case IMAGE:
+						return "M";
+						break;
+					case MULTICOMBO:
+						return "H";
+						break;
+					case CRUD:
+						return "U";
+						break;				
+					case TREE:
+						return "E";
+						break;		
+			}
+			return "";
+		}
+		
+	}
+}

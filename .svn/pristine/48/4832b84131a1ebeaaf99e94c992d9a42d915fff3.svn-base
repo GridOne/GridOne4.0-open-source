@@ -1,0 +1,68 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.utils
+{
+	public class ConvertProperty
+	{
+//		public static var contextMenuStyleObj:Object={
+//			strContextMenuColor:"contextMenuColor";
+//			strContextMenuFontFamily:"contextMenuFontFamily";
+//			nContextMenuFontSize:"contextMenuFontSize";
+//			strContextMenuFontStyle:"contextMenuFontStyle";
+//			strContextMenuFontWeight:"contextMenuFontWeight";
+//		};
+		
+		public static var headerStyleObj:Object={
+			strHDFontName:"fontFamily",
+			nHDFontSize:"fontSize",
+			bHDFontBold:"fontWeight",
+			bHDFontItalic:"fontStyle",
+			bHDFontULine:"textDecoration",
+			strHDFgColor:"color",
+			strGroupHDColor:"groupHDColor",
+			strHDBorderStyle:"borderStyle",
+			nHDLetterSpacing:"letterSpacing",
+			headerPaddingRight:"paddingRight"
+		};
+		
+		
+		public static var proObj:Object={
+			//strRowBorderStyle:"horizontalGridLineColor",
+			strActiveRowBgColor:"selectionColor",
+			strAlternateRowsBgColor:"alternatingItemColors",
+			//strBgImage:"backgroundImage",
+			strCellFontName:"fontFamily",
+			nHDLineSize:"headerHeight",
+			nHDLines:"headerHeight",
+			nRowHeight:"rowHeight",
+			nCellFontSize:"fontSize",			
+			strSelectedCellBgColor:"selectionColor",
+			strGridBgColor:"backgroundColor",
+			strGridBorderColor:"borderColor",
+			strGridBorderStyle:"borderStyle",
+			strCellFgColor:"color",
+			strHDBgColor:"headerBackgroundColor",
+			strHDSizing:"resizableColumns",
+			bHDMoving:"draggableColumns",
+			bCellFontBold:"fontWeight",
+			bCellFontItalic:"fontStyle",
+			bCellFontULine:"textDecoration",
+			strActiveRowFgColor:"textSelectedColor",
+			strSelectedCellFgColor:"textSelectedColor",
+			strBorderWidth:"borderWidth",
+			strRowSelectorBgColor:"selectionColor",
+			bCellFontCLine:"bCellFontCLine",
+			strHDAlign:"headerTextAlign",
+			bHDFontCLine:"bHDFontCLine"
+		 
+		};
+	}
+}
+
+//strRowScrollDragAction:"liveScrolling",

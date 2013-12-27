@@ -1,0 +1,61 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+package kr.co.actsone.accessibility
+{
+	import kr.co.actsone.controls.ExAdvancedDataGrid;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridHeaderInfo;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridHeaderRenderer;
+	
+	import mx.core.mx_internal;
+	
+	use namespace mx_internal;
+	
+	public class AccessibilityUtils
+	{
+		public function AccessibilityUtils()
+		{
+		}
+		
+		public  static function sendMsgToScreenReader(grid : ExAdvancedDataGrid) :String
+		{
+			//get current selected cells
+			var cellArr: Array = grid.selectedCells;
+			var sCellReader: String = "";
+			
+			if (grid.selectionMode == "multipleRows")
+			{
+				return sCellReader;
+			}
+			else if(cellArr.length > 0)
+			{
+				var colIndex: int = int(cellArr[0]["columnIndex"]);
+				var rowIndex: int = int(cellArr[0]["rowIndex"]);
+//				var listRender:Array = grid.getListItem(); //// command line 1
+				var itemRenderer:* = grid.getCellItemAt(rowIndex, colIndex); //// command line 1
+//				trace("colIndex = " + colIndex);
+//				trace("rowIndex = " + rowIndex);
+//				trace(grid.selectionMode);
+//				if (grid.selectionMode == "singleCell" || grid.selectionMode == "singleRow")
+				if (itemRenderer != null)
+					sCellReader = itemRenderer.getAccessibilityFullInfor();
+			}
+			return sCellReader;
+		}
+		
+		public static function readHeaderGridOne(grid: ExAdvancedDataGrid, sHeaderReader: String) : String
+		{
+			var headerInfo:ExAdvancedDataGridHeaderInfo = grid.selectedHeaderInfo;
+			var headerRenderer: Object = headerInfo.headerItem;
+			
+			if (headerRenderer && !(headerRenderer is ExAdvancedDataGridHeaderRenderer))
+				sHeaderReader = headerRenderer.getAccessibilityName(sHeaderReader);
+			
+			return sHeaderReader;
+		}
+	}	
+}

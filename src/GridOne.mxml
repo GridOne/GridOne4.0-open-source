@@ -1,0 +1,4128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone  
+//  All Rights Reserved.
+//
+//	This program is free software: you can redistribute it and/or modify
+//	it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or
+//	(at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program.  If not, see <http://www.gnu.org/licenses/>.*/
+//
+////////////////////////////////////////////////////////////////////////////////
+* File Name     : GridOne.mxml
+* Author        : Toan
+* Since         : 08/13/2012
+-->
+
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   xmlns:actsone="kr.co.actsone.controls.*"
+			   preinitialize="preinitializeHandler(event)"
+			   initialize="initializeHandler(event)"
+			   creationComplete="creationCompleteHandler(event)"
+			   applicationComplete="applicationCompleteHandler(event)" 
+			   xmlns:advancedDataGridClasses="kr.co.actsone.controls.advancedDataGridClasses.*" 
+			   click="app_ClickHandler(event)" >
+	<fx:Style source="assets/default.css"/>
+	<fx:Declarations>
+	  
+	</fx:Declarations>
+
+	<fx:Script>
+		<![CDATA[
+			import com.adobe.serialization.json.JSON;
+			
+			import kr.co.actsone.common.Activity;
+			import kr.co.actsone.common.DataGridManager;
+			import kr.co.actsone.common.Global;
+			import kr.co.actsone.common.GridOneImpl;
+			import kr.co.actsone.common.GridOneManager;
+			import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+			import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumnGroup;
+			import kr.co.actsone.custom.PrintADG;
+			import kr.co.actsone.events.SAEvent;
+			import kr.co.actsone.summarybar.SummaryBarManager;
+			import kr.co.actsone.utils.ErrorMessages;
+			import kr.co.actsone.utils.MouseWheelTrap;
+			import kr.co.actsone.utils.URLInfo;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.AdvancedDataGrid;
+			import mx.controls.Alert;
+			import mx.controls.advancedDataGridClasses.AdvancedDataGridRendererProvider;
+			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ResizeEvent;
+			import mx.events.ScrollEvent;
+			import mx.formatters.DateFormatter;
+			import mx.formatters.Formatter;
+			import mx.modules.IModuleInfo;
+			import mx.printing.FlexPrintJob;
+			import mx.printing.FlexPrintJobScaleType;
+			import mx.printing.PrintAdvancedDataGrid;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.StringUtil;
+			import mx.utils.URLUtil;
+			
+			import spark.components.Label;
+			
+			public var gridoneManager:GridOneManager;
+			public var gridoneImpl:GridOneImpl;
+			public var dgManager:DataGridManager;			
+			public var activity:Activity;
+			public var bridgeName:String;
+			
+			public var stackFun:Array=new Array();
+			
+			private var _title:String=""; 
+			private var err:ErrorMessages=new ErrorMessages();
+			[Bindable]
+			public var applicationWidth:Number;
+			
+			public var fixLang:Boolean=false;
+			
+			/************************************************
+			 * Handler of initialize event: init GridOne.
+			 * @param event FlexEvent.
+			 ***********************************************/
+			protected function initializeHandler(event:FlexEvent):void
+			{
+				systemManager.addEventListener(MouseEvent.MOUSE_WHEEL,systemMouseWheelHandler);
+				this.addEventListener(ResizeEvent.RESIZE,resizeApplicationHandler);
+			    Global.DEFAULT_LANG = "EN";
+			}
+			 
+			/************************************************
+			 * Handler of creationComplete event: init GridOne.
+			 *
+			 * @param event FlexEvent.
+			 ***********************************************/
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				//Long add on 2013/07/23
+				if (Capabilities.hasIME)
+				{
+					try
+					{
+						IME.enabled = true;
+						//IME.conversionMode = IMEConversionMode.KOREAN;					
+					}
+					catch (error:Error)
+					{
+						//statusText.text = "Unable to set conversion mode.\n" + error.message;
+					}
+				}
+				
+				Global.initCallback(this);
+				
+				gridoneManager=new GridOneManager(this);
+				
+				dgManager=new DataGridManager(this);
+				gridoneImpl=new GridOneImpl(this);
+				MouseWheelTrap.setup();
+				MouseWheelTrap.gridoneId=this.id;
+				if(Global.BUILD_VERSION == Global.RELEASE_VERSION)
+				{
+					datagrid.setStyle("backgroundImage","");
+					this.hBoxLogo.visible=false;
+				}
+ 
+				
+				this.datagrid.summaryBarManager = new SummaryBarManager(this);
+				
+				applicationWidth = FlexGlobals.topLevelApplication.width; 
+				var serialKey:String=FlexGlobals.topLevelApplication.parameters.serialKey;	
+				 
+				if (serialKey != null)
+				 	this.hBoxLogo.includeInLayout=this.hBoxLogo.visible=!dgManager.checkValidate(serialKey);
+			    // var bDebugMode:String=FlexGlobals.topLevelApplication.parameters.bDebugMode;
+				
+				//improve performance
+				var performanceMode:String = FlexGlobals.topLevelApplication.parameters.performanceMode;
+				bridgeName = FlexGlobals.topLevelApplication.parameters.bridgeName;
+				
+				if(performanceMode && performanceMode.toLowerCase() == "fast")
+					datagrid.performanceMode = true;
+				else
+					datagrid.performanceMode = false;
+				
+				this.datagrid.columns=new Array();
+				callLater(dispatchInitialEvent);
+			 
+			 	gridoneManager.createDefaultContextMenu();
+				
+				if(datagrid.bExternalScroll)
+					datagrid.width = 0;
+			}
+			
+			/*************************************************
+			 * After init GridOne completed: dispatch event
+			 *************************************************/
+			private function dispatchInitialEvent():void
+			{
+				gridoneManager.initJavaFunction();
+				this.datagrid.originalAppHeight = this.height;
+				this.datagrid.originalDgHeight = this.datagrid.height;
+				
+				var initialFunction:String=FlexGlobals.topLevelApplication.parameters.initialize;
+				ExternalInterface.call(initialFunction);
+				
+			}
+			
+			/*************************************************************
+			 * Handler of application complete event
+			 * @param event FlexEvent 
+			 * @author Duong Pham
+			 * ***********************************************************/
+			protected function applicationCompleteHandler(event:FlexEvent):void
+			{
+				//handle event in datagrid
+				this.dgManager.registerAdvancedDataGridEvents();
+				//handle event in gridone
+				this.gridoneManager.registerGridOneEvents();
+	 
+				if(Global.BUILD_VERSION == Global.RELEASE_VERSION)
+					setTimeout(saveURLInfo,1000);
+ 
+			}
+			
+			/*************************************************************
+			 * save information of server which use GridOne
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function saveURLInfo():void
+			{
+				if(loaderInfo != null)
+				{			
+					var urlInfo:URLInfo = new URLInfo();
+					urlInfo.fullURL = loaderInfo.loaderURL;
+					urlInfo.serverName = URLUtil.getServerName(urlInfo.fullURL);
+					urlInfo.port = URLUtil.getPort(urlInfo.fullURL).toString();
+					urlInfo.protocol = URLUtil.getProtocol(urlInfo.fullURL);					
+					var mySO:SharedObject = SharedObject.getLocal("localData","/");		
+					var isStop:Boolean = false;
+					for(var i:int = 0 ; i<urlInfo.preventIPList.length; i++)
+					{
+						if(urlInfo.serverName.toLowerCase().search(urlInfo.preventIPList[i])>=0)
+						{
+							isStop = true;
+							break; 
+						}
+					}
+					if(!isStop)
+					{
+						if(mySO.data.serverName == undefined)						
+						{	//create new shared object																					
+							mySO.data.serverName = urlInfo.serverName;					
+							mySO.data.port = urlInfo.port;
+							mySO.data.protocol = urlInfo.protocol;
+							mySO.flush();
+							mySO.close();
+							remoteService.saveServerInfor(urlInfo.serverName,"Y",urlInfo.port,urlInfo.fullURL,urlInfo.protocol,'gridone3.0');									
+						}											
+						remoteService.getLicense(urlInfo.serverName);						
+					}
+				}
+			}
+			
+			/*************************************************************
+			 * handle fault remote service when saving URL info to dev server
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function remoteServiceFaultHandler(event:FaultEvent):void 
+			{
+				//trace("remoteServiceFaultHandler: " + event.fault.toString());
+			}
+			
+			/*************************************************************
+			 * handle fault remote service when getting license info from dev server
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function getLicenseFaultHandler(event:FaultEvent):void 
+			{
+				//trace("getLicenseFaultHandler: " + event.fault.toString());
+			}
+			
+			/*************************************************************
+			 * handle result event when getting license info from dev server
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function getLicenseSuccessHandler(event:ResultEvent):void
+			{
+				var result:String = event.result as String;				
+				if(StringUtil.trim(result.toUpperCase()) == "N")
+				{
+					Alert.show("You do not have permission to access grid");
+					datagrid.visible = false;
+				}
+			}
+			
+			/************************************************
+			 * Create column for datagrid
+			 *
+			 * @param columnKey column dataField 
+			 * @param columnText header text
+			 * @param columnType column type: combo, text, calendar...
+			 * @param maxLength length of text in a cell, or length of a number
+			 * @param columnWidth column width
+			 * @param editable indicate whether column is editable or not
+			 ***********************************************/
+			public function addHeader(columnKey:String, columnText:String, columnType:String, maxLength:String, columnwidth:String, editable:Boolean,textAlign:String=""):void
+			{
+				
+				gridoneImpl.createHeader(columnKey, columnText, columnType, maxLength, columnwidth, editable,textAlign);
+			}
+			
+			/*************************************************************
+			 * Handler of preinitialize event
+			 * @param event FlexEvent 
+			 * ***********************************************************/
+			protected function preinitializeHandler(event:FlexEvent):void
+			{
+				if(activity == null)
+					activity = new Activity(this);
+ 
+			}
+			
+			/*************************************************************
+			 * Bound header after adding headers
+			 * ***********************************************************/
+			public function boundHeader():void
+			{
+				gridoneImpl.boundHeader();
+ 
+			}
+			
+			/*************************************************************
+			 * add XML data
+			 * @param path string path of xml file from javascript
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setXMLData(path:String):void
+			{
+				gridoneManager.setXMLData(path);
+			}
+			
+			/*************************************************************
+			 * get XML data
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getXMLData():String
+			{
+				return this.gridoneManager.getXMLData();
+			}
+			
+			/*************************************************************
+			 * add text data
+			 * @param data string data from javascript
+			 * @param bValidation indicate where validate data or not
+			 * @param isFormatDate indicate where format date column or not
+			 * @param isFormatDateTime indicate where validate date time column or not 
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function addTextData(data:String, bValidation:Boolean=false,isFormatDate:Boolean=false,isFormatDateTime:Boolean=false):void
+			{
+				this.activity.showBusyBar();
+				var provider:Array=gridoneManager.decodeTextData(data,isFormatDate,isFormatDateTime);
+				gridoneManager.checkDataProvider(provider, bValidation,"setTextData");
+			}
+			
+			/*************************************************************
+			 * Set text data
+			 * @param data string data from javascript
+			 * @param bValidation indicate where validate data or not
+			 * @param isFormatDate indicate where format date column or not
+			 * @param isFormatDateTime indicate where validate date time column or not 
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setTextData(data:String, bValidation:Boolean=false,isFormatDate:Boolean=false,isFormatDateTime:Boolean=false):void
+			{
+			 	this.activity.showBusyBar();
+				var provider:Array=gridoneManager.decodeTextData(data,isFormatDate,isFormatDateTime);
+				gridoneManager.checkDataProvider(provider, bValidation,"setTextData");
+			}
+			
+			/*************************************************************
+			 * Set json data
+			 * @param jsonData object Data from javascript
+			 * @param bValidation indicate where validate data or not
+			 * @author Duong Pham
+			 * ***********************************************************/			
+			public function setGridData(jsonData:Object, bValidation:Boolean=true):void
+			{
+				this.gridoneManager.setJsonData(jsonData,bValidation,"setGridData");
+			}
+			
+			/*************************************************************
+			 * Set json data
+			 * @param jsonData object Data from javascript
+			 * @param bValidation indicate where validate data or not
+			 * @author Duong Pham
+			 * ***********************************************************/			
+			public function setJSonData(jsonData:Object, bValidation:Boolean=true):void
+			{
+				this.gridoneManager.setJsonData(jsonData, bValidation, "setJsonData");
+			}
+			
+			/*************************************************************
+			 * Get grid data
+			 * @param columnKey String Data from javascript
+			 * @author Duong Pham
+			 * ***********************************************************/			
+			public function getGridData(columnKey:String=null):String
+			{				
+				return gridoneManager.getGridData(columnKey);
+			}
+			
+			/*************************************************************
+			 * Set property or style for DataGrid.
+			 * @param name String
+			 * @param value Object
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setProperty(name:String, value:Object):void
+			{
+				this.setDataGridProperty(name, value);
+			}
+			
+			/*************************************************************
+			 * Set property or style for DataGrid.
+			 * @param name string of name of property.
+			 * @param value object of value of property
+			 * ***********************************************************/
+			public function setDataGridProperty(name:String, value:Object):void
+			{
+				gridoneImpl.setDataGridProperty(name, value);
+				this.datagrid.invalidateList();	
+			}
+			
+			/*************************************************************
+			 * get value of property of DataGrid.
+			 * @param property name of property.
+			 * @return value of property as a object
+			 * ***********************************************************/
+			public function getDataGridProperty(property:String):Object
+			{
+				if (this.datagrid.hasOwnProperty(property))
+					return this.datagrid[property];
+				else
+					return this.datagrid.getStyle(property);
+			}
+			
+			/*************************************************************
+			 * Set property or style for column
+			 * @param dataField string of name of dataField column
+			 * @param name string of name of property.
+			 * @param value object of value of property
+			 * ***********************************************************/
+			public function setColumnProperty(dataField:String, name:String, value:Object):void
+			{
+				gridoneImpl.setColumnProperty(dataField, name, value);
+				this.datagrid.invalidateList();				
+			}
+			
+			/*************************************************************
+			 * get value of property of specified column.
+			 * @param colField it can be a string object for DataField column or integer object for index column.
+			 * @param property name of property.
+			 * @return value of property as a object
+			 * ***********************************************************/
+			public function getColumnProperty(colField:Object, property:String):Object
+			{
+				return gridoneImpl.getColumnProperty(colField, property);
+			}
+  		
+			/*************************************************************
+			 * Set the column is visible or not
+			 * @param dataField The name of dataField column
+			 * @param isVisible Is true if visible; is false if invisible 
+			 * @author Thuan 
+			 * ***********************************************************/			
+			public function setColHide(dataField:String, isHide: Boolean):void
+			{
+				gridoneImpl.setColHide(dataField, isHide);
+			}
+			
+			/*************************************************************
+			 * Check column is visible or not 
+			 * @param columnKey The name of dataField column
+			 * @author Duong Pham
+			 * ***********************************************************/			
+			public function isColHide(columnKey:String):Boolean
+			{
+				return gridoneImpl.isColHide(columnKey);
+			}
+		 	
+			/*************************************************************
+			 * set column index
+			 * @param columnKey The name of dataField column
+			 * @param index int Index of column
+			 * @author Duong Pham
+			 * ***********************************************************/	
+			public function setColIndex(columnKey:String, index:int):void
+			{
+				gridoneImpl.setColIndex(columnKey,index);				
+			}
+			/*************************************************************
+			 * Set the column width
+			 * @param dataField The name of dataField column
+			 * @param width The width of column 
+			 * @author Thuan 
+			 * ***********************************************************/			
+			public function setColWidth(dataField:String, width: String):void
+			{
+				gridoneImpl.setColumnProperty(dataField, "width", width);
+			}	
+			
+			/*************************************************************
+			 * Get the column width
+			 * @param columnKey dataField of column
+			 * @author Thuan 
+			 * @modified by Duong Pham
+			 * ***********************************************************/			
+			public function getColWidth(columnKey:String):Number
+			{		
+				return gridoneImpl.getColWidth(columnKey);
+			}
+			
+			/*************************************************************
+			 * Set the col fix: Keep column(s) is visible while using horizontal scrolls
+			 * @param columnKey The name of dataField column
+			 * @author Thuan 
+			 * ***********************************************************/		
+			public function setColFix(columnKey:String):void
+			{
+				gridoneImpl.setColFix(columnKey);
+			}
+			
+			/*************************************************************
+			 * Reset the col fix: column unfix
+			 * @param strColumnKey The name of dataField column
+			 * @author Thuan 
+			 * ***********************************************************/		
+			public function resetColFix():void
+			{
+				gridoneImpl.resetColFix();
+			}			
+			
+			/*************************************************************
+			 * Set the row fix: Keep row(s) is visible while using vertical scrolls
+			 * @param strColumnKey The name of dataField column
+			 * @author Thuan
+			 * ***********************************************************/		
+			public function setRowFix(rowIndex:int):void
+			{ 		
+				gridoneImpl.setRowFix(rowIndex);				
+			}		
+			
+			/*************************************************************
+			 * Set the row fix: Row unfix
+			 * @param strColumnKey The name of dataField column
+			 * @author Thuan
+			 * ***********************************************************/		
+			public function resetRowFix():void
+			{
+				gridoneImpl.resetRowFix();				
+			}	
+			
+			/*************************************************************
+			 * getColCount: The number of columns to be displayed in a TileList control 
+			 * 				or items in a HorizontalList control. For the data grids, 
+			 * 				specifies the number of visible columns. 
+			 * @param strColumnKey The name of dataField column
+			 * @author Thuan
+			 * ***********************************************************/		
+			public function getColCount():int
+			{
+				return gridoneImpl.getColCount();
+			}		
+			
+			/*************************************************************
+			 * setColCellAlign: Set alignment of a column text
+			 * @param columnKey The name of dataField column
+			 * @param strAlign Left/Center/Right/Justify
+			 * @author Thuan
+			 * ***********************************************************/				
+			public function setColCellAlign(columnKey:String, strAlign:String):void
+			{
+				gridoneImpl.setColCellAlign(columnKey, strAlign);				
+			}
+			
+			/*************************************************************
+			 * getColType: Get Type of Column
+			 * @param columnKey The name of dataField column
+			 * @author Thuan
+			 * ***********************************************************/			
+			public function getColType(columnKey:String):String
+			{
+				return dgManager.getColumnType(columnKey);
+			}
+			
+			/*************************************************************
+			 * setColCellBgColor: Set background color to column
+			 * @param columnKey The name of dataField column
+			 * @author Thuan
+			 * ***********************************************************/			
+			public function setColCellBgColor(columnKey:String, color:String):void
+			{
+				this.gridoneImpl.setColCellBgColor(columnKey, color);		
+			}
+			
+			/*************************************************************
+			 * setColCellFgColor: Set foreground color to column
+			 * @param columnKey The name of dataField column
+			 * @author Thuan
+			 * ***********************************************************/			
+			public function setColCellFgColor(columnKey:String, color:String):void
+			{
+				gridoneImpl.setColCellFgColor(columnKey, color);			
+			}		
+			
+			/*************************************************************
+			 * set column cell font
+			 * @param columnKey The name of dataField column
+			 * @param fontName Font nam
+			 * @param bBold Whether font bold
+			 * @param bItalic Whether font italic
+			 * @param bUnderLine Whether font underline
+			 * @param bCenterLine Whether font strikethrough
+			 * @param nSize Font size
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setColCellFont(columnKey:String, fontName:String, nSize:Number, bBold:Boolean, bItalic:Boolean, bUnderLine:Boolean, bCenterLine:Boolean):void
+			{
+				gridoneImpl.setColCellFont(columnKey, fontName, nSize, bBold, bItalic, bUnderLine, bCenterLine);
+			}		
+			
+			/*************************************************************
+			 * set column cell font bold
+			 * @param columnKey Name of datafield
+			 * @param bBold Whether font is bold
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setColCellFontBold(columnKey:String, bBold:Boolean):void
+			{
+				gridoneImpl.setColCellFontBold(columnKey, bBold);
+			}
+			
+			/*************************************************************
+			 * set column cell font italic
+			 * @param columnKey Name of datafield
+			 * @param bItalic Whether font is italic
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setColCellFontItalic(columnKey:String, bItalic:Boolean):void
+			{
+				gridoneImpl.setColCellFontItalic(columnKey, bItalic);
+			}
+			
+			/*************************************************************
+			 * set column cell font name
+			 * @param columnKey Name of datafield
+			 * @param fontName Font name in column
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setColCellFontName(columnKey:String, fontName:String):void
+			{
+				gridoneImpl.setColCellFontName(columnKey, fontName);
+			}
+			
+			/*************************************************************
+			 * set column cell font size
+			 * @param columnKey Name of datafield
+			 * @param nSize Font size in column
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setColCellFontSize(columnKey:String, nSize:Number):void
+			{
+				gridoneImpl.setColCellFontSize(columnKey, nSize);
+			}
+			
+			/*************************************************************
+			 * set column cell font underline
+			 * @param columnKey Name of datafield
+			 * @param bUnderLine Whether font is underline
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setColCellFontULine(columnKey:String, bUnderLine:Boolean):void
+			{
+				gridoneImpl.setColCellFontULine(columnKey, bUnderLine);					
+			}			
+			
+			/*************************************************************
+			 * change column separator in text data which will be used in text parser.
+			 * @param sep New separator
+			 * @author Thuan
+			 * ***********************************************************/
+			public function changeColumnSeparator(sep:String):void
+			{
+				DataGridManager.columnSeparator = sep;					
+			}
+			
+			/*************************************************************
+			 * add Default Context Menu Item
+			 * @param strMenuItemKey string data of context menu item
+			 * @author Duong Pham			 
+			 * ***********************************************************/
+			public function addDefaultContextMenuItem(strMenuItemKey:String):void
+			{
+				this.gridoneManager.addDefaultContextMenu(strMenuItemKey);
+			}
+			
+			/*************************************************************
+			 * add user context menu item
+			 * @param strMenuKey string data of menu key
+			 * @param strMenuItemKey string data of context menu item
+			 * @param strText string data of content menu
+			 * ***********************************************************/
+			public function addUserContextMenuItem(strMenuKey:String, strMenuItemKey:String, strText:String):void
+			{
+				this.gridoneManager.addUserContextMenu(strMenuKey, strMenuItemKey, strText);				
+			}
+			
+			/*************************************************************
+			 * remove all context menu item
+			 * @param strMenuKey string data of menu key
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function removeAllContextMenuItem(strMenuKey:String):void
+			{
+				gridoneManager.removeAllContextMenuItem(strMenuKey);
+			}
+			
+			/*************************************************************
+			 * remove all context menu item
+			 * @param strMenuKey string data of menu key
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function addContextMenuSeparator(strMenuKey:String):void
+			{
+				gridoneManager.addContextMenuSeparator(strMenuKey);				
+			}
+			
+			/*************************************************************
+			 * add event for GridOne.
+			 * @param type type of event likes itemClick, dataChange, addRow,....
+			 * @param listener name of function for listening event
+			 * ***********************************************************/
+			public function addEvent(type:String, listener:Function):void
+			{
+				if (this.datagrid != null)
+					this.datagrid.addEventListener(type, listener);
+			}
+			
+			/*************************************************************
+			 * remove event for GridOne
+			 * @param type type of event likes itemClick, dataChange, addRow,....
+			 * @param listener name of function for listening event
+			 * ***********************************************************/
+			public function removeEvent(type:String, listener:Function):void
+			{
+				if(this.datagrid.hasEventListener(type))
+					this.datagrid.removeEventListener(type,listener);
+			}
+			
+			/*************************************************************
+			 * control event according to  External Interface
+			 * @param type string event's name
+			 * @param type string function's name
+			 * ***********************************************************/
+			public function createEvent(type:String, listener:String):void
+			{				
+				this.datagrid.eventArr[type]=listener;
+			}
+			
+			/*************************************************************
+			 * setColHDCheckBoxVisible
+			 * @param strColKey String data of data field
+			 * @param bVisible boolean 
+			 * @param bChangeCellEvent boolean
+			 * ***********************************************************/
+			public function setColHDCheckBoxVisible(strColKey:String, bVisible:Boolean, bChangeCellEvent:Boolean=false):void
+			{
+				this.gridoneImpl.setColHDCheckBoxVisible(strColKey,bVisible,bChangeCellEvent);
+			}
+			
+			/*************************************************************
+			 * setColHDCheckBoxValue
+			 * @param strColumnKey String data of data field
+			 * @param bValue boolean 			 
+			 * ***********************************************************/
+			public function setColHDCheckBoxValue(strColumnKey:String, bValue:Boolean):void
+			{
+				this.gridoneImpl.setColHDCheckBoxValue(strColumnKey,bValue);
+			}
+			
+			/*************************************************************
+			 * add group in header
+			 * @param groupKey dataField of group column
+			 * @param groupName name of group column
+			 * ***********************************************************/
+			public function addGroup(groupKey:String, groupName:String):void
+			{
+				this.gridoneImpl.createGroup(groupKey, groupName);
+			}
+			
+			/*************************************************************
+			 * append header into group column
+			 * @param groupKey dataField of group column
+			 * @param columnKey dataField of column
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function appendHeader(groupKey:String, columnKey:String):void
+			{
+				this.gridoneImpl.appendHeader(groupKey, columnKey);
+			}
+			
+			/*************************************************************
+			 * append group column into group column
+			 * @param parentGroupKey dataField of parent group column
+			 * @param childGroupKey dataField of child group column
+			 * @author Duong Pham			  
+			 * ***********************************************************/
+			public function appendGroup(parentGroupKey:String, childGroupKey:String):void
+			{
+				this.gridoneImpl.appendHeader(parentGroupKey, childGroupKey);				
+			}
+			
+			/*************************************************************
+			 * set name for group header
+			 * @param strGroupKey dataField of group column
+			 * @param strText name of group column
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setGroupHDText(strGroupKey:String, strText:String):void
+			{
+				this.gridoneImpl.setGroupHDText(strGroupKey, strText);
+			}
+			
+			/*************************************************************
+			 * get name for group header
+			 * @param strGroupKey dataField of group column	
+			 * @author Duong Pham		
+			 * ***********************************************************/
+			public function getGroupHDText(strGroupKey:String):String
+			{
+				return this.gridoneImpl.getGroupHDText(strGroupKey);
+			}
+			
+			/*************************************************************
+			 * set column header align
+			 * @param strColumnKey dataField of column
+			 * @param strAlign string of data
+			 *    left right center			
+			 * @author Duong Pham			 
+			 * ***********************************************************/
+			public function setColHDAlign(strColumnKey:String, strAlign:String):void
+			{
+				this.gridoneImpl.setColHDAlign(strColumnKey, strAlign);
+			}
+			
+			/*************************************************************
+			 * get column header key
+			 * @param nColunmIndex index of column
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getColHDKey(nColunmIndex:int):String
+			{
+				return this.gridoneImpl.getColHDKey(nColunmIndex);
+			}
+			
+			/*************************************************************
+			 * get column header visible index
+			 * @param strColumnKey string of data filed 
+			 * ***********************************************************/
+			public function getColHDVisibleIndex(strColumnKey:String):int
+			{
+				return this.gridoneImpl.getColHDVisibleIndex(strColumnKey);
+			}
+			
+			/*************************************************************
+			 * get column header visible key
+			 * @param index position of column 
+			 * ***********************************************************/
+			public function getColHDVisibleKey(index:int):String
+			{
+				return this.gridoneImpl.getColHDVisibleKey(index);			
+			}
+			
+			/*************************************************************
+			 * get column header text
+			 * @param strColumnKey string of data filed 
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getColHDText(strColumnKey:String):String
+			{
+				return this.gridoneImpl.getColHDText(strColumnKey);
+			}
+			
+			/*************************************************************
+			 * set column header text
+			 * @param strColumnKey string of data filed 
+			 * @param strText string of text
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setColHDText(strColumnKey:String, strText:String):void
+			{
+				this.gridoneImpl.setColHDText(strColumnKey , strText);				
+			}
+			
+			/*************************************************************
+			 * Get column header index
+			 * @param columnKey:String
+			 * author: Duong Pham
+			 * ***********************************************************/
+			public function getColHDIndex(columnKey:String):int
+			{
+				return this.gridoneImpl.getColHDIndex(columnKey);
+			}
+			
+			/*************************************************************
+			 * Get column header background color
+			 * @param columnKey:String
+			 * author: Duong Pham
+			 * ***********************************************************/
+			public function setColHDBgColor(columnKey:String, strColor:String):void
+			{
+				this.gridoneImpl.setColHDBgColor(columnKey , strColor);			
+			}
+			
+			/*************************************************************
+			 * set color of column header
+			 * @param columnKey:String ,color:String
+			 * author: Duong Pham
+			 * ***********************************************************/
+			public function setColHDFgColor(columnKey:String, color:String):void
+			{
+				this.gridoneImpl.setColHDFgColor(columnKey,color);
+			}
+			
+			/*************************************************************
+			 * set group header font color and background color
+			 * @param columnKey String DataField of column
+			 * @param strFgColor String Font color
+			 * @param strBgColor String Background color
+			 * author: Duong Pham
+			 * ***********************************************************/
+			public function setGroupHDColor(strGroupKey:String, strFgColor:String, strBgColor:String):void
+			{
+				this.gridoneImpl.setGroupHDColor(strGroupKey, strFgColor, strBgColor);
+			}
+			
+			/*************************************************************
+			 * set group header font color and background color
+			 * @param strGroupKey String DataField of column
+			 * @param strFontName String Font color
+			 * @param nSize String Font size
+			 * @param bBold Boolean Font weight
+			 * @param bItalic Boolean Font style
+			 * @param bUnderLine Boolean Text decoration
+			 * @param bCenterLine Boolean Center line
+			 * author: Duong Pham
+			 * ***********************************************************/
+			public function setGroupHDFont(strGroupKey:String, strFontName:String, nSize:Number, bBold:Boolean, bItalic:Boolean, bUnderLine:Boolean, bCenterLine:Boolean = false):void
+			{
+				this.gridoneImpl.setGroupHDFont(strGroupKey, strFontName, nSize, bBold, bItalic, bUnderLine, bCenterLine);
+			}
+			
+			/*************************************************************
+			 * set Tree Mode
+			 * @param strTreeColumnKey String dataField of column which tree is displayed 
+			 * @param strRootKey String Root key
+			 * @param strDelimiter String Delimeter
+			 * author Duong Pham
+			 * ***********************************************************/
+			public function setTreeMode(strTreeColumnKey:String, strRootKey:String, strDelimiter:String):void
+			{
+				this.gridoneImpl.setTreeMode(strTreeColumnKey, strRootKey, strDelimiter);
+			}
+			
+			/*************************************************************
+			 * add a object or text row.
+			 * @param row object
+			 * author Duong Pham
+			 * ***********************************************************/
+			public function addRow(row:Object=null):void
+			{
+				this.gridoneImpl.addRow(row);
+				 
+				 
+			}
+			
+			/*************************************************************
+			 * add an empty row at an index.
+			 * @param index index of row will be added.
+			 * ***********************************************************/
+			public function insertRow(index:int):void
+			{				
+				this.gridoneImpl.addRowAt(null, index);
+				 
+			}
+			
+			/*************************************************************
+			 * add an row at an index.
+			 * @param index index of row will be added.
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function addRowAt(row:Object, index:int):void
+			{				
+				this.gridoneImpl.addRowAt(row, index);
+			}
+			
+			/*************************************************************
+			 * delete a row at an pre-defined index or selected index.
+			 * @param index Index of row will be deleted. If not declare then current selected index will be used.
+			 * @param isDisappearCRUDmode use for CRUDmode 
+			 * 	      -true: item row that delete will disppear from screen
+			 *        -false: item row that delete still display on screen
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function deleteRow(index:int=-1):void
+			{
+				this.gridoneImpl.deleteRow(index);
+			 
+			}
+			
+			/*************************************************************
+			 * move row
+			 * @param index Index of row will be moved.
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function moveRow(nRow:int):void
+			{
+				this.gridoneImpl.scrollToIndex(nRow);
+			}
+			
+			/*************************************************************
+			 * get row count
+			 * @param isFilter boolean
+			 * @return number of row count in datagrid
+			 * @author Duong Pham
+			 * ***********************************************************/
+			
+			public function getRowCount(isFilter:Boolean=false):Number
+			{
+				return this.gridoneImpl.getRowCount(isFilter);
+			}
+			
+			/*************************************************************
+			 * set active for row index
+			 * @param rowIndex
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setActiveRowIndex(rowIndex:int):void
+			{
+				this.gridoneImpl.setActiveRowIndex(rowIndex);
+			}
+			
+			/*************************************************************
+			 * get active for row index
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getActiveRowIndex():int
+			{				
+				return gridoneImpl.getActiveRowIndex();
+			}
+			
+			/*************************************************************
+			 * Set number format for column
+			 * @param columnKey Datafield name
+			 * @param value Format string 
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setNumberFormat(columnKey:String, value:String):void
+			{
+				this.gridoneImpl.setNumberFormat(columnKey , value);	
+			}
+			
+			/*************************************************************
+			 * set active for row index
+			 * @param rowIndex
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setRowActivation(nRow:int, strActivation:String):void
+			{
+				this.gridoneImpl.setRowActivation(nRow , strActivation);	
+			}
+			
+			/*************************************************************
+			 * set row background color
+			 * @param row int
+			 * @param color String
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setRowBgColor(row:int, color:String):void
+			{
+				this.gridoneImpl.setRowBgColor(row, color);
+			}
+			
+			/*************************************************************
+			 * set row font color
+			 * @param row int
+			 * @param color String
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setRowFgColor(row:int, color:String):void
+			{
+				this.gridoneImpl.setRowFgColor(row, color);
+			}
+			
+			/*************************************************************
+			 * set row hide
+			 * @param rowIndex int
+			 * @param bHide Boolean
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setRowHide(nRow:int, bHide:Boolean,isHandleBkDp:Boolean=true):void
+			{
+				this.gridoneImpl.setRowHide(nRow,bHide,isHandleBkDp);
+			}
+			
+			/*************************************************************
+			 * is row hide
+			 * @param rowIndex int			 
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function isRowHide(nRow:int):Boolean
+			{
+				return this.gridoneImpl.isRowHide(nRow);
+			}
+			
+			/*************************************************************
+			 * search data
+			 * @param searchStr String
+			 * @param isDown String
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function search(searchStr:String,isDown:String=null,columnKey:String=""):void
+			{
+				this.gridoneManager.searchData(searchStr,isDown,columnKey);
+			}
+			
+			/*************************************************************
+			 * filter data
+			 * @param searchStr String
+			 * @param columnKey String
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function filter(searchText:String,columnKey:String=""):void
+			{
+				this.gridoneManager.filter(searchText,columnKey);
+			}
+			
+			/*************************************************************
+			 * set CRUD mode
+			 * @param strCRUDColumnKey String
+			 * @param strInsertRowText String
+			 * @param strUpdateRowText String
+			 * @param strDeleteRowText String
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCRUDMode(strCRUDColumnKey:String, strInsertRowText:String="C", strUpdateRowText:String="U", strDeleteRowText:String="D"):void			
+			{
+				this.gridoneManager.setCRUDMode(strCRUDColumnKey,strInsertRowText,strUpdateRowText,strDeleteRowText);
+			}
+			
+			/*************************************************************
+			 * cancel CRUD
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function cancelCRUD():void			
+			{
+				this.gridoneManager.cancelCRUD();
+			}
+			
+			/*************************************************************
+			 * disable CRUD mode
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function clearCRUDMode():void
+			{
+				this.gridoneManager.clearCRUDMode();
+			}
+			
+			/*************************************************************
+			 * reset value for a specified cell in CRUD column
+			 * @param rowIndex int index of row
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function cancelCRUDRow(rowIndex:int):void
+			{
+				this.gridoneManager.cancelCRUDRow(rowIndex);
+			}
+			
+			/*************************************************************
+			 * get cell value index
+			 * @param nColumnIndex int index of column
+			 * @param nRow int index of row
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getCellValueIndex(nColumnIndex:int, nRow:int):String
+			{
+				return this.gridoneImpl.getCellValueIndex(nColumnIndex,nRow);
+			}
+			
+			/*************************************************************
+			 * reset value for a specified cell in CRUD column
+			 * @param nColumnIndex int index of column
+			 * @param nRow int index of row
+			 * @param strValue String data from javascript
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellValueIndex(nColumnIndex:int, nRow:int, strValue:String):void
+			{
+				this.gridoneImpl.setCellValueIndex(nColumnIndex,nRow,strValue);
+			}
+			
+			/*************************************************************
+			 * get cell hidden value index
+			 * @param nColumnIndex int index of column
+			 * @param nRow int index of row			
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getCellHiddenValueIndex(nColumnIndex:int, nRow:int):String
+			{
+				return this.gridoneImpl.getCellHiddenValueIndex(nColumnIndex,nRow);
+			}
+			
+			/*************************************************************
+			 * set cell hidden value index
+			 * @param nColumnIndex int index of column
+			 * @param nRow int index of row	
+			 * @param strValue String data from javascript		
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellHiddenValueIndex(nColumnIndex:int, nRow:int, strValue:String):void
+			{
+				this.gridoneImpl.setCellHiddenValueIndex(nColumnIndex,nRow,strValue);
+			}
+			
+			/*************************************************************
+			 * get cell hidden value
+			 * @param nColumnIndex int index of column
+			 * @param nRow int index of row			
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getCellHiddenValue(strColumnKey:String, nRow:int):String
+			{
+				return this.gridoneImpl.getCellHiddenValueHelper(strColumnKey,nRow,"getCellHiddenValue");
+			}
+			
+			/*************************************************************
+			 * set cell hidden value
+			 * @param nColumnIndex int index of column
+			 * @param nRow int index of row	
+			 * @param strValue String data from javascript		
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellHiddenValue(strColumnKey:String, nRow:int, strValue:String):void
+			{
+				this.gridoneImpl.setCellHiddenValueHelper(strColumnKey,nRow,strValue, "setCellHiddenValue");
+			}
+			
+			/*************************************************************
+			 * set value of specified cell that is visible in grid
+			 * @param nColumnIndex int index of column
+			 * @param nRow int index of row	
+			 * @param strValue String data from javascript	
+			 * @param belongVisibleCol to validate cell data in two cases
+			 *  - true: cell data is displayed in grid
+			 *  - false: cell data is not displayed in grid 	
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellValue(columnKey:String, nRow:int, value:String, belongVisibleCol:Boolean=false):void
+			{				
+				this.gridoneImpl.setCellValue(columnKey,nRow,value,belongVisibleCol);
+			}
+			
+			/*************************************************************
+			 * get cell value
+			 * @param listColumKey string of list of column key
+			 * @param nRow index of row	
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getCellValue(listColumKey:String, nRow:int):Object
+			{
+				return this.gridoneImpl.getCellValue(listColumKey,nRow);
+			}
+			
+			/*************************************************************
+			 * set cell image
+			 * @param strColKey int index of column
+			 * @param nRow int index of row	
+			 * @param nImageIndex int Index of image inside image list
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellImage(strColKey:String, nRow:int, nImageIndex:int):void
+			{
+				this.gridoneImpl.setCellImage(strColKey,nRow,nImageIndex);
+			}
+			
+			/*************************************************************
+			 * get cell image
+			 * @param strColKey int index of column
+			 * @param nRow int index of row				 
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getCellImage(strColKey:String, nRow:int):String
+			{
+				return this.gridoneImpl.getCellImage(strColKey,nRow);
+			}
+			
+			/*************************************************************
+			 * set cell background color
+			 * @param columnKey string data field of column
+			 * @param nRow int Index of row
+			 * @param color String data of color				 
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellBgColor(columnKey:String, nRow:int, color:String):void
+			{				
+				this.gridoneImpl.setCellBgColor(columnKey, nRow, color);
+			}
+			
+			/*************************************************************
+			 * set cell font color
+			 * @param columnKey string data field of column
+			 * @param nRow int Index of row	
+			 * @param color String data of color			 
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellFgColor(columnKey:String, nRow:int, color:String):void
+			{
+				this.gridoneImpl.setCellFgColor(columnKey, nRow, color);				
+			}
+		 
+			/*************************************************************
+			 * set cell font
+			 * @param columnKey string data field of column
+			 * @param nRow int Index of row	
+			 * @param fontName string
+			 * @param nSize number
+			 * @param bBold boolean
+			 * @param bItalic boolean
+			 * @param bUnderLine boolean
+			 * @param bCenterLine boolean
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellFont(columnKey:String, nRow:int, fontName:String, nSize:Number, bBold:Boolean, bItalic:Boolean, bUnderLine:Boolean, bCenterLine:Boolean):void
+			{
+				this.gridoneImpl.setCellFont(columnKey,nRow,fontName,nSize,bBold,bItalic,bUnderLine,bCenterLine);
+			}
+			
+			/*************************************************************
+			 * set cell font bold
+			 * @param columnKey string data field of column
+			 * @param nRow int Index of row	
+			 * @param bBold boolean
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellFontBold(columnKey:String, nRow:int, bBold:Boolean):void
+			{
+				this.gridoneImpl.setCellFontBold(columnKey,nRow,bBold);
+			}
+			
+			/*************************************************************
+			 * set cell font center line
+			 * @param columnKey string data field of column
+			 * @param nRow int Index of row	
+			 * @param bValue boolean
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellFontCLine(columnKey:String, nRow:int, bValue:Boolean):void
+			{
+				this.gridoneImpl.setCellFontCLine(columnKey,nRow,bValue);
+			}
+			
+			/*************************************************************
+			 * set column cell font center line
+			 * @param columnKey string data field of column
+			 * @param bCenterLine boolean
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setColCellFontCLine(columnKey:String, bCenterLine:Boolean):void
+			{
+				this.gridoneImpl.setColCellFontCLine(columnKey, bCenterLine);
+			}
+			
+			/*************************************************************
+			 * merge all cells inside column
+			 * @param columnKey string data field of column
+			 * @param bMerge boolean
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setColCellMerge(columnKey:String, bMerge:Boolean):void
+			{
+				this.gridoneImpl.setColCellMerge(columnKey, bMerge);
+			}
+			
+			/*************************************************************
+			 * set cell font style
+			 * @param columnKey string data field of column
+			 * @param nRow int Index of row	
+			 * @param bValue boolean
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellFontItalic(columnKey:String, nRow:int, bValue:Boolean):void
+			{
+				this.gridoneImpl.setCellFontItalic(columnKey,nRow,bValue);
+			}
+			
+			/*************************************************************
+			 * set cell font name
+			 * @param columnKey string data field of column
+			 * @param nRow int Index of row	
+			 * @param value string
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellFontName(columnKey:String, nRow:int, value:String):void
+			{
+				this.gridoneImpl.setCellFontName(columnKey,nRow,value);
+			}
+			
+			/*************************************************************
+			 * set cell font size
+			 * @param columnKey string data field of column
+			 * @param nRow int Index of row	
+			 * @param value string
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellFontSize(columnKey:String, nRow:int, value:Number):void
+			{
+				this.gridoneImpl.setCellFontSize(columnKey,nRow,value);
+			}
+			
+			/*************************************************************
+			 * set cell font underline
+			 * @param columnKey string data field of column
+			 * @param nRow int Index of row	
+			 * @param bValue boolean
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellFontULine(columnKey:String, nRow:int, value:Boolean):void
+			{
+				this.gridoneImpl.setCellFontULine(columnKey,nRow,value);
+			}
+			
+			/*************************************************************
+			 * allow draw update
+			 * @param boolDraw Boolean
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function allowDrawUpdate(boolDraw:Boolean):void
+			{
+				this.gridoneImpl.allowDrawUpdate(boolDraw);
+			}
+			
+			/*************************************************************
+			 * Add a combo to column
+			 * @param columnKey Column Name
+			 * @param listkey Combo Name	
+			 * @author Thuan
+			 * ***********************************************************/
+			public function addComboList(columnKey:String, value:Object):void
+			{
+				this.gridoneImpl.addComboList(columnKey, value);
+			}
+			
+			/*************************************************************
+			 * set array data into combo column
+			 * @param columnKey Column Name
+			 * @param value  Object	
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setMultiComboData(columnKey:String,value:Object):void
+			{
+				this.gridoneImpl.addComboList(columnKey, value);
+			}
+			
+			/*************************************************************
+			 * Add a item data to combo in column
+			 * @param columnKey Column name
+			 * @param strText Item text
+			 * @param strValue Item value
+			 * @param listkey Combo name	
+			 * @author Thuan
+			 * ***********************************************************/
+			public function addComboListValue(columnKey:String, strText:String, strValue:String, listKey:String=Global.DEFAULT_COMBO_KEY):void
+			{
+				this.gridoneImpl.addComboListValue(columnKey, strText, strValue, listKey);
+			}
+			
+			/*************************************************************
+			 * Get combo list key
+			 * @param columnKey Column name
+			 * @param listKey Combo name	
+			 * @return Combo list key
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getComboListKey(columnKey:String, listKey:int):String
+			{
+				return this.gridoneImpl.getComboListKey(columnKey, listKey);
+			}
+			
+			/*************************************************************
+			 * Get combo selected key
+			 * @param columnKey Column name
+			 * @param rowIndex row index	
+			 * @return Combo selected key
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getComboSelectedListKey(columnKey:String, rowIndex:int):String
+			{
+				return this.gridoneImpl.getComboSelectedListKey(columnKey, rowIndex);
+			}
+			
+			/*************************************************************
+			 * Get combo list count
+			 * @param columnKey Column name
+			 * @param listKey Combo name	
+			 * @return Combo list count
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getComboListCount(columnKey:String, listKey:String=Global.DEFAULT_COMBO_KEY):int
+			{
+				return this.gridoneImpl.getComboListCount(columnKey, listKey);
+			}
+			
+			/*************************************************************
+			 * Get item value in combo
+			 * @param columnKey Column name
+			 * @param comboIndex Item value index in combox
+			 * @param listKey Combo name	
+			 * @return Item value in combo
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getComboHiddenValue(columnKey:String, comboIndex:int, listKey:String=Global.DEFAULT_COMBO_KEY):String
+			{
+				return this.gridoneImpl.getComboHiddenValue(columnKey, comboIndex, listKey);
+			}
+			
+			/*************************************************************
+			 * Get item text in combo
+			 * @param columnKey Column name
+			 * @param comboItemIndex 
+			 * @param listKey Combo name
+			 * @return Item text in combo	
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getComboText(columnKey:String, comboIndex:int, listKey:String=Global.DEFAULT_COMBO_KEY):String
+			{
+				return this.gridoneImpl.getComboText(columnKey, comboIndex, listKey);
+			}
+			
+			/*************************************************************
+			 * Get combo selected index
+			 * @param columnKey Column name
+			 * @param rowIndex Row index 
+			 * @return Combo selected index
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getComboSelectedIndex(columnKey:String, rowIndex:int):int
+			{
+				return this.gridoneImpl.getComboSelectedIndex(columnKey, rowIndex);
+			}
+			
+			/*************************************************************
+			 * Get combo selected index
+			 * @param columnKey Column name
+			 * @param rowIndex Row index
+			 * @param comboIndex Combo index
+			 * @param listKey Combo name	
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setComboSelectedIndex(columnKey:String, rowIndex:int, comboIndex:int, listKey:String=Global.DEFAULT_COMBO_KEY):void
+			{
+				this.gridoneImpl.setComboSelectedIndex(columnKey, rowIndex, comboIndex, listKey);
+			}
+			
+			/*************************************************************
+			 * Add combo header value
+			 * @param columnKey Column name
+			 * @param comboIndex 
+			 * @param listKey Combo name	
+			 * @author Thuan
+			 * ***********************************************************/
+			public function addComboHeaderValue(columnKey:String, label:String, value:String):void
+			{
+				this.gridoneImpl.addComboHeaderValue(columnKey, label, value);
+			}
+			
+			/*************************************************************
+			 * Set an item value of combo is hidden value for row index of grid
+			 * @param columnKey Column name
+			 * @param rowIndex Row index of Grid
+			 * @param hiddenValue Hidden value is the item value of combo
+			 * @param listKey Combo name	
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setComboSelectedHiddenValue(columnKey:String, rowIndex:int, hiddenValue:String, listKey:String=Global.DEFAULT_COMBO_KEY):void
+			{
+				this.gridoneImpl.setComboSelectedHiddenValue(columnKey, rowIndex, hiddenValue, listKey);
+			}
+			
+			/*************************************************************
+			 * Get an item value of combo is hidden value for row index of grid
+			 * @param columnKey Column name
+			 * @param rowIndex Row index of Grid
+			 * @param listKey Combo name	
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getComboSelectedHiddenValue(columnKey:String, rowIndex:int, listKey:String=Global.DEFAULT_COMBO_KEY):String
+			{
+				return this.gridoneImpl.getComboSelectedHiddenValue(columnKey, rowIndex, listKey);
+			}
+			
+			/*************************************************************
+			 * Whether column has combo
+			 * @param columnKey Column name
+			 * @param listKey Combo name	
+			 * @return Whether column key has combolist[listKey]
+			 * @author Thuan
+			 * ***********************************************************/
+			public function hasComboList(columnKey:String, listKey:String=Global.DEFAULT_COMBO_KEY):Boolean
+			{
+				return this.gridoneImpl.hasComboList(columnKey, listKey);
+			}
+			
+			/*************************************************************
+			 * Clear combo list
+			 * @param columnKey Column name
+			 * @param listKey Combo name	
+			 * @author Thuan
+			 * ***********************************************************/
+			public function clearComboList(columnKey:String, listKey:String=Global.DEFAULT_COMBO_KEY):void
+			{
+				this.gridoneImpl.clearComboList(columnKey, listKey);
+			}
+			
+			/*************************************************************
+			 * Set combo rowcount
+			 * @param columnKey Column name
+			 * @param rowCount Rows of combo are displayed at the same time 
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setComboRowCount(columnKey:String, rowCount:int):void
+			{
+				this.gridoneImpl.setComboRowCount(columnKey, rowCount);	
+			}
+			
+			/*************************************************************
+			 * Get Active Column Key
+			 * @return Active column key
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getActiveColKey():String
+			{
+				return this.gridoneImpl.getActiveColKey();
+			}
+			
+			/*************************************************************
+			 * add image list
+			 * @param columnKey String of data field
+			 * @param strUrl String of URL file
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function addImageList(columnKey:String, strUrl:String):void
+			{
+				return this.gridoneImpl.addImageList(columnKey,strUrl);
+			}
+			
+			/*************************************************************
+			 * remove image list
+			 * @param columnKey String of data field
+			 * @param imageIndex index of image
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function removeImageList(columnKey:String, imageIndex:int):void
+			{
+				this.gridoneImpl.removeImageList(columnKey,imageIndex);
+			}
+			
+			/*************************************************************
+			 * get image list URL
+			 * @param columnKey String of data field
+			 * @param imageIndex index of image
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getImageListURL(columnKey:String, imageIndex:int):String
+			{
+				return this.gridoneImpl.getImageListURL(columnKey,imageIndex);
+			}
+			
+			/*************************************************************
+			 * get image list size
+			 * @param columnKey String of data field
+			 * @param iwidth int
+			 * @param iHeight int
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setImageListSize(columnKey:String, iwidth:int, iHeight:int):void
+			{
+				this.gridoneImpl.setImageListSize(columnKey,iwidth,iHeight);
+			}
+			
+			/*************************************************************
+			 * clear image list
+			 * @param columnKey String of data field
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function clearImageList(columnKey:String):void
+			{
+				this.gridoneImpl.clearImageList(columnKey);
+			}
+			
+			/*************************************************************
+			 * get image list count
+			 * @param columnKey String of data field
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getImageListCount(columnKey:String):int
+			{
+				return this.gridoneImpl.getImageListCount(columnKey);
+			}
+			
+			/*************************************************************
+			 * add grid image list
+			 * @param url String of image file
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function addGridImageList(url:String):void
+			{
+				this.gridoneImpl.addGridImageList(url);
+			}
+			
+			/*************************************************************
+			 * add column grid image list
+			 * @param url String of image file
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setColCellGridImageList(columnKey:String, bValue:Boolean):void
+			{
+				this.gridoneImpl.setColCellGridImageList(columnKey,bValue);
+			}
+			
+			/*************************************************************
+			 * clear grid image list
+			 * @param url String of image file
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function clearGridImageList():void
+			{
+				this.gridoneImpl.clearGridImageList();
+			}
+			
+			/*************************************************************
+			 * set grid image list size
+			 * @param url String of image file
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setGridImageListSize(nWidth:int, nHeight:int):void
+			{
+				this.gridoneImpl.setGridImageListSize(nWidth,nHeight);
+			}
+			
+			/*************************************************************
+			 * set column cell activation
+			 * @param strColumnKey String of data field
+			 * @param strValue String activation type EDIT ACTIVATEONLY DISABLE
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setColCellActivation(strColumnKey:String, strValue:String):void
+			{
+				this.gridoneImpl.setColCellActivation(strColumnKey,strValue);
+			}
+			
+			/*************************************************************
+			 * get column cell activation
+			 * @param strColumnKey String of data field
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getColCellActivation(strColumnKey:String):String
+			{
+				return this.gridoneImpl.getColCellActivation(strColumnKey);
+			}
+			
+			/*************************************************************
+			 * Set column cell sort
+			 * @param strColumnKey String
+			 * @param strSort String data of descending or ascending or none
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setColCellSort(strColumnKey:String, strSort:String):void
+			{
+				this.gridoneImpl.setColCellSort(strColumnKey,strSort);
+			}
+			
+			/*************************************************************
+			 * set column cell radio
+			 * @param columnKey String
+			 * @param bRadio Boolean
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setColCellRadio(columnKey:String, bRadio:Boolean):void
+			{
+				this.gridoneImpl.setColCellRadio(columnKey,bRadio);
+			}
+			/*************************************************************
+			 * Get max length of column
+			 * @param columnKey String
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getColMaxLength(columnKey:String):String
+			{
+				return this.gridoneImpl.getColMaxLength(columnKey);
+			}
+			
+			/*************************************************************
+			 * remove grid
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function clearGrid():void
+			{
+				this.gridoneManager.clearGrid();
+			}
+			
+			/*************************************************************
+			 * set date format
+			 * @param columnKey String
+			 * @param value String
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setDateFormat(columnKey:String, value:String):void
+			{
+				return this.gridoneImpl.setDateFormat(columnKey,value);
+			}
+			
+			/*************************************************************
+			 * Whether AdvancedDataGrid is tree mode 
+			 * @return True if tree mode, False if not tree mode 
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getTreeMode():Boolean
+			{
+				return (this.datagrid.isTree == true);
+			}
+			
+			/*************************************************************
+			 * Collapse all tree node
+			 * @author Thuan
+			 * ***********************************************************/
+			public function collapseTreeAll():void
+			{
+				this.datagrid.collapseAll();
+			}
+			
+			/*************************************************************
+			 * Expand all tree node
+			 * @author Thuan
+			 * ***********************************************************/
+			public function expandTreeAll():void
+			{
+				this.datagrid.expandAll();
+			}
+			
+			/*************************************************************
+			 * Expand directly children node or all children node of tree 
+			 * @param strTreeKey Key of tree
+			 * @param bAll Is true if expand all children, Is false if expand only directly children
+			 * @author Thuan
+			 * ***********************************************************/
+			public function expandTreeNode(strTreeKey:String, bAll:Boolean):void
+			{
+				this.gridoneImpl.expandAtNode(strTreeKey, bAll, "expandTreeNode");
+			}
+			
+			/*************************************************************
+			 * Collapse tree node
+			 * @param strTreeKey Key of tree
+			 * @author Thuan
+			 * ***********************************************************/
+			public function collapseTreeNode(strTreeKey:String):void
+			{
+				this.gridoneImpl.collapseAtNode(strTreeKey, "collapseTreeNode");
+			}
+			
+			/*************************************************************
+			 * Delete tree node and all children of that
+			 * @param strTreeKey Key of tree
+			 * @author Thuan
+			 * ***********************************************************/
+			public function deleteTreeNode(strTreeKey:String):void
+			{
+				this.gridoneImpl.deleteTreeNode(strTreeKey, "deleteTreeNode");
+			}
+			
+			/*************************************************************
+			 * Get row index from tree key
+			 * @param strTreeKey Key of tree
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getRowIndexFromTreeKey(strTreeKey:String):int
+			{
+				return this.gridoneImpl.getRowIndexFromTreeKey(strTreeKey, "getRowIndexFromTreeKey");
+			}
+			
+			/*************************************************************
+			 * Return the number of child node of the corresponding tree node if true is inputted as bAll value
+			 * @param strTreeKey Key of tree
+			 * @param bAll Is true if count all children, Is false if count only directly children
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getTreeChildNodeCount(strTreeKey:String, bAll:Boolean): int
+			{
+				return this.gridoneImpl.getTreeChildNodeCount(strTreeKey, bAll, "getRowIndexFromTreeKey");
+			}
+			
+			/*************************************************************
+			 * Get the next child node key from the currently tree key 
+			 * @param strTreeKey Key of tree
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getTreeChildNodeKey(strTreeKey:String): String
+			{   
+				return this.dgManager.getNextNodeByKey(strTreeKey, false);
+			}
+			
+			/*************************************************************
+			 * Return the first node of tree
+			 * @return The first node of tree
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getTreeFirstNodeKey(): Object
+			{
+				return this.gridoneImpl.getTreeFirstNodeKey("getTreeFirstNodeKey");
+			}
+			
+			/*************************************************************
+			 * Get tree key from row index
+			 * @return String of tree key from row index
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getTreeKeyFromRowIndex(rowIndex: int): String
+			{
+				return this.gridoneImpl.getTreeKeyFromRowIndex(rowIndex, "getTreeKeyFromRowIndex");
+			}
+			
+			/*************************************************************
+			 * Get next key
+			 * @param strTreeKey Key of tree
+			 * @param isInBranch True: Next key is in branch with strTreeKey; False: Next key can be key of next branch
+			 * @return The next key of strTreeKey
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getTreeNextNodeKey(strTreeKey:String, isInBranch:Boolean = false):String
+			{
+				return this.gridoneImpl.getTreeNextNodeKey(strTreeKey, "getTreeNextNodeKey", isInBranch);
+			}
+			
+			/*************************************************************
+			 * Get previous key
+			 * @param strTreeKey Key of tree
+			 * @param isInBranch True: Previous key is in branch with strTreeKey; False: Previous key can be key of next branch
+			 * @return The previous key of strTreeKey
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getTreePrevNodeKey(strTreeKey:String, isInBranch:Boolean = false):String
+			{
+				return this.gridoneImpl.getTreePrevNodeKey(strTreeKey, "getTreePrevNodeKey", isInBranch);
+			}
+			
+			/*************************************************************
+			 * Get depth of tree key
+			 * @param strTreeKey Key of tree
+			 * @return The depth of strTreeKey
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getTreeNodeDepth(strTreeKey:String):int
+			{
+				return this.gridoneImpl.getTreeNodeDepth(strTreeKey, "getTreeNodeDepth");
+			}
+			
+			/*************************************************************
+			 * Get parent key of key
+			 * @param strTreeKey Key of tree
+			 * @return The parent key of strTreeKey
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getTreeParentNodeKey(strTreeKey:String):String
+			{
+				return this.gridoneImpl.getTreeParentNodeKey(strTreeKey, "getTreeParentNodeKey");
+			}
+			
+			/*************************************************************
+			 * Return the summary of child node of the corresponding tree node
+			 * @param strTreeKey Key of tree
+			 * @param strSummaryColumnKey Summary applied ColumnKey
+			 * @param strFunc Function [ sum | count | avarage ] 
+			 * @param bAll Whether to apply all subordinate node
+			 * @return The Summary of child node of the corresponding tree node
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getTreeSummaryValue(strTreeKey:String, strSummaryColumnKey:String, strFunc:String, bAll:Boolean):int
+			{
+				return this.gridoneImpl.getTreeSummaryValue(strTreeKey, strSummaryColumnKey, strFunc, "getTreeSummaryValue", bAll);
+			}
+			
+			/*************************************************************
+			 * Check if the corresponding tree node has child node or not
+			 * @param strTreeKey Key of tree
+			 * @return Indicates whether node of strTreeKey has child 
+			 * @author Thuan
+			 * ***********************************************************/
+			public function hasTreeChildNode(strTreeKey: String):Boolean
+			{
+				return this.gridoneImpl.hasTreeChildNode(strTreeKey, "hasTreeChildNode");
+			}
+			
+			/*************************************************************
+			 * Check if the corresponding tree node has next node or not
+			 * @param strTreeKey Key of tree
+			 * @return Indicates whether node of strTreeKey has next node
+			 * @author Thuan
+			 * ***********************************************************/
+			public function hasTreeNextNode(strTreeKey: String):Boolean
+			{
+				return this.gridoneImpl.hasTreeNextNode(strTreeKey, "hasTreeNextNode");
+			}
+			
+			/*************************************************************
+			 * Check if the corresponding tree node has parent node or not
+			 * @param strTreeKey Key of tree
+			 * @return Indicates whether node of strTreeKey has parent node
+			 * @author Thuan
+			 * ***********************************************************/
+			public function hasTreeParentNode(strTreeKey: String):Boolean
+			{
+				return this.gridoneImpl.hasTreeParentNode(strTreeKey, "hasTreeParentNode");
+			}
+			
+			/*************************************************************
+			 * Check if the corresponding tree node has previous node or not
+			 * @param strTreeKey Key of tree
+			 * @return Indicates whether node of strTreeKey has previous node
+			 * @author Thuan
+			 * ***********************************************************/
+			public function hasTreePrevNode(strTreeKey: String):Boolean
+			{
+				return this.gridoneImpl.hasTreePrevNode(strTreeKey, "hasTreePrevNode");
+			}
+			
+			/*************************************************************
+			 * Check whether tree node is collapsed
+			 * @param strTreeKey Key of tree
+			 * @return True: tree node is collapsed; False: tree node is not collapsed 
+			 * @author Thuan
+			 * ***********************************************************/
+			public function isTreeNodeCollapse(strTreeKey: String):Boolean
+			{
+				return this.gridoneImpl.isTreeNodeCollapse(strTreeKey, "isTreeNodeCollapse");		
+			}
+			
+			/*************************************************************
+			 * Check whether tree node is expanded
+			 * @param strTreeKey Key of tree
+			 * @return True: tree node is expanded; False: tree node is not expanded  
+			 * @author Thuan
+			 * ***********************************************************/
+			public function isTreeNodeExpand(strTreeKey: String):Boolean
+			{
+				return this.gridoneImpl.isTreeNodeExpand(strTreeKey, "isTreeNodeExpand");		
+			}
+			
+			/*************************************************************
+			 * Check whether tree key is of tree node
+			 * @param strTreeKey Key of tree
+			 * @return True: key is of tree node; False: key is not of tree node 
+			 * @author Thuan
+			 * ***********************************************************/
+			public function isTreeNodeKey(strTreeKey: String):Boolean
+			{
+				return this.gridoneImpl.isTreeNodeKey(strTreeKey, "isTreeNodeKey");
+			}
+			
+			/*************************************************************
+			 * Insert tree node at last child node of parent node
+			 * @param strParentTreeKey Parent key of inserted key
+			 * @param strTreeKey Inserted key of tree
+			 * @param strText Value of tree data field
+			 * @author Thuan
+			 * ***********************************************************/
+			public function insertTreeNode(strParentTreeKey: String, strTreeKey: String, strText: String):void
+			{
+				this.gridoneImpl.insertTreeNode(strParentTreeKey, strTreeKey, strText, "insertTreeNode");
+			}
+			
+			/*************************************************************
+			 * Move tree node to other parent
+			 * @param strParentTreeKey Parent key of moved key
+			 * @param strTreeKey Moved key of tree
+			 * @author Thuan
+			 * ***********************************************************/
+			public function moveTreeNode(strParentTreeKey:String, strTreeKey:String):void
+			{
+				this.gridoneImpl.moveTreeNode(strParentTreeKey, strTreeKey, "moveTreeNode");
+			}
+			
+			/*************************************************************
+			 * Whether DisclosureIcon on treecolumn is enable
+			 * @param bAction True: if DisclosureIcon is enable; False: if DisclosureIcon is not enable
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setTreeClickAction(bAction:Boolean):void
+			{
+				this.datagrid.enableTreeClickAction = bAction;
+			}
+			
+			/*************************************************************
+			 * Export AdvancedDataGrid to Excel
+			 * param bColHideVisible=true allow hidden column include in excel export, bColHideVisible=false not allow hidden column include in excel export.
+			 * @author Thuan
+			 * ***********************************************************/
+			public function excelExport(strPath:String, strListColumnKey:String, bHeaderVisible:Boolean, bDataFormat:Boolean, bHeaderOrdering:Boolean=true,bColHideVisible:Boolean=true,strExcelFileName:String="" , bCharset:Boolean=true):void
+			{
+				this.gridoneImpl.excelExport(strPath, strListColumnKey, bHeaderVisible, bDataFormat, bHeaderOrdering,bColHideVisible,strExcelFileName,bCharset);
+			}
+			
+			/*************************************************************
+			 * Export AdvancedDataGrid to Excel
+			 * @author Thuan
+			 * ***********************************************************/
+			public function excelImport(strPath:String, strColumnKeyList:String, strImportValidate:String, bIgnoreHeader:Boolean, bTrimBottom:Boolean, bCharset:Boolean = true, dateInputFormat:String=""):void
+			{
+				this.gridoneImpl.excelImport(strPath, strColumnKeyList, strImportValidate, bIgnoreHeader, bTrimBottom, bCharset, dateInputFormat);
+			}
+			
+			/*************************************************************
+			 * Align text and image in image text renderer
+			 * @param strColumnKey String
+			 * @param strAlign String
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setImagetextAlign(strColumnKey:String, strAlign:String):void
+			{
+				this.gridoneImpl.setImagetextAlign(strColumnKey,strAlign);
+			}
+			
+			/*************************************************************
+			 * set focus on cell. If selection mode is multiple row. It will auto change to selection mode is multiple cell.
+			 * @param strColumnKey String
+			 * @param nRow int
+			 * @param bEditmode boolean allow cell is edited or not. It belongs to editable of column
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellFocus(strColumnKey:String,nRow:int,bEditmode:Boolean):void
+			{
+				gridoneImpl.setCellFocus(strColumnKey,nRow,bEditmode);
+			}
+			/*************************************************************
+			 * set group merge
+			 * @param strColumnKeyList String
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setGroupMerge(strColumnKeyList:String):void
+			{
+				this.gridoneImpl.setGroupMerge(strColumnKeyList);
+			}
+			
+			/*******************************************************6******
+			 * check column is merged or not
+			 * @param columnKey String
+			 * @author: Duong Pham
+			 * ***********************************************************/
+			public function isGroupMergeColumn(columnKey:String): Boolean
+			{
+				return gridoneImpl.isGroupMergeColumn(columnKey);
+			}
+			
+			/*******************************************************6******
+			 * get group cell merge infor
+			 * @param columnKey String
+			 * @author: Chheavhun
+			 * ***********************************************************/
+			public function  getCellGroupMergeInfo(columnKey:String,row:int):Array
+			{
+				return gridoneImpl.getCellGroupMergeInfo(columnKey,row);
+			}
+			
+			/*******************************************************6******
+			 * check grid that has group merge or not
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function hasGroupMerge(): Boolean
+			{
+				return gridoneImpl.hasGroupMerge();
+			}
+			
+			/*******************************************************6******
+			 * clear group merge
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function clearGroupMerge():void  
+			{
+				gridoneImpl.clearGroupMerge();
+			}
+			
+			/*************************************************************
+			 * add summary bar
+			 * @param strSummaryBarKey String
+			 * @param strText String
+			 * @param strMergeColumn String
+			 * @param strFunc String
+			 * @param strColumnList String
+			 * @param position String
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function addSummaryBar(strSummaryBarKey:String, strText:String, strMergeColumn:String, strFunc:String, strColumnList:String,position:String="bottom"):void
+			{
+				this.gridoneImpl.addSummaryBar(strSummaryBarKey,strText,strMergeColumn,strFunc,strColumnList,position);
+			}
+			
+			/*************************************************************
+			 * has summary bar
+			 * @return Boolean
+			 * author: Duong Pham
+			 * ***********************************************************/
+			public function hasSummaryBar():Boolean
+			{
+				return this.datagrid.summaryBarManager.hasSummaryBar();
+			}
+			
+			/*************************************************************
+			 * clear summary bar
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function clearSummaryBar():void
+			{
+				this.gridoneImpl.clearSummaryBar();
+			}
+			
+			/*************************************************************
+			 * get summary bar value
+			 * @param strSummaryBarKey:String
+			 * @param strColumnKey String
+			 * @param nMergeIndex Number
+			 * @param bDataFormat Boolean default value is true
+			 * @return String
+			 * @author: Duong Pham
+			 * ***********************************************************/
+			public function getSummaryBarValue(strSummaryBarKey:String, strColumnKey:String, nMergeIndex:Number, bDataFormat:Boolean=true):String
+			{
+				return gridoneImpl.getSummaryBarValue(strSummaryBarKey,strColumnKey,nMergeIndex,bDataFormat);
+			}
+			
+			/*************************************************************
+			 * set summary bar color
+			 * @param strSummaryBarKey String
+			 * @param strFgColor String
+			 * @param strBgColor String
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setSummaryBarColor(strSummaryBarKey:String, strFgColor:String, strBgColor:String):void
+			{
+				gridoneImpl.setSummaryBarColor(strSummaryBarKey,strFgColor,strBgColor);
+			}
+			
+			/*************************************************************
+			 * set summary bar font
+			 * @param strSummaryBarKey String
+			 * @param strName String
+			 * @param nSize int 
+			 * @param bBold Boolean
+			 * @param bItalic Boolean
+			 * @param bUnderLine Boolean
+			 * @param bCenterLine Boolean
+			 * @param columnKey String Default value is null
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setSummaryBarFont(strSummaryBarKey:String, strName:String, nSize:Number, bBold:Boolean, bItalic:Boolean, bUnderLine:Boolean, bCenterLine:Boolean, columnKey : String=null):void
+			{
+				gridoneImpl.setSummaryBarFont(strSummaryBarKey,strName,nSize,bBold,bItalic,bUnderLine,bCenterLine,columnKey);
+			}
+			
+			/*************************************************************
+			 * set summary bar format
+			 * @param strSummaryBarKey String
+			 * @param strColumnKey String
+			 * @param strFormat String
+			 * @author: Duong Pham
+			 * ***********************************************************/
+			public function setSummaryBarFormat(strSummaryBarKey:String, strColumnKey:String, strFormat:String):void
+			{
+				gridoneImpl.setSummaryBarFormat(strSummaryBarKey,strColumnKey,strFormat);
+			}
+			
+			/*************************************************************
+			 * set summary bar function only work in case summary bar has CUSTOM value
+			 * @param strSummaryBarKey String
+			 * @param strColumnKey String
+			 * @param strFormat String
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setSummaryBarFunction(strSummaryBarKey:String, strFunc:String, strColumnKey:String):void
+			{
+				gridoneImpl.setSummaryBarFunction(strSummaryBarKey,strFunc,strColumnKey);
+			}
+			
+			/*************************************************************
+			 * set summary bar text
+			 * @param strSummaryBarKey String
+			 * @param strText String
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setSummaryBarText(strSummaryBarKey:String, strText:String):void
+			{
+				gridoneImpl.setSummaryBarText(strSummaryBarKey,strText);
+			}
+			
+			/*************************************************************
+			 * set summary bar value only work in case summary bar has CUSTOM value 
+			 * @param strSummaryBarKey String
+			 * @param strColumnKey String
+			 * @param strFormat String
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setSummaryBarValue(strSummaryBarKey:String, strColumnKey:String, nMergeIndex:Number, strValue:String):void
+			{
+				gridoneImpl.setSummaryBarValue(strSummaryBarKey,strColumnKey,nMergeIndex,strValue);
+			}
+			
+			/*************************************************************
+			 * Insert asterisk character in a specific column from index nStartIndex with nCount characters
+			 * @param strColumnKey Indicated the column will be inserted in asterisk character
+			 * @param nStartIndex Start index to insert asterisk character
+			 * @param nCount Number of asterisk characters to insert
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setColCellExcelAsterisk(strColumnKey:String, nStartIndex:int, nCount:int):void
+			{
+				this.gridoneImpl.setColCellExcelAsterisk(strColumnKey, nStartIndex, nCount);
+			}
+			
+			/*************************************************************
+			 * Set header excel file
+			 * @param strTitle Title of header
+			 * @param nHeigh Heigh of header
+			 * @param nFontSize Font size of header
+			 * @param strAlign Alignment of header
+			 * @strBottom Content below header
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setExcelHeader(strTitle:String, nHeigh:int, nFontSize:int, strAlign:String, strBottom:String=''):void
+			{
+				this.gridoneImpl.setExcelHeader(strTitle, nHeigh, nFontSize, strAlign, strBottom);
+			}
+			
+			/*************************************************************
+			 * Set footer excel file
+			 * @param strTitle Title of footer
+			 * @param nHeigh Heigh of footer
+			 * @param nFontSize Font size of footer
+			 * @param strAlign Alignment of footer
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setExcelFooter(strTitle:String, nHeigh:int, nFontSize:int, strAlign:String):void
+			{
+				this.gridoneImpl.setExcelFooter(strTitle, nHeigh, nFontSize, strAlign);
+			}
+			
+			/*************************************************************
+			 * Clear excel file info
+			 * @author Thuan
+			 * ***********************************************************/
+			public function clearExcelInfo():void
+			{
+				this.gridoneImpl.clearExcelInfo();
+			}
+			
+			/*************************************************************
+			 * Set strAccessReader for Accessibility function
+			 * @param strColumnKey Column key name
+			 * @param strAccReader String of accessibility reader
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setAccessReader(strColumnKey:String, strAccReader:String):void
+			{
+				this.datagrid.setAccessReader(strColumnKey, strAccReader);
+			}
+			
+			/*************************************************************
+			 * Set strAccessReaderHeader for Accessibility function
+			 * @param strColumnKey Column key name
+			 * @param strAccReaderHeader String of accessibility reader
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setAccessReaderHeader(strColumnKey:String, strAccReaderHeader:String):void
+			{
+				this.datagrid.setAccessReaderHeader(strColumnKey, strAccReaderHeader);
+			}
+			
+			/*************************************************************
+			 * clear data in datagrid
+			 * @author Thuan
+			 * ***********************************************************/
+			public function clearData():void
+			{
+				this.gridoneManager.clearData();
+			}
+			
+			/*************************************************************
+			 * set data into grid with protocol format
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setDataObject(protocolData:String):void
+			{
+				this.gridoneManager.setProtocolData(protocolData,"setDataObject");
+			}
+			
+			/*************************************************************
+			 * set data into grid with protocol format
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setProtocolData(protocolData:String):void
+			{
+				this.gridoneManager.setProtocolData(protocolData);
+			}
+			
+			/*************************************************************
+			 * show busy bar
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function showBusyBar(text:String=""):void
+			{
+				this.activity.showBusyBar(text);
+			}
+			
+			/*************************************************************
+			 * close busy bar
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function closeBusyBar():void
+			{
+				this.activity.closeBusyBar();
+			}
+			
+			/*************************************************************
+			 * go to actsone home
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function gotoGridOneHome():void
+			{
+				navigateToURL(new URLRequest(Global.grioneHomeURL));
+			}
+			
+			/*************************************************************
+			 * set datagrid lose focus
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function loseFocus():void
+			{
+				gridoneImpl.loseFocus();
+			}
+			
+			/*************************************************************
+			 * get data from grid with protocol format
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getDataObject(selectedField:Object=null):String
+			{
+				return this.gridoneManager.getProtocol(selectedField);
+			}
+			
+			/*************************************************************
+			 * set data from grid with protocol format
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getProtocolData(selectedField:Object=null):String
+			{
+				return this.gridoneManager.getProtocol(selectedField);
+			}			
+			
+			/*************************************************************
+			 * verify datagrid has footer bar or not
+			 * @return Boolean
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function hasFooter():Boolean
+			{
+				return this.datagrid.hasFooterBar;
+			}
+			
+			/*************************************************************
+			 * remove footer bar from datagrid
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function clearFooter(strFooterKey:String="all"):void
+			{
+				this.gridoneManager.clearFooter(strFooterKey);
+			}
+			
+			/*************************************************************
+			 * add footer into grid
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function addFooter(strFooterKey:String, strFunc:String, strColumnList:String, isFooter:Boolean=true):void
+			{
+				return this.gridoneManager.addFooter(strFooterKey,strFunc,strColumnList,isFooter);
+			}
+			
+			/*************************************************************
+			 * set footer value
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setFooterValue(strFooterKey:String, strColumnKey:String, strValue:String):void
+			{
+				return this.gridoneManager.setFooterValue(strFooterKey,strColumnKey,strValue);
+			}
+			
+			/*************************************************************
+			 * Setting the status code to tranfer to Server
+			 * @param strStatus Value of status
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setStatus(strStatus: String):void
+			{
+				this.gridoneManager.gridProtocol.status = strStatus; 
+			}
+			
+			/*************************************************************
+			 * Get the status code transferred from Server
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getStatus():String
+			{
+				return this.gridoneManager.gridProtocol.status; 
+			}
+			
+			/*************************************************************
+			 * Set parameters for passing them to server page
+			 * @param key String
+			 * @param value String
+			 * @author Duong Pham;  Updated by Thuan 10 Dec 2012
+			 * ***********************************************************/
+			public function setParams(key:String, value:String):void
+			{
+				this.datagrid.setParams(key, value);
+			}
+			
+			/*************************************************************
+			 * Get parameters when passing them to server page
+			 * @param key String
+			 * @author Duong Pham;  Updated by Thuan 10 Dec 2012
+			 * ***********************************************************/
+			public function getParams(key:String):String
+			{
+				return this.datagrid.getParams(key);
+			}
+			
+			/*************************************************************
+			 * Count number of param when parsing them to server page
+			 * @author Duong Pham;  Updated by Thuan 10 Dec 2012
+			 * ***********************************************************/
+			public function getParamCount():int
+			{ 
+				return this.datagrid.getParamCount();
+			}
+			
+			/*************************************************************
+			 * Get param key
+			 * @param index int
+			 * @author Duong Pham;  Updated by Thuan 10 Dec 2012
+			 * ***********************************************************/
+			public function getParamKey(index:int):String
+			{
+				return this.datagrid.getParamKey(index);
+			}
+			
+			/*************************************************************
+			 * Set the message transferred from Server
+			 * @author Thuan
+			 * ***********************************************************/
+			public function setMessage(value: String):void
+			{
+				this.gridoneManager.gridProtocol.message = value;
+			}
+			
+			/*************************************************************
+			 * Get the message transferred from Server
+			 * @author Thuan
+			 * ***********************************************************/
+			public function getMessage():String
+			{
+				return this.gridoneManager.gridProtocol.message; 
+			}
+			
+			/*************************************************************
+			 * The function sends parameteres to server page using URL parameter and do query based on action parameter.
+			 * @param urlStr URL string of server page likes JSP, ASP.
+			 * @param objQuery: A string of column key or array of row indexes
+			 * @validationCheck indicate whether data is checked or not
+			 * @author Toan Nguyen; updated by Thuan on 12 Dec 2012
+			 * ***********************************************************/
+			public function doQuery(urlStr:String, objQuery:Object=null, validationCheck:Boolean=true):void
+			{
+				//this.gridoneManager.doQuery(urlStr, objQuery, validationCheck);
+			}
+			
+			/*************************************************************
+			 * ICompia: Indicate whether connection between server and client is checking or not
+			 * @author Toan Nguyen
+			 * ***********************************************************/
+			public function isDoQuery():Boolean
+			{
+				return this.datagrid.isDoQuery;
+			}
+			
+			/*************************************************************
+			 * It will be called after getting data from the server
+			 * @athor:Duong Pham
+			 * ***********************************************************/
+			public function doEndQuery():void
+			{
+				this.datagrid.isDoQuery = false;
+				closeBusyBar();
+			}
+			
+			/*************************************************************
+			 * it will refresh Grid 
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function refreshGrid():void
+			{
+				this.datagrid.invalidateList();
+			}
+			
+			/*************************************************************
+			 * get column type from dataField
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function getColumnType(columnKey:String):String
+			{
+				return dgManager.getColumnType(columnKey);
+			}
+			
+			/*************************************************************
+			 *  change row separator
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function changeRowSeparator(sep:String):void
+			{
+				DataGridManager.rowSeparator=sep;
+			}
+			
+			/*************************************************************
+			 *  add json data into comboBox 
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function addComboListJson(columnKey:String,strText:String,strValue:String,jsonData:Object):void
+			{
+				this.gridoneImpl.addComboListJson(columnKey,strText,strValue,jsonData);
+			}
+			
+			/*************************************************************
+			 * add  data into dynamic comboBox 
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function addDynamicComboList(columnKey:String,strText:String,strValue:String,jsonData:Object):void
+			{
+				 this.gridoneImpl.addComboDynamicListJson(columnKey,strText,strValue,jsonData);
+			}
+			
+//			public function addMulticomboListValue(columnKey:String,...args):void
+//			{
+//				
+//			}
+			
+			/*************************************************************
+			 * get row index of checked checkbox
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function getCheckedRowsIndex(columnKey:String):Array
+			{
+				return gridoneImpl.getCheckedRowsIndex(columnKey);
+			}
+			
+			/*************************************************************
+			 * set json data in combobox through httpService 
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			internal var comboColumnField:String="";
+			public function setComboJSONData(dataField:String, urlStr:String):void
+			{
+				this.comboService.url=urlStr;
+				this.comboService.resultFormat="text";
+				this.comboService.send(dataField);
+				comboColumnField=dataField;
+			}
+			
+			/*************************************************************
+			 * set json data in combobox  service result handler
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			private function comboServiceResult(event:ResultEvent):void
+			{
+				var dataObject:String=event.result as String;
+				var jsonArray:Array;
+				var jsonObj:Object=com.adobe.serialization.json.JSON.decode(dataObject);
+				jsonArray=(jsonObj as Array);
+				var comboColumn:ExAdvancedDataGridColumn=this.dgManager.getColumnByDataField(comboColumnField) as ExAdvancedDataGridColumn;
+				comboColumn.listCombo[Global.DEFAULT_COMBO_KEY]=jsonArray;
+				this.datagrid.invalidateList();
+			}
+			
+			
+			/*********************************************************
+			 *  set json data for datGrid use service http
+			 *  chheavhun
+			 * */
+			public function setJsonDataUrl(strurl:String):void
+			{
+				var http:HTTPService=new HTTPService();
+				http.method="POST";
+				http.url=strurl;
+				http.resultFormat="text";
+				http.addEventListener(ResultEvent.RESULT,jsonServiceResultHanlder);
+				http.addEventListener(FaultEvent.FAULT,jsonServiceFault);
+				http.send();
+			}
+			
+			/*********************************************************
+			 * handler result evnet of set json data for datGrid
+			 * */
+			private function jsonServiceResultHanlder(event:ResultEvent):void
+			{
+				var dataObject:String=event.result as String;
+				var jsonArray:Array=new Array();
+				var jsonObj:Object=com.adobe.serialization.json.JSON.decode(dataObject);
+				jsonArray=(jsonObj as Array);
+				this.setJSonData(jsonArray,true);
+			}
+			
+			/*************************************************************
+			 * set json data in data  service fault handler
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			private function jsonServiceFault(event:FaultEvent):void
+			{
+				return;
+			}
+			
+			
+			/*************************************************************
+			 * set json data in combobox  service fault handler
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			private function comboServiceFault(event:FaultEvent):void
+			{
+				
+			}
+			
+			/*************************************************************
+			 * set image for column imagetext 
+			 * @columnKey : dataField 
+			 * @index: index of image
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function setColCellImage(columnKey:String, index:int):void
+			{
+				gridoneImpl.setColCellImage(columnKey, index);
+			}
+			
+			/*************************************************************
+			 * set column object
+			 * @param dataField : column key
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function getColumn(dataField:String):ExAdvancedDataGridColumn
+			{
+				return dgManager.getColumnByDataField(dataField) as ExAdvancedDataGridColumn;
+			}
+			
+			/*************************************************************
+			 * insert header in to DataGrid 
+			 * @param params object that is defined with multiple properties to create columns likes  .
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function insertHeader(params:Object):void
+			{
+				gridoneImpl.insertHeader(params);
+			}
+			
+			/*************************************************************
+			 * add header as array 
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function addHeaders(headers:Array):void
+			{
+				datagrid.totalVisibleColumnWidth =0;
+				for each (var item:Object in headers)
+				{
+					gridoneImpl.createHeader(item["key"], item["name"], item["type"], item["length"], item["width"], item["edit"],item['textAlign']);
+				}
+				
+				boundHeader();
+				
+			}
+			
+			/*************************************************************
+			 * create group column  
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function createGroup(groupKey:String, groupName:String):ExAdvancedDataGridColumnGroup
+			{
+				return gridoneImpl.createGroup(groupKey,groupName);
+			}
+			
+			/*************************************************************
+			 * get column index   
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function getColumnIndex(dataField:String):int
+			{
+				return gridoneImpl.getColumnIndex(dataField);
+			}
+			
+			/*************************************************************
+			 * set image waiting logo
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function setWaitingLogoValue(logoUrl:String, logoWidth:Number=200, logoHeight:Number=50):void
+			{
+				gridoneImpl.setWaitingLogoValue(logoUrl,logoWidth,logoHeight);
+			}
+			
+			/*************************************************************
+			 * show image logo   
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function showWaitingLogo():void
+			{
+				gridoneImpl.showWaitingLogo();
+			}
+			
+			/*************************************************************
+			 * hide image logo   
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function hideWaitingLogo():void
+			{
+				gridoneImpl.hideWaitingLogo();
+			}
+			
+			/*************************************************************
+			 * add data to combo box with a specific columnKey and set data as string.
+			 * @param colKey : column key
+			 * @sComboData: text data format (ex: "TH|Thailand%%,VN|Vietnam%%,CBD|Cambodia")
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function addComboDataAtColumn(colKey:String, sComboData:String):void
+			{
+				gridoneImpl.addComboDataAtColumn(colKey,sComboData);
+			}
+			
+			/*************************************************************
+			 * add data to combo box with a specific column index and set data as string.
+			 * @param colIndex : column index
+			 * @sComboData: text data format (ex: "TH|Thailand%%,VN|Vietnam%%,CBD|Cambodia")
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function addComboDataAtColumnIndex(colIndex:int, sComboData:String):void
+			{
+				gridoneImpl.addComboDataAtColumnIndex(colIndex,sComboData);
+			}
+			
+			/*************************************************************
+			 * destroy event listerner   
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function destroyEventListener(type:String):void
+			{
+				this.datagrid.eventArr[type]=null;
+			}
+			
+			/*************************************************************
+			 * set text data by service 
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setTextDataByService(path:String):void
+			{
+				gridoneManager.setTextDataByService(path);
+			}
+			
+//			public function addXMLData(sData:String):void
+//			{
+//				// gridoneManager.addXMLDataTest(sData);
+//			}
+//			
+//			public function addXMLRow(row:String):void
+//			{
+//				//				var xmlRow:XML=new XML(row);
+//				//				this.gridoneImpl.addRow(xmlRow);
+//			}
+//			public function addXMLRowAt(row:String, index:int):void
+//			{
+//				//				var xmlRow:XML=new XML(row);
+//				//				this.gridoneImpl.addRowAt(xmlRow, index);
+//			}
+			
+//			public function applyChange(action:String=null):void
+//			{
+//				
+//			}
+			
+			/*************************************************************
+			 * romove all data in dataGrid   
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function removeAllData():void
+			{
+				this.gridoneManager.clearData();				
+			}
+			
+			/*************************************************************
+			 * delete multi rows which selected or (shift + selected) in DataGrid's row.
+			 * Before call this function, must set "selectCell=false", "strCellClickAction=rowselect", and "allowMultipleSelection=true".
+			 * @columnKey : dataField 
+			 * @index: index of image
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function deleteRows():void
+			{
+				this.gridoneImpl.deleteRows();
+			}
+			
+			/*************************************************************
+			 * It will be called before getting data from server			 
+			 * Return true: without getting data from server or otherwise
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function doStartQuery(useLoadingBar:Boolean=true):Boolean
+			{
+				return this.gridoneImpl.doStartQuery(useLoadingBar);
+			}
+			
+			/*************************************************************
+			 * set grid data by httpService to get string
+			 * author:Toan Nguyen
+			 * ***********************************************************/
+			public function getGridProtocolText():String
+			{
+				return gridoneManager.gridProtocol.protocolStr;
+			}
+			
+			/*************************************************************
+			 * load data text into DataGrid by httpService			 
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function loadGridData(url:String):void
+			{
+				this.gridoneManager.loadGridData(url);
+			}
+			
+//			public function loadGridStringData(jsonData:String, bValidation:Boolean=true):void
+//			{
+//				
+//			}
+			
+			/*************************************************************
+			 * The function get data with text format to bind to datagrid
+			 * @param urlStr URL string of server page likes JSP, ASP.			 
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function queryTextData(urlStr:String):void
+			{
+				this.gridoneManager.queryTextData(urlStr);
+			}
+			
+			/*************************************************************
+			 * The function get data with text format to bind to combodata
+			 * @param urlStr URL string of server page likes JSP, ASP.
+			 * @Author: Chheav Hun
+			 * ***********************************************************/
+			public function queryComboTextData(dataField:String, urlStr:String):void
+			{
+				this.gridoneManager.queryComboTextData(dataField,urlStr);
+			}
+			
+			/*************************************************************
+			 * get data from one cell as string by setting specific rowIndex and columnKey
+			 * @param  rowIndex Row index   
+			 * @param  fieldName columnKey	 
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getCell(rowIndex:int, fieldName:String,bname:Boolean=false):String
+			{
+				return  this.gridoneImpl.getCell(rowIndex,fieldName,bname);
+			}
+			
+			/*************************************************************
+			 * get data from more than one cell in one row as Array by setting specific rowIndex and columnKey list (ex: "name,nation")
+			 * @param  listColumKey the list of choosing columnKey as string (ex: "name,nation")  
+			 * @param  nRow  The row index 
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getCellValues(listColumKey:String, nRow:int):Array
+			{
+				return  this.gridoneImpl.getCellValues(listColumKey,nRow);
+			}
+			
+			/*************************************************************
+			 * set button column in a specific row to visible or not visible. 
+			 * @param  strColKey ColumnKey
+			 * @param  nRow  The row index 
+			 * @param bVisible true=visible or not visible=false
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function setButtonVisible(strColKey:String, nRow:int, bVisible:Boolean):void
+			{
+				this.gridoneImpl.setButtonVisible(strColKey,nRow,bVisible);
+			}
+			
+			/*************************************************************
+			 * set checkbox column in a specific row to visible or not visible. 
+			 * @param  strColKey ColumnKey
+			 * @param  nRow  The row index 
+			 * @param bVisible true=visible or not visible=false
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function setCheckBoxVisible(strColKey:String, nRow:int, bVisible:Boolean):void
+			{
+				this.gridoneImpl.setCheckBoxVisible(strColKey,nRow,bVisible);
+			}
+			
+			/*************************************************************
+			 * get cell background color.
+			 * @return  string color
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getCellBackgroundColor(col:int, row:int):String
+			{
+				return this.gridoneImpl.getCellBackgroundColor(col,row);
+			}
+			
+//			public function getCellFontColor(col:int, row:int):String
+//			{
+//				return "";
+//			}
+			
+			/*************************************************************
+			 * set hide column in specific column index; 
+			 * @param  colIndex  column index
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function hideColumnIndex(colIndex:int):void
+			{
+				this.gridoneImpl.hideColumnIndex(colIndex);
+			}
+			
+			/*************************************************************
+			 * set show of hide column in specific column index; 
+			 * @param  colIndex  column index
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function showColumnIndex(colIndex:int):void
+			{
+				this.gridoneImpl.showColumnIndex(colIndex);
+			}
+			
+			/*************************************************************
+			 * get name of a cell which using commbo box renderer.
+			 * @param colname column fied name.
+			 * @param rowIndex row index of the cell.
+			 * @return displaying name of the cell.
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getComboNameAtColumn(colname:String, rowIndex:int):String
+			{
+				return this.gridoneImpl.getComboNameAtColumn(colname,rowIndex);
+			}
+			
+			/*************************************************************
+			 * get name of a cell which using commbo box renderer.
+			 * @param colIndex column index. if index is not for combobox column, this function still work with the input column index.
+			 * @param rowIndex row index of the cell.
+			 * @return displaying name of the cell.
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getComboNameAtColumnIndex(colIndex:int, rowIndex:int):String
+			{
+				return this.gridoneImpl.getComboNameAtColumnIndex(colIndex,rowIndex);
+			}
+			
+			/*************************************************************
+			 * get data of datagrid in HTML format.
+			 * @return string of data in HTML format.
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getDataGridString():String
+			{
+				return gridoneImpl.getDataGridString();
+			}
+			
+			/*************************************************************
+			 * get rows deleted by user.
+			 * @return array of deleted rows.
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getDeletedRows():Array
+			{
+				return  this.gridoneImpl.getDeletedRows();
+			}
+			
+			/*************************************************************
+			 * get inserted rows by user.
+			 * @return array of inserted rows.
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getInsertedRows():Array
+			{
+				return this.gridoneImpl.getInsertedRows();
+			}
+			
+			/*************************************************************
+			 * get rows at row index by user.
+			 * @return object of row item
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getRow(rowIndex:int,bHidden:Boolean=false):Object
+			{
+				return this.gridoneImpl.getRow(rowIndex,bHidden);
+			}
+			
+			/*************************************************************
+			 * get update rows by user. it will collect all update rows in crud column. 
+			 * @return  array of rows
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getUpdatedRows():Array
+			{
+				return  this.gridoneImpl.getUpdatedRows();
+			}
+			
+			/*************************************************************
+			 * get current page.
+			 * 
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getCurrentPage():int
+			{
+				return this.gridoneImpl.getCurrentPage();
+			}
+			
+			/*************************************************************
+			 * get page total  
+			 * @return  number of page
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getPageTotal():int
+			{
+				return  this.gridoneImpl.getPageTotal();
+			}
+			
+//			public function getPagingIndex():int
+//			{
+//				return 0;
+//			}
+			
+			/*************************************************************
+			 * get page count
+			 * @return  number of page
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getPagingCount():int
+			{
+				return this.gridoneImpl.getPagingCount();
+			}
+			
+//			public function setPagingIndex(pageNum:int):void
+//			{
+//				
+//			}
+//			
+//			public function nextNavigate():void
+//			{
+//				
+//			}
+			
+			/*************************************************************
+			 * refresh datagrid
+			 * @return  number of page
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function refresh():void
+			{
+				this.datagrid.height -= 1;
+				this.datagrid.validateNow();
+				this.datagrid.height += 1;
+				this.datagrid.validateNow();
+			}
+			
+			/*************************************************************
+			 * set scroll to row index
+			 * @param  rowIndex is row index
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function scrollToRow(rowIndex:int):void
+			{
+				this.gridoneImpl.scrollToIndex(rowIndex);
+			}
+			
+			/*************************************************************
+			 * set cell value 
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function setCell(value:Object, rowIndex:int, fieldName:String):void
+			{
+				this.gridoneImpl.setCellHelper(fieldName,rowIndex,value, "setCell",false);
+			}
+			
+			/*************************************************************
+			 * get multiple cell index
+			 * @param: value in object that want to seach
+			 * @param: fieldName in columnKey want to seach
+			 * @param: returnFieldName is the columnKey which result we want to get the value of it.
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getCellIndexArray(value:Object, fieldName:String, returnFieldName:String):Array
+			{
+				return this.gridoneImpl.getCellIndexArray(value,fieldName,returnFieldName);
+			}
+			
+			/*************************************************************
+			 * set value to multiple cell in one specific column. 
+			 * the valueArray and rowIndexArray have to set in order and same length size. 
+			 * Ex: valueArray[1] must put in rowIndexArray[1].
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function setCellArray(valueArray:Array, rowIndexArray:Array, fieldName:String):void
+			{
+				this.gridoneImpl.setCellArray(valueArray,rowIndexArray,fieldName);
+			}
+			
+			/*************************************************************
+			 * set cell padding left
+			 * @param  columnKey is column key
+			 * @param  nRow is row index
+			 * @param  padding is padding number
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function setCellPaddingLeft(columnKey:String,nRow:int,padding:Number):void
+			{
+				this.gridoneImpl.setCellPaddingLeft(columnKey,nRow,padding);
+			}
+			
+			/*************************************************************
+			 * set cell padding right
+			 * @param  columnKey is column key
+			 * @param  nRow is row index
+			 * @param  padding is padding number
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function setCellPaddingRight(columnKey:String,nRow:int,padding:Number):void
+			{
+				this.gridoneImpl.setCellPaddingRight(columnKey,nRow,padding);
+			}
+			
+//			public function setRowPaddingLeft(nRow:int,value:Number):void
+//			{
+//				
+//			}
+//			
+//			public function setRowPaddingRight(nRow:int,value:Number):void
+//			{
+//				
+//			}
+//			
+//			public function setCellAlign(columnKey:String,nRow:int,align:String):void
+//			{
+//				
+//			}
+//			
+//			public function setRowAlign(nRow:int,alignStr:String):void
+//			{
+//				
+//			}
+//			
+//			public function setRowFontBold(nRow:int,bBold:Boolean):void
+//			{
+//				
+//			}
+//			
+//			public function setCellBackgroundColorDefault(col:int, row:int):void
+//			{
+//				
+//			}
+//			
+//			public function setCellFontColorArray(col:int, rowIndexArray:Array, colorArray:Array):void
+//			{
+//				
+//			}
+//			
+//			public function setCellFontColorDefault(col:int, row:int):void
+//			{
+//				
+//			}
+//			
+//			public function setColumnProperties(obj:Object):void
+//			{
+//				
+//			}
+//			
+//			public function setDataGridProperties(obj:Object):void
+//			{
+//				
+//			}
+//			
+//			public function setDataGridToClipboard():String
+//			{
+//				return "";
+//			}
+//			
+//			public function setPDFConfiguration(sPDFConfig:String):void
+//			{
+//				
+//			}
+//			
+//			public function setRowAt(row:Object, rowIndex:int):void
+//			{
+//				
+//			}
+//			
+//			public function setRowBackgroundColorArray(rowIndexArray:Array, colorArray:Array):void
+//			{
+//				
+//			}
+//			
+//			public function setRowBackgroundColorDefault(row:int):void
+//			{
+//				
+//			}
+			
+			/*************************************************************
+			 * set XML row at index
+			 * @author  Chheav Hun
+			 * ***********************************************************/
+			public function setXMLRowAt(row:String, rowIndex:int):void
+			{
+				this.gridoneImpl.setXMLRowAt(row,1);
+			}
+			
+//			public function getExcelString():String
+//			{
+//				return "";
+//			}
+//			
+//			public function createJSONGrid(urlStr:String):void
+//			{
+//				
+//			}
+//			
+//			public function initGrid(jsonObj:Object):void
+//			{
+//				
+//			}
+			
+			/*************************************************************
+			 * handler mouse wheel event
+			 * @author  Chheav Hun
+			 * ***********************************************************/
+			public function handleWheel(event:Object):void
+			{
+				gridoneManager.handleMouseWheelHandler(this.stage, event);
+			}
+			
+//			public function setRowFgColorDefault(index:int):void
+//			{
+//				
+//			}
+			
+			/*************************************************************
+			 * set show progress bar
+			 * @author  Chheav Hun
+			 * ***********************************************************/
+			public function showProgressBar():void
+			{
+				showBusyBar();
+			}
+			
+			/*************************************************************
+			 * set hide progress bar
+			 * @author  Chheav Hun
+			 * ***********************************************************/
+			public function hideProgressBar():void
+			{
+				closeBusyBar();
+			}
+			
+//			public function changeScrollBar():void
+//			{
+//				
+//			}
+//			
+//			public function getRowValues(rowIndex:int):Object
+//			{
+//				return null;
+//			}
+//			
+//			public function getVersion():String
+//			{
+//				return "Version " + Global.CURRENT_VERSION;
+//			}
+//			
+//			public function setGridAMFData():void
+//			{
+//				
+//			}
+			
+			/*************************************************************
+			 * get selected items. work when "selectrow"=true 
+			 * @author  Chheav Hun
+			 * ***********************************************************/
+			public function getSelectedIndex():int
+			{
+				return this.datagrid.selectedIndex;
+			}
+			
+			/*************************************************************
+			 * get multiple selected items. work when "selectrow"=true 
+			 * @author  Chheav Hun
+			 * ***********************************************************/
+			public function getSelectedIndexs():Array
+			{
+				return datagrid.selectedItems;
+				//	return this.datagrid.selectedIndices();
+				//	return this.datagrid.selectedIndices();
+			}
+			
+			/*************************************************************
+			 * get selected item. work when "selectrow"=true 
+			 * @author  Chheav Hun
+			 * ***********************************************************/
+			public function getSelectedItem():Object
+			{
+				return datagrid.selectedItem;
+			}
+			
+			/*************************************************************
+			 * get all columns in dataGrid as array include some properties values, such as dataField,headerText,width.
+			 * @author  Chheav Hun
+			 * ***********************************************************/
+			public function getColumns():Array
+			{
+				return  gridoneManager.getColumns(); 
+			}
+			
+			/*************************************************************
+			 * getColCount: The number of columns to be displayed in a TileList control 
+			 * 				or items in a HorizontalList control. For the data grids, 
+			 * 				specifies the number of visible columns. 
+			 * @author Thuan
+			 * ***********************************************************/	
+			public function getColumnCount():int
+			{
+				return gridoneImpl.getColCount();
+			}
+			
+//			public function setStatusbarHide(visible:Boolean=true):void
+//			{
+//				
+//			}
+//			
+//			public function setColCellRolloverFgColor(columnKey:String,color:String):void
+//			{
+//				
+//			}
+//			
+//			public function getColumnKeys():Array
+//			{
+//				return new Array();
+//			}
+//			
+//			public function getCRUDJsonData():String
+//			{
+//				return "";
+//			}
+//			
+//			public function getCheckedItems(columnKey:String,returnType:String="json"):Object
+//			{
+//				return null;
+//			}
+//			
+//			public function setHandCursor(value:Boolean):void
+//			{
+//				
+//			}
+//			
+//			public function reverseAutoNumber(columnKey:String,bReverse:Boolean):void
+//			{
+//				
+//			}
+			
+			/*************************************************************
+			 * import excel by active X
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function importExcelByActiveX(str:String):void
+			{
+				gridoneImpl.importExcelByActiveX(str);
+			}
+			
+			/*************************************************************
+			 * export excel by active X
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function exportExcelByActiveX():String
+			{
+				return gridoneImpl.exportExcelByActiveX();
+			}
+			
+			/*************************************************************
+			 *get all data from datagrid as Object
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function getAllData():Object
+			{
+				return gridoneImpl.getAllData();
+			}
+			
+			/*************************************************************
+			 * set activation for specified cell
+			 * @param strColumnKey
+			 * @param nRow
+			 * @param strActivation
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setCellActivation(strColumnKey:String, nRow:int, strActivation:String):void
+			{
+				gridoneImpl.setActivation(strColumnKey,nRow,strActivation,true);
+			}
+			
+			/*************************************************************
+			 * get activation for specified cell
+			 * @param strColumnKey
+			 * @param nRow
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getCellActivation(strColumnKey:String, nRow:int):String
+			{
+				return gridoneImpl.getCellActivation(strColumnKey,nRow);
+			}
+			
+			/*************************************************************
+			 * handle thump mouse up event of external vertical scroll bar
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function thumbMouseUpHandler():void
+			{
+				datagrid.verticalScrollPosition=vScroll.scrollPosition;
+			}
+			
+			/*************************************************************
+			 * update external vertical scroll bar accroding to vertical scroll position of advanceddatagrid 
+			 * when moving external vertical scroll bar 
+			 * @author Duong Pham
+			 * ***********************************************************/
+		 
+			private function scrollHandler(event:ScrollEvent):void
+			{ 
+				dgManager.dg_scrollDatagridHandler(event);
+			}
+			
+			/*************************************************************
+			 * handle mouse wheel when moving external vertical scroll bar
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function systemMouseWheelHandler(event:MouseEvent):void
+			{
+				dgManager.dg_onMouseWheelDGHandler(event);
+			}
+			
+			/*************************************************************
+			 * get text data
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getTextData(hasColumnDataField:Boolean=false):String
+			{
+				return gridoneImpl.getTextData(hasColumnDataField);
+			}						
+			
+			/*************************************************************
+			 * handle resize event of application
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function resizeApplicationHandler(event:ResizeEvent):void
+			{
+				if(gridoneManager)
+					gridoneManager.resizeApplication(event);
+			}
+			
+			/*************************************************************
+			 * catch mouse click in browser when user click out of GridOne
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function handlePressOutOfGridOne():void
+			{
+				gridoneManager.handlePressOutOfGridOne();
+			}
+			
+			/*************************************************************
+			 * create row data to test performance
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function generateTestData(numRows:int,numCols:int,isNormal:Boolean=true):void
+			{
+				gridoneImpl.generateTestData(numRows,numCols,isNormal);
+			}
+			
+			/************************************************
+			 * insert column for datagrid
+			 * @param columnKey column dataField 
+			 * @param columnText header text
+			 * @param columnType column type: combo, text, calendar...
+			 * @param maxLength length of text in a cell, or length of a number
+			 * @param columnWidth column width
+			 * @param editable indicate whether column is editable or not
+			 * @param parentDataField dataField of parent in case added column has parent
+			 * @param insertAt (support in two cases)
+			 * 		- index (insert at index)
+			 * 		- dataField (insert before dataField)
+			 * @author Duong Pham
+			 ***********************************************/
+			public function insertColumn(columnKey:String, columnText:String, columnType:String, maxLength:String, columnwidth:String, editable:Boolean,parentDataField:String,insertAt:String):void
+			{
+				gridoneImpl.insertColumn(columnKey, columnText, columnType, maxLength, columnwidth, editable,parentDataField,insertAt);
+			}
+			
+			/*************************************************************
+			 * The function get data of client grid 
+			 * @param type kind of data which want to get
+			 * 		A: all
+			 * 		If it has CRUD mode, I: Insert ; U:Update; D:Delete
+			 * 		Eg: Type can be "A" ; "A+I"; "I+U+D";...
+			 * @param visibleType the status of row
+			 * 		A: all ( include visible and invisible rows)
+			 * 		I: invisible (include invisible rows)
+			 * 		V: visible (include visible rows)
+			 * @param dataType kind of data which wants to return (text | json)
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function getClientDataString(type:String="A",visibleType:String="A",dataType:String="text"):String
+			{
+				return gridoneImpl.getClientDataString(type.toUpperCase(),visibleType.toUpperCase(),dataType.toLowerCase());
+			}
+			
+			/*************************************************************
+			 * set visible row according to order of setRowHide is reverted
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function undoRowHide():void
+			{
+				gridoneImpl.undoRowHide();
+				 
+			}
+			
+			/*************************************************************
+			 * set multi rows is hidden
+			 * @param strListHideIndex String contain list of index to be set invisible rows
+			 * @param bHide Boolean
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setMultiRowsHide(strListHideIndex:String,bHide:Boolean,isHandleBkDp:Boolean=true):void
+			{
+				gridoneImpl.setMultiRowsHide(strListHideIndex,bHide,isHandleBkDp);
+			}
+			
+			/*************************************************************
+			 * import array data into datagrid
+			 * @param arrData array of data
+			 * @param bValidate Boolean 
+			 *       -true: get data from _bkdata
+			 *       -false: get data from dataprovider 
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function setArrayData(arrData:Array,bValidate:Boolean=false):void{
+				
+				if(this.datagrid.crudMode)
+				{
+					for (var i:int=0;i<arrData.length;i++)
+					{
+						arrData[i]['CRUD']="";         
+					}
+				}
+				gridoneImpl.setArrayData(arrData,bValidate);
+			}
+			
+			/*************************************************************
+			 *  get data from datagrid at row index
+			 * @param  rIndex row index
+			 * @return Object item of that row index
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function getItemAt(rowIndex:int):Object
+			{
+				return datagrid.getItemAt(rowIndex);
+			}
+			
+			/*************************************************************
+			 * set data 1 row into datagrid at row index
+			 * @param item  Object
+			 * @param rIndex row index
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function setItemAt(item:Object,rIndex:int):void{
+				datagrid.setItemAt(item,rIndex);
+			}
+			
+			/*************************************************************
+			 * get data all datagrid as array 
+			 * @param item  Object
+			 * @param rIndex row index
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function getArrayData(isBackup:Boolean = false):Array
+			{
+				return gridoneImpl.getArrayData(isBackup);
+			}
+			
+			/*************************************************************
+			 * get value for checkbox. it related to checkboxTrueValue, and checkboxFalseValue
+			 * User will get value  of checkbox based on what they set. (Ex: yes/no, 1/0, Y/N, T/F, true/false...)
+			 * @return columnKey dataField
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function getCheckBoxValue(dataField:String):Array
+			{
+				return gridoneImpl.getCheckBoxValue(dataField);
+			}
+			
+			/*************************************************************
+			 * dispatch event mouse up and down
+			 * @param funcName  can be "mouseUp", or "mouseDown"
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function  dispatchCustomEvent(funcName:String):void
+			{
+				this.gridoneImpl.dispatchCustomEvent(funcName);
+			}
+			
+			/*************************************************************
+			 * get dataField index 
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function getDataFieldIndex():Object
+			{
+				return this.datagrid.dataFieldIndex;
+			}
+			
+			/*************************************************************
+			 * set content for header GridOne 
+			 * @param imgurl url of image. it must be path of server.
+			 * @param strText is the title text of GridOne header 
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function  setHeaderContent(imgurl:String,strText:String):void
+			{ 
+				this.gridoneManager.setHeaderContent(imgurl,strText);
+			}
+			
+			/*************************************************************
+			 * event focus of dataGrid. event name is "onDgFocus".
+			 * The result is bridgName.
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function datagrid_focusInHandler(event:FocusEvent):void
+			{
+				//Long add on 2013/07/23
+				if (Capabilities.hasIME)
+				{
+					try
+					{
+						IME.enabled = true;
+						//IME.conversionMode = IMEConversionMode.KOREAN;
+						//statusText.text = "Conversion mode is " + IME.conversionMode + ".";
+					}
+					catch (error:Error)
+					{
+						//statusText.text = "Unable to set conversion mode.\n" + error.message;
+					}
+				}
+				
+				this.dgManager.datagrid_focusInHandler(event);
+				
+			}
+			
+			/*************************************************************
+			 * set visible of GridOne header
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function setGridOneHeaderVisible(bheader:Boolean):void
+			{
+				this.gridoneManager.setGridOneHeaderVisible(bheader);
+			}	
+			/*************************************************************
+			 * event data change of dataGrid. this event is work internally for row index status change.
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			protected function datagrid_changeHandler(event:ListEvent):void
+			{
+				this.lRowNum.text=(event.rowIndex +1) + "/" + this.datagrid.dataProvider.length + " Rows";
+			}
+			
+			/*************************************************************
+			 * event data change of dataGrid. this event is work internally for row index status change.
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			protected function datagrid_dataChangeHandler(event:FlexEvent):void
+			{
+				this.lRowNum.text=(this.datagrid.selectedIndex +1) + "/" + this.datagrid.dataProvider.length + " Rows";
+				this.datagrid.validateNow();
+				
+			}
+			
+			/*************************************************************
+			 * event data change of dataGrid. this event is work internally for row index status change.
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			protected function collectionChange_handler(event:SAEvent):void
+			{
+				 this.gridoneManager.collectionChange_handler(event);
+			}
+			
+			/*************************************************************
+			 * set gridone header title  
+			 * @param strheader  is text that will be display on header of GridOne.
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function setGridOneHeaderTitle(strheader:String):void
+			{
+				this.gridoneManager.setGridOneHeaderTitle(strheader);
+			}
+			
+			/*************************************************************
+			 * set gridone header image by url
+			 * @param url is path image at server
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function setGridOneHeaderImage(url:String):void
+			{
+				this.gridoneManager.setGridOneHeaderImage(url);
+			}
+			
+			/*************************************************************
+			 * event click of application 
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function app_ClickHandler(event:MouseEvent):void
+			{
+				
+				this.gridoneManager.app_ClickHandler(event);
+			}
+			
+			
+			/*************************************************************
+			 * end edit use for end edit item editor, in case it doesn't refresh.
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function endEditWithReason(reason:String=null):void
+			{
+				this.datagrid.endEditWithReason(reason);
+			}
+			
+			/*************************************************************
+			 *  enable DataGrid when not allow to do sth with this Grid.
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function enableDataGrid(en:Boolean):void
+			{
+				this.datagrid.enabled=en;
+			}
+			
+			/*************************************************************
+			 * set row height for all row in datagrid.
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function setRowHeight(numHeight:Number):void
+			{
+				this.datagrid.rowHeight=numHeight;
+				
+				this.datagrid.variableRowHeight=true;
+			}
+  
+			/*************************************************************
+			 *  register function with External interface in runtime.
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function registerFunc(arrfun:Array,fun:String):void
+			{
+			    this.gridoneImpl.registerFunc(arrfun,fun);
+			}
+			
+	 
+			/*************************************************************
+			 * scroll event , set bscrollStart =true. this property very important for vertical scroll performance.
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			protected function datagrid_scrollHandler(event:ScrollEvent):void
+			{
+				// TODO Auto-generated method stub
+				this.datagrid.bscrollStart=true;
+			}
+			
+			/*************************************************************
+			 * print datagrid as pdf file. 
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			[Bindable]
+			public var bgPrintColor:uint;
+			public function printPDF(dgHDBgColor:uint=0xDCDCDC,dgHDHeight:Number=50,strheader:String="", bfooter:Boolean=false, fontSize:Number=24,strHeaderFColor:uint=0x000000,textAlign:String="center",strBgpageColor:uint=0xFFFFFF):void
+			{
+				var label:spark.components.Label;
+				if (strheader !="")
+				{
+					label=new  spark.components.Label();
+					label.text=strheader;
+					label.setStyle("fontSize",fontSize);
+					label.setStyle("color",strHeaderFColor);
+					label.setStyle("textAlign",textAlign);
+					label.y=10;
+					label.setStyle("padding-top",5);
+					label.setStyle("padding-bottom",5);
+					label.percentWidth=100;
+					label.height=50;
+					this.vPrint.addChild(label);
+				}
+				bgPrintColor=strBgpageColor;
+				print(bfooter,dgHDBgColor,dgHDHeight);
+				if (label !=null)
+				  this.vPrint.removeChild(label);
+			}
+ 
+			/********************************************************************
+			 * print pdf
+			 *  @author Chheav Hun
+			 * */
+			public function print(bfooter:Boolean,dgHDBgColor:uint,dgHDHeight:Number):void
+			{
+				var printJob:FlexPrintJob = new FlexPrintJob();
+				var num:Number=this.datagrid.dataProvider.length;
+				var nPage:Number=num / 22;
+				var vPheight:Number=((num*22)/nPage) * 2 + dgHDHeight + 50;
+				if (printJob.start())
+				{
+					var printGrid:PrintADG = new  PrintADG();
+					var footer:spark.components.Label;
+					printGrid.width =datagrid.totalVisibleColumnWidth;
+					printGrid.includeInLayout = false;
+				 
+					printGrid.x=30;
+					printGrid.y=50;
+					printGrid.bgColor[0]=dgHDBgColor;
+					printGrid.bgColor[1]=dgHDBgColor;
+					printGrid.headerHeight=dgHDHeight;
+					
+			 
+					printGrid.height = vPheight ;
+			 
+				 	printGrid.source=datagrid;
+				 	this.vPrint.visible=true;
+					this.vPrint.includeInLayout = false;
+					vPrint.width=datagrid.totalVisibleColumnWidth + 60;
+					vPrint.height=vPheight+ 100; 
+					printGrid.visible = true;
+		 
+				 	this.vPrint.addChild(printGrid);
+					if (bfooter)
+					{
+						footer=new spark.components.Label();
+						var formatter :DateFormatter = new DateFormatter();
+						formatter.formatString = "YYYY/MM/DD";
+						footer.text= formatter.format(new Date());
+						footer.percentWidth=95;
+						footer.setStyle("textAlign","right");
+						footer.y=vPheight + 60; 
+						this.vPrint.addChild(footer);
+					}
+					printJob.addObject(vPrint, FlexPrintJobScaleType.MATCH_WIDTH);
+					while (printGrid.validNextPage)
+					{
+						printGrid.nextPage();
+						printJob.addObject(vPrint,FlexPrintJobScaleType.MATCH_WIDTH);
+					}
+					printJob.send();
+			 
+				 	this.vPrint.removeChild(printGrid);
+				}
+				else
+				{
+					if (bfooter)
+					{
+						this.vPrint.removeChild(footer);
+					}
+				}
+			}
+			
+		  /******************************
+		  *  set ToolTip information , work when "showDataToolTip" is false.
+		  *   @author Chheav Hun
+		  * */
+          public function setToolTipInfor(colKey:String,infor:String):void
+		  {
+  			 this.gridoneImpl.setToolTipInfor(colKey,infor);
+		  }
+            
+		 /******************************
+		  *  set  language for use as Global
+		  * */
+		  public function setLanguage(strLang:String="EN"):void
+		  {
+	         this.gridoneManager.setLanguage(strLang);
+		  }
+			
+		  /******************************
+			 *  set  padding for header text from right
+			 *  @author Chheav Hun
+			 * */
+		  public function setHeaderRightPadding(value:Number):void
+		  {
+				 this.datagrid.headerRightPadding=value;
+		  }
+			
+		  /******************************
+			 *  set cell border color and border width
+			 *  @author Chheav Hun
+			 * */
+		  public function setCellBorderColor(column:Number, nRow:int, color:uint,thickness:Number):void
+		  {
+			this.datagrid.cellBorderColor=color;
+			this.datagrid.cellBorderWidth=thickness;
+ 
+			this.datagrid.drawCellBorder(column,nRow);
+			 
+		  }
+ 
+		 /******************************
+		 *  remove cell border
+		 *  @param column is column index
+		 *  @param rowInd is row index
+		 *  @author Chheav Hun
+		 * */
+		 public function removeCellBorder(column:Number,rowInd:Number):void
+		 {
+			 this.datagrid.removeCellBorder(column,rowInd);
+		 }
+		 /******************************
+		 *  remove all cells border
+		 *  @author Chheav Hun
+		 * */
+		 public function removeCellBorderAll():void
+		 {
+			 this.datagrid.removeCellBorderAll();	
+		 }
+ 
+		]]>
+	</fx:Script>	
+	<fx:Declarations> 
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<mx:RemoteObject id="remoteService" source="GridOne.licenseGrid.ComGridOne" destination="ColdFusion" endpoint="http://dev.actsone.co.kr/flex2gateway/"
+						 fault="remoteServiceFaultHandler(event)">
+			<mx:method name="getLicense" result="getLicenseSuccessHandler(event)" fault="getLicenseFaultHandler(event)"/>
+			<mx:method name="insertLicense" />		
+		</mx:RemoteObject>
+		<s:HTTPService id="comboService" method="POST" result="comboServiceResult(event)" fault="comboServiceFault(event)" />
+		<fab:FABridge xmlns:fab="bridge.*" id="faBridge"/>
+	</fx:Declarations>
+	<mx:VBox id="subVbDg" width="100%" height="100%" verticalGap="0" horizontalGap="0" >
+		<mx:HBox backgroundColor="#DFDFDF" horizontalGap="0"
+				 width="100%"  height="25"  paddingBottom="0" paddingTop="0"
+				 id="hBoxHeader" includeInLayout="false" visible="false">
+			<mx:HBox id="hleft" horizontalAlign="left" width="50%" paddingLeft="2" paddingTop="2" horizontalGap="0" >
+				<mx:Image  buttonMode="true" id="imgHeader" width="18" scaleContent="false" maintainAspectRatio="false" />
+				<mx:Label  paddingTop="3" fontSize="12" fontWeight="normal" id="lHeadTitle" />
+			</mx:HBox>
+			<mx:HBox id="hright" horizontalAlign="right" width="50%" paddingRight="5" paddingTop="2">
+				<mx:Label  id="lRowNum" fontSize="12" fontWeight="normal"  paddingTop="2" />
+			</mx:HBox>
+		</mx:HBox>
+		<mx:HBox height="100%"
+				 id="mainContain"
+				 horizontalGap="0"
+				 borderThickness="1"
+				 borderStyle="solid"
+				 verticalScrollPolicy="off"
+				 horizontalScrollPolicy="off"
+				 width="{applicationWidth}">
+			
+			<mx:HBox id="hbDg" 
+					 height="100%"
+					 width="{vScroll.visible?applicationWidth-18:applicationWidth}"
+					 horizontalGap="0"
+					 verticalScrollPolicy="off"
+					 horizontalScrollPolicy="off" paddingBottom="0"   scroll="scrollHandler(event);">
+				<actsone:ExAdvancedDataGrid id="datagrid" textAlign="left" rowHeight="25" 
+											editable="all" doubleClickEnabled="true" 
+											minWidth="{this.hbDg.width}"
+											height="100%"
+											horizontalScrollPolicy="auto"
+											verticalScrollPolicy="auto"
+											accessibilityEnabled="true"
+											accessibilityName="{Global.ACCESS_READER_GRIDONE_NAME}"
+											accessibilityDescription="{Global.ACCESS_READER_GRIDONE_NAME}"
+											sortExpertMode="true"
+											sortableColumns="true"
+											liveScrolling="{datagrid.strRowScrollDragAction == 'syncscreen'? true : false}"
+											backgroundImage="@Embed(source='assets/images/bg2.png')" backgroundAlpha="0.2" 
+											focusIn="datagrid_focusInHandler(event)"  change="datagrid_changeHandler(event)"  scroll="datagrid_scrollHandler(event)"
+											dataChange="datagrid_dataChangeHandler(event)" 
+											dgcollectionChange="collectionChange_handler(event)"  />
+  	     
+			</mx:HBox>
+			 
+			<actsone:ExVScrollBar width="16"
+								  height="100%"
+								  includeInLayout="{datagrid.bExternalScroll &amp;&amp; datagrid.maxVerticalScrollPosition > 0 &amp;&amp; ((!datagrid.bAllowResizeDgHeight) || (datagrid.bAllowResizeDgHeight &amp;&amp; datagrid.bResizeHeightByApp &amp;&amp; this.height == datagrid.originalAppHeight) || (datagrid.bAllowResizeDgHeight &amp;&amp; !datagrid.bResizeHeightByApp &amp;&amp; this.datagrid.height == datagrid.originalDgHeight))}"
+								  visible="{datagrid.bExternalScroll &amp;&amp; datagrid.maxVerticalScrollPosition > 0 &amp;&amp; ((!datagrid.bAllowResizeDgHeight) || (datagrid.bAllowResizeDgHeight &amp;&amp; datagrid.bResizeHeightByApp &amp;&amp; this.height == datagrid.originalAppHeight) || (datagrid.bAllowResizeDgHeight &amp;&amp; !datagrid.bResizeHeightByApp &amp;&amp; this.datagrid.height == datagrid.originalDgHeight))}"
+								  thumbMouseUp="thumbMouseUpHandler()"
+								  id="vScroll"
+								  scrollPosition="{this.datagrid.verticalScrollPosition}"
+								  minScrollPosition="0"
+								  maxScrollPosition="{datagrid.maxVerticalScrollPosition==0?0:datagrid.maxVerticalScrollPosition}"
+								  lineScrollSize="1"
+								  pageScrollSize="1"
+								  pageSize="1"
+								  scroll="scrollHandler(event);"
+								  />
+		</mx:HBox>
+		<mx:HBox backgroundColor="#FFFFFF" horizontalGap="0"
+				 width="100%"
+				 horizontalAlign="right"
+				 id="hBoxLogo">
+			<mx:Label text="Version {Global.CURRENT_VERSION}"
+					  paddingTop="5"/>
+			<mx:Label text="Powered by ActsOne"
+					  paddingTop="5"
+					  fontWeight="bold"/>
+			<mx:Image source="@Embed(source='assets/Logo.png')"
+					  click="gotoGridOneHome();"
+					  useHandCursor="true"
+					  buttonMode="true"/>
+		</mx:HBox>
+		
+		<mx:Canvas  x="0" id="vPrint" visible="false" backgroundColor="{bgPrintColor}"/>
+			
+	</mx:VBox>
+	
+</s:Application>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+//	This program is free software: you can redistribute it and/or modify
+//	it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or
+//	(at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+////////////////////////////////////////////////////////////////////////////////
+-->
+<mx:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:s="library://ns.adobe.com/flex/spark" 
+				xmlns:mx="library://ns.adobe.com/flex/mx" 
+				layout="absolute"
+				width="250"
+				height="120"
+				showCloseButton="false" title="File type" creationComplete="creationCompleteHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import kr.co.actsone.events.SAEvent;
+			
+			public var strDefaultExportFileFilter:String = "";
+			
+			private function saveHandler():void
+			{
+				var saEvent:SAEvent=new SAEvent(SAEvent.SELECT_FILE_TYPE);				
+				saEvent.fileType=this.combo.selectedItem["value"];
+				this.dispatchEvent(saEvent);
+				closeHandler();
+			}
+			
+			private function closeHandler():void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			
+			private function findIndex(arrCollection:Object, value:String):int
+			{				
+				var nCount:int = -1;
+				if(arrCollection as ArrayCollection)
+				{
+					for each(var item:Object in arrCollection)
+					{
+						nCount ++;
+						if(item["value"] == value)
+						{							
+							break;
+						}						
+					}
+				}
+				return nCount;
+			};
+			
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				if(strDefaultExportFileFilter != "")
+				{
+					if(strDefaultExportFileFilter.search("xls")>=0 || strDefaultExportFileFilter.search("csv")>=0)
+					{											
+						this.combo.selectedIndex = findIndex(this.combo.dataProvider, strDefaultExportFileFilter);
+					}
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	<mx:VBox>
+		<mx:FormItem label="Choose file type">
+			<mx:ComboBox labelField="label" textAlign="center"
+						 id="combo" width="80">
+				<mx:dataProvider>
+					<fx:Array>
+						<fx:Object value="xls"
+								   label="xls"/>
+						<fx:Object value="csv"
+								   label="csv"/>
+					</fx:Array>
+				</mx:dataProvider>
+			</mx:ComboBox>
+		</mx:FormItem>
+		<mx:FormItem direction="horizontal">
+			<mx:Button label="OK"
+					   click="saveHandler()"/>
+			<mx:Button label="Cancel"
+					   click="closeHandler()"/>
+		</mx:FormItem>
+	</mx:VBox>
+</mx:TitleWindow>

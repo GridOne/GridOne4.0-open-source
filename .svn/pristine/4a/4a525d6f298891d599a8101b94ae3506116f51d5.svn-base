@@ -1,0 +1,483 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+//	This program is free software: you can redistribute it and/or modify
+//	it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or
+//	(at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.protocol
+{
+	import kr.co.actsone.common.ColumnType;
+	import kr.co.actsone.common.Global;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+	
+	import mx.collections.ArrayCollection;
+	import mx.controls.Alert;
+	
+	public class GridProtocol extends ProtocolBase
+	{
+		public static const DRAW_TYPE_A:String="A";
+		
+		public static const DRAW_TYPE_D:String="D";
+		
+		public static const DRAW_TYPE:String="drawType";
+
+		public static const ROW_COUNT:String="rowCount";
+
+		public static const COLUMN_COUNT:String="columnCount";
+
+		public static const TOTAL_COUNT:String="totalCount";
+
+		public static const PAGE_INDEX:String="pageIndex";
+
+		public static const LICENSE:String="license";
+
+		public static const GROUPS:String="groups";
+
+		public static const COLUMNS:String="columns";
+
+		public static const DATAS:String="datas";
+
+		public static const MESSAGE:String="message";
+
+		public static const STATUS:String="status";
+		
+		private var _jsonProtocol:JSONProtocol;
+		
+		public function get jsonProtocol():JSONProtocol
+		{
+			return this._jsonProtocol;
+		}
+		
+		public function set jsonProtocol(value:JSONProtocol):void
+		{
+			this._jsonProtocol=value;
+		}
+
+		private var _groupProtocol:GroupProtocol;
+
+		public function get groupProtocol():GroupProtocol
+		{
+			return _groupProtocol;
+		}
+
+		public function set groupProtocol(value:GroupProtocol):void
+		{
+			this._groupProtocol=value;
+		}
+
+		private var _columnProtocol:ColumnProtocol;
+
+		public function get columnProtocol():ColumnProtocol
+		{
+			return _columnProtocol;
+		}
+
+		public function set columnProtocol(value:ColumnProtocol):void
+		{
+			_columnProtocol=value;
+		}
+
+		private var _dataProtocol:DataProtocol;
+
+		public function get dataProtocol():DataProtocol
+		{
+			return _dataProtocol;
+		}
+
+		public function set dataProtocol(value:DataProtocol):void
+		{
+			this._dataProtocol=value;
+		}
+		
+		public var tempDrawType:String="D";
+		
+		private var _drawType:String;
+
+		public function get drawType():String
+		{
+			return this._drawType;
+		}
+
+		public function set drawType(value:String):void
+		{
+			this._drawType=value;
+		}
+
+		private var _rowCount:int=0;
+
+		public function get rowCount():int
+		{
+			return _rowCount;
+		}
+
+		public function set rowCount(value:int):void
+		{
+			this._rowCount=value;
+		}
+
+		private var _columnCount:int;
+
+		public function set columnCount(value:int):void
+		{
+			this._columnCount=value;
+		}
+
+		public function get columnCount():int
+		{
+			if(this.gridOne.datagrid.columns!=null)
+				return this.gridOne.datagrid.columns.length;
+			return 0;
+		}
+
+		private var _totalCount:int;
+
+		public function get totalCount():int
+		{
+			return this._totalCount;
+		}
+
+		public function set totalCount(value:int):void
+		{
+			this._totalCount=value;
+		}
+
+		private var _pageIndex:int = -1;
+
+		public function set pageIndex(value:int):void
+		{
+			this._pageIndex=value;
+		}
+
+		public function get pageIndex():int
+		{
+			return this._pageIndex;
+		}
+
+		private var _license:String="";
+
+		public function get license():String
+		{
+			return _license;
+		}
+
+		public function set license(value:String):void
+		{
+			this._license=value;
+		}
+
+		private var _message:String="";
+
+		public function set message(value:String):void
+		{
+			_message=value;
+		}
+
+		public function get message():String
+		{
+			return _message;
+		}
+
+		private var _status:String="";
+
+		public function get status():String
+		{
+			return _status;
+		}
+
+		public function set status(value:String):void
+		{
+			_status=value;
+		}
+
+		public var groupData:Array;
+
+		public var columnData:Array;
+
+		public var provider:Array;
+
+		public function GridProtocol(app:Object)
+		{
+			super(app);
+			this.jsonProtocol=new JSONProtocol(app);
+			this.columnProtocol=new ColumnProtocol(app);
+			this.groupProtocol=new GroupProtocol(app);
+			this.dataProtocol=new DataProtocol(app);
+		}
+
+		override public function decode(value:String):Object
+		{
+			this.protocolStr=value;
+			/* var jsonRaw:Array=this.protocolStr.split(ProtocolDelimiter.JSON_RAW);
+			var jsonStr:String=jsonRaw[0]; */
+			var groupStr:String="";
+			var r1:Array=value.split(ProtocolDelimiter.BASE + GROUPS + ProtocolDelimiter.BASE);
+			var r2:Array;
+			if(r1.length>1)
+			{
+				r2=r1[1].toString().split(ProtocolDelimiter.BASE + COLUMNS + ProtocolDelimiter.BASE);
+				groupStr=r2[0];
+				this.decodeHeader(r1[0]);
+			}
+			else
+			{
+				r2=r1[0].toString().split(ProtocolDelimiter.BASE + COLUMNS + ProtocolDelimiter.BASE);
+				this.decodeHeader(r2[0]);
+			}
+			var r3:Array=r2[1].toString().split(ProtocolDelimiter.BASE + DATAS + ProtocolDelimiter.BASE);
+			//var r4:Array=r3[1].toString().split(ProtocolDelimiter.BASE + MESSAGE + ProtocolDelimiter.BASE);
+			//var r5:Array=r4[1].toString().split(ProtocolDelimiter.BASE + STATUS + ProtocolDelimiter.BASE);
+			//this.message=r5[0];
+			//this.status=r5[1].toString().substring(0,r5[1].toString().length-2);
+			//this.jsonProtocol.decode(jsonStr);
+						
+			this.columnData=this.columnProtocol.decode(r3[0]) as Array;
+			if(groupStr!="")
+				this.groupData=this.groupProtocol.decode(groupStr) as Array;
+			if(drawType=="A")
+				this.provider=this.decodeData(columnData, r3[1]);
+			else
+				this.provider=this.decodeData(this.gridOne.datagrid.columns,r3[1]);
+			/* switch(drawType)
+			{
+				case "A":
+					
+					if(groupStr!="")
+						this.groupData=this.groupProtocol.decode(groupStr) as Array;
+					this.columnData=this.columnProtocol.decode(r3[0]) as Array;
+					this.provider=this.decodeData(columnData, r3[1]);						
+					break;
+				case "D":
+					this.provider=this.decodeData(this.gridOne.datagrid.columns,r3[1]);
+					break;
+			} */
+			return null;
+		}
+
+		private function decodeHeader(value:String):void
+		{
+			var result:Array=value.split(ProtocolDelimiter.BASE);
+			for (var i:int=0; i < result.length; )
+			{
+				this[result[i]]=result[i + 1];
+				i=i + 2;
+			}
+		}
+
+		public function decodeData(cols:Array, data:String):Array
+		{
+			var result:Array=new Array();
+			var itemArray:Array;
+			var rowStr:String;
+			var rowArray:Array=data.split(ProtocolDelimiter.CELL + ProtocolDelimiter.ROW);
+			var item:Object;
+			var comboItemArr:Array;
+			var imageItemArr:Array;
+			var col:ExAdvancedDataGridColumn;
+			for (var i:int=0; i < rowArray.length - 1; i++)
+			{
+				rowStr=rowArray[i];
+				itemArray=rowStr.split(ProtocolDelimiter.CELL);
+				item=new Object();
+				var treeInfoArr:Array;
+				for (var j:int=0; j < cols.length; j++)
+				{
+					col=cols[j] as ExAdvancedDataGridColumn;
+					if(col.type == ColumnType.CRUD)
+					{
+						if(itemArray[j] == Global.CRUD_INSERT)
+							item[cols[j].dataField]= this.gridOne.datagrid.strInsertRowText;
+						else if(itemArray[j] == Global.CRUD_UPDATE)
+							item[cols[j].dataField]= this.gridOne.datagrid.strUpdateRowText;
+						else if(itemArray[j] == Global.CRUD_DELETE)
+							item[cols[j].dataField]= this.gridOne.datagrid.strDeleteRowText;
+					}
+					switch (cols[j].type)
+					{
+						case ColumnType.MULTICOMBO:
+							comboItemArr=itemArray[j].toString().split(ProtocolDelimiter.ITEM);
+							item[cols[j].dataField + Global.SELECTED_COMBO_INDEX]=comboItemArr[0];//combo index
+							item[cols[j].dataField + Global.COMBO_KEY_CELL]=comboItemArr[1]; //comobolist index
+							break;
+						case ColumnType.COMBOBOX:
+							item[cols[j].dataField + Global.SELECTED_COMBO_INDEX]=itemArray[j];
+							var comboItem:Object=col.listCombo[col.comboKey]!=null?(col.listCombo[col.comboKey] as Array)[itemArray[j]]:null;
+							if(comboItem==null)
+								item[cols[j].dataField]="";
+							else
+								item[cols[j].dataField]=comboItem["value"];
+							break;
+						case ColumnType.TREE:
+							imageItemArr=itemArray[j].toString().split(ProtocolDelimiter.ITEM);
+							item[cols[j].dataField]=imageItemArr[0];
+							if(col.dataField==this.datagrid.treeDataField)
+							{
+								//item["HIDDENVALUE"]=imageItemArr[1].toString();
+								treeInfoArr=imageItemArr[1].toString().split(datagrid.treeInfo[1]);
+								item[datagrid.treePIDField]=treeInfoArr[0];
+								item[datagrid.treeIDField]=treeInfoArr[1];
+							}
+							break;
+						case ColumnType.IMAGETEXT:
+							imageItemArr=itemArray[j].toString().split(ProtocolDelimiter.ITEM);
+							item[cols[j].dataField]=imageItemArr[0];
+							item[cols[j].dataField + Global.SELECTED_IMAGE_INDEX]=imageItemArr[1];
+							break;
+						case ColumnType.CRUD:							
+							item[cols[j].dataField+Global.CRUD_KEY]=itemArray[j];
+							break;
+						default:
+						{
+							item[cols[j].dataField]=itemArray[j];
+							break;
+						}
+
+					}
+				}
+				result.push(item);
+			}
+			return result;
+		}
+		/*************************************************************
+		 * getProtocol
+		 * author:Toan Nguyen
+		 * modified by: Duong Pham - pageIndex = -1 and adds: message & status
+		 * ***********************************************************/
+		public function getProtocol(selectedField:Object=null):String
+		{
+			var result:String="";
+			var datas:String=DATAS + ProtocolDelimiter.BASE+ ProtocolDelimiter.BASE;
+			var groupStr:String=groupProtocol.encode(datagrid.groupedColumns);
+			var columnStr:String=columnProtocol.encode(datagrid.columns);
+			var dataStr:String=encodeData(selectedField);
+			var rowCnt:int=0;
+			if(selectedField!=null){
+				rowCnt = rowCount;
+				datas=DATAS + ProtocolDelimiter.BASE + dataStr + ProtocolDelimiter.BASE;
+			}
+			//var jsonStr:String=jsonProtocol.encode(jsonProtocol.jsonObj);
+			//result=jsonStr+ProtocolDelimiter.JSON_RAW+"grid"+ProtocolDelimiter.JSON_RAW+DRAW_TYPE + ProtocolDelimiter.BASE + drawType + ProtocolDelimiter.BASE + ROW_COUNT + ProtocolDelimiter.BASE + grid.dataProvider.length + ProtocolDelimiter.BASE;
+			result=DRAW_TYPE + ProtocolDelimiter.BASE + tempDrawType+ ProtocolDelimiter.BASE +
+			COLUMN_COUNT + ProtocolDelimiter.BASE + columnCount.toString() + ProtocolDelimiter.BASE + 
+			ROW_COUNT + ProtocolDelimiter.BASE + rowCnt + ProtocolDelimiter.BASE+
+			TOTAL_COUNT + ProtocolDelimiter.BASE + totalCount.toString() + ProtocolDelimiter.BASE+
+			PAGE_INDEX + ProtocolDelimiter.BASE + "-1" + ProtocolDelimiter.BASE;
+			/* if(license!="") 
+				result=result + LICENSE + ProtocolDelimiter.BASE + license + ProtocolDelimiter.BASE; */
+			if(groupStr!="")
+				result=result + GROUPS + ProtocolDelimiter.BASE + groupStr + ProtocolDelimiter.BASE;
+			result=result + COLUMNS + ProtocolDelimiter.BASE + columnStr+ ProtocolDelimiter.BASE+
+			//DATAS + ProtocolDelimiter.BASE + dataStr + ProtocolDelimiter.BASE +
+			datas+
+			MESSAGE + ProtocolDelimiter.BASE + message + ProtocolDelimiter.BASE +
+			STATUS + ProtocolDelimiter.BASE + status + ProtocolDelimiter.BASE;
+			//result=result + ProtocolDelimiter.JSON_RAW;					
+			return result;
+		}
+
+		public function encodeData(selectedField:Object=null):String
+		{
+			var result:String="";
+			try
+			{
+				var provider:ArrayCollection=new ArrayCollection();
+				if(selectedField!=null)
+				{
+					if(selectedField is Array)
+					{
+						for each(var index:int in selectedField)
+						{
+							provider.addItem(datagrid._bkDP[index]);		
+						}
+					}
+					else if(selectedField == Global.GRIDDATA_ALL)
+					{
+						provider=datagrid._bkDP as ArrayCollection;
+					}
+					else
+					{
+						var selectedCol:ExAdvancedDataGridColumn=datagrid.columns[datagrid.dataFieldIndex[selectedField]];
+						if(selectedCol.type==ColumnType.CHECKBOX)
+							provider=selectedCol.arrSelectedCheckbox;
+						else if(selectedCol.type==ColumnType.CRUD)
+						{
+							for each(var item:Object in datagrid.dataProvider)
+							{
+								if(item[selectedField]!=null && item[selectedField]!="")
+								{
+									provider.addItem(item);
+								}
+							}
+						}	
+					}
+				}				
+				if(provider!=null)	
+					this.rowCount=provider.length;
+				else
+					this.rowCount=0;
+				for each (var data:Object in provider)
+				{
+					for each (var col:ExAdvancedDataGridColumn in datagrid.columns)
+					{			
+						if(datagrid.bUpdateNullToZero && col.type == ColumnType.NUMBER &&
+							(data[col.dataField] == undefined || data[col.dataField] == null || data[col.dataField] == ""))
+							data[col.dataField] = "0";
+						if(col.type == ColumnType.TREE && data[datagrid.crudColumnKey+Global.CRUD_KEY] == null)
+							data[datagrid.crudColumnKey+Global.CRUD_KEY] = "";
+						if(col.type == ColumnType.COMBOBOX && data[col.dataField+Global.SELECTED_COMBO_INDEX] == null)
+							data[col.dataField + Global.SELECTED_COMBO_INDEX] = "-1";
+						if(col.type == ColumnType.MULTICOMBO && data[col.dataField+Global.SELECTED_COMBO_INDEX] == null)
+							data[col.dataField + Global.SELECTED_COMBO_INDEX] = "-1";
+						if(col.type == ColumnType.IMAGETEXT && data[col.dataField+Global.SELECTED_IMAGE_INDEX] == null)
+							data[col.dataField + Global.SELECTED_IMAGE_INDEX] = "-1";
+						if(col.dataField == this.gridOne.datagrid.treePIDField || col.dataField == this.gridOne.datagrid.treeIDField )
+							continue;
+						switch (col.type)
+						{
+							case ColumnType.COMBOBOX:
+								result=result + data[col.dataField + Global.SELECTED_COMBO_INDEX]+ ProtocolDelimiter.CELL;
+								break;
+							case ColumnType.MULTICOMBO:
+								result=result + data[col.dataField + Global.SELECTED_COMBO_INDEX] + ProtocolDelimiter.ITEM + data[col.dataField + Global.COMBO_KEY_CELL]  + ProtocolDelimiter.CELL;
+								break;
+							case ColumnType.IMAGETEXT:
+								result=result + data[col.dataField] + ProtocolDelimiter.ITEM + data[col.dataField + Global.SELECTED_IMAGE_INDEX] + ProtocolDelimiter.ITEM + ProtocolDelimiter.CELL;
+								break;
+							case ColumnType.TREE:
+								result=result + data[col.dataField] + ProtocolDelimiter.ITEM + 
+								data[this.gridOne.datagrid.treePIDField] +  this.gridOne.datagrid.treeInfo[1] + data[this.gridOne.datagrid.treeIDField] +ProtocolDelimiter.ITEM+ ProtocolDelimiter.CELL;
+								break;
+							case ColumnType.CRUD:
+								result=result + data[col.dataField+Global.CRUD_KEY] + ProtocolDelimiter.CELL; 								
+								break;
+							default:
+								result=result + data[col.dataField] + ProtocolDelimiter.CELL;
+								break;
+						}
+					}
+					result=result + ProtocolDelimiter.ROW;
+				}
+			}
+			catch (error:Error)
+			{
+				Alert.show("data"+error.message);
+			}
+			return result;
+		}
+
+	}
+}

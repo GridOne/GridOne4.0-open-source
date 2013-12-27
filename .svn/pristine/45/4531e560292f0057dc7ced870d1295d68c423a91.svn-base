@@ -1,0 +1,113 @@
+package kr.co.actsone.utils
+{
+	import flash.events.MouseEvent;
+	import flash.external.ExternalInterface;
+	
+	import mx.controls.Alert;
+	import mx.core.Application;
+	import mx.core.FlexGlobals;
+	import mx.core.UIComponent;
+ 
+	
+	public class MouseWheelTrap
+	{
+		static private var _mouseWheelTrapped:Boolean;
+		
+		public static var isMouseOutGrid:Boolean=true;
+		
+		public static var component:UIComponent=null;
+		
+		public static var gridoneId:String="";
+	 
+ 
+	 
+		public static function setup(com:UIComponent=null):void
+		{
+			if (com != null)
+			{
+				component=com;
+				component.addEventListener(MouseEvent.ROLL_OVER, mouseRollOverHandler);
+				component.addEventListener(MouseEvent.ROLL_OUT, mouseRollOutHandler);
+			}
+			else
+			{
+				//making it work better for flex. use 'stage' for flash
+				FlexGlobals.topLevelApplication.addEventListener(MouseEvent.ROLL_OVER, mouseRollOverHandler);
+				FlexGlobals.topLevelApplication.addEventListener(MouseEvent.CLICK, mouseClickHandler);
+				//making it work better for flex. use 'stage' for flash 
+				FlexGlobals.topLevelApplication.addEventListener(MouseEvent.ROLL_OUT, mouseRollOutHandler);
+			}
+			
+		}
+		
+		private static function mouseRollOverHandler(event:MouseEvent):void
+		{
+			isMouseOutGrid=false;
+			allowBrowserScroll(false);
+		 
+		}
+		
+		private static function mouseRollOutHandler(event:MouseEvent):void
+		{
+			isMouseOutGrid=true;
+			allowBrowserScroll(true);
+		 
+		}
+		
+		
+		private static function mouseClickHandler(event:MouseEvent):void
+		{
+			isMouseOutGrid=false;
+			allowBrowserScroll(false);
+		 
+		}
+		
+		public static function allowBrowserScroll(allow:Boolean):void
+		{
+			 
+			//createMouseWheelTrap();
+         
+		 //	Alert.show(gridoneId );
+			if (ExternalInterface.available)
+			{
+				ExternalInterface.call("allowBrowserScroll"+gridoneId, allow, FlexGlobals.topLevelApplication.id);
+			}
+		}
+		
+		
+		private static function createMouseWheelTrap():void
+		{
+			if (_mouseWheelTrapped)
+			{
+				return;
+			}
+			_mouseWheelTrapped=true;
+			
+			return;
+//			if (ExternalInterface.available)
+//			{
+//				ExternalInterface.call("eval", "var browserScrolling;" +
+//					
+//					"function allowBrowserScroll(value){browserScrolling=value;}" +
+//					
+//					"function handle(delta){" + "if(!browserScrolling){return false;}" + "return true;" + "}" +
+//					
+//					"function wheel(event){" + "var delta = 0; " + "if(!event){event = window.event;}" +
+//					
+//					"var app = document.getElementById('GridOne');             var edelta = (navigator.userAgent.indexOf('Firefox') !=-1) ? -event.detail : event.wheelDelta/40;                                                var o = {x: event.screenX, y: event.screenY,                  delta: edelta,                 ctrlKey: event.ctrlKey, altKey: event.altKey,                  shiftKey: event.shiftKey}              app.handleWheel(o);" +
+//					
+//					"if(event.wheelDelta){" + "delta = event.wheelDelta/120;" + "if(window.opera){delta =- delta;}" + "}" + "else if(event.detail){" + "delta =- event.detail/3;" + "}" +
+//					
+//					"if(delta){handle(delta);}" +
+//					
+//					"if(!browserScrolling){" + "if(event.preventDefault){event.preventDefault();}" + "event.returnValue=false;" + "}" + "}" +
+//					
+//					"if(window.addEventListener){" + "window.addEventListener('DOMMouseScroll',wheel,false);" + "}" +
+//					
+//					"window.onmousewheel = document.onmousewheel = wheel;" +
+//					
+//					"allowBrowserScroll(true);");
+//			}
+		}
+	}
+}

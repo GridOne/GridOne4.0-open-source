@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+-->
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="{this.height}"
+		   focusEnabled="true"
+		   verticalScrollPolicy="off"
+		   horizontalScrollPolicy="off"
+		   tabEnabled="false"
+		   implements="mx.controls.listClasses.IDropInListItemRenderer"
+		   initialize="init()"
+		   click="canvas1_clickHandler(event)">
+	
+	<mx:Script>
+		<![CDATA[			
+			import flash.events.MouseEvent;
+			
+			import kr.co.actsone.common.Global;
+			import kr.co.actsone.controls.ExAdvancedDataGrid;
+			import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+			import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridListData;
+			import kr.co.actsone.events.SAEvent;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.listClasses.BaseListData;
+			import mx.controls.listClasses.IDropInListItemRenderer;								
+			
+			[Bindable]
+			public var imageTextValue:String="";
+			
+			private var _flag:Boolean=false;
+			
+			private function init():void
+			{
+//				this.addEventListener(FocusEvent.FOCUS_OUT, focusOutItemHandler);
+			}
+			
+			private function focusOutItemHandler(event:FocusEvent):void
+			{
+				if (!_flag)
+				{
+					this.txtImageText.setFocus();
+					_flag=true;
+				}
+			}
+			
+			private var _listData:BaseListData;
+			public var dataField:String;
+			
+			public function set listData(value:BaseListData):void
+			{
+				this._listData=ExAdvancedDataGridListData(value);
+				
+				dataField=ExAdvancedDataGrid(this.listData.owner).columns[this.listData.columnIndex].dataField;
+			}
+			
+			public function get listData():BaseListData
+			{
+				return _listData;
+			}
+			
+			override public function set data(value:Object):void
+			{
+				super.data=value;
+				this.height=(this.listData.owner as ExAdvancedDataGrid).rowHeight;
+				imageTextValue=value[dataField];
+				var imageCol:ExAdvancedDataGridColumn=(this.listData.owner as ExAdvancedDataGrid).columns[this.listData.columnIndex];				
+				if (imageCol != null)
+				{				
+					if(value[dataField+Global.SELECTED_IMAGE_INDEX]==null)
+					{
+						value[dataField+Global.SELECTED_IMAGE_INDEX]=0;
+					}	
+					var index:int=parseInt(value[dataField +Global.SELECTED_IMAGE_INDEX]);
+					if(!imageCol.isUseGridImage)
+					{
+						this.linkIcon.source=imageCol.imageList[index];
+					}
+					else
+					{
+						this.linkIcon.source=(this.listData.owner as ExAdvancedDataGrid).imageList[index];
+					}								
+					if(this.linkIcon.source == null)				
+						this.linkIcon.includeInLayout=false;					
+					else
+					{
+						this.linkIcon.includeInLayout=true;
+						this.linkIcon.width=imageCol.imageWidth + 2;
+						this.linkIcon.height=imageCol.imageHeight;
+					}
+					this.txtImageText.width = imageCol.width - linkIcon.width - 2;
+					this.txtImageText.maxChars=imageCol.maxLength;
+				}				
+			}
+			
+			private function initTextInputHandler():void
+			{
+				this.txtImageText.setFocus();				
+			}
+							
+			public function onMouseDownImageHandler(event:MouseEvent):void{
+				var listOwner:ExAdvancedDataGrid = this.listData.owner as ExAdvancedDataGrid;
+				var saEvent:SAEvent=new SAEvent(SAEvent.IMAGE_ICON_CLICK,true);
+				saEvent.columnKey=dataField;
+				saEvent.nRow=listOwner.getItemIndex(data);
+				listOwner.dispatchEvent(saEvent);
+			}
+			
+			private function changeHandler(event:Event):void
+			{
+				this.imageTextValue=this.txtImageText.text;
+			}
+			
+			protected function txtImageText_keyUpHandler(event:KeyboardEvent):void
+			{
+				var listOwner:ExAdvancedDataGrid = this.listData.owner as ExAdvancedDataGrid;
+				if(listOwner.eventArr.hasOwnProperty(SAEvent.TEXT_INPUT_KEY_UP))
+				{
+					//dispatch event textInputKeyUp event to javascript
+					var saEvent:SAEvent = new SAEvent(SAEvent.TEXT_INPUT_KEY_UP,true);
+					saEvent.strText = txtImageText.text;
+					saEvent.keyCode = event.keyCode;
+					saEvent.columnKey = this.dataField;
+					saEvent.nRow = (this.listData.owner as ExAdvancedDataGrid)._selectedRowIndex; //Add property nRow for Feature #3894 (Keyup event)
+					listOwner.dispatchEvent(saEvent);
+				}
+			}
+			
+			protected function canvas1_clickHandler(event:MouseEvent):void
+			{
+				var a:int = 0;
+			}
+			
+		]]>
+	</mx:Script>
+	
+	
+	<mx:Image id="linkIcon"
+			  mouseDown="onMouseDownImageHandler(event)"
+			  maintainAspectRatio="true"
+			  x="0" y="{Math.floor((this.height - this.linkIcon.height)/2)}"/>
+	<mx:TextInput id="txtImageText" 
+				  width="{this.width * 0.85}" 
+				  height="{this.height-1.5}" 
+				  horizontalCenter="{this.linkIcon.includeInLayout ? linkIcon.width/2 : 0}"
+				  verticalCenter="-1"
+				  text="{imageTextValue}" 
+				  creationComplete="initTextInputHandler()"
+				  change="changeHandler(event)" 
+				  keyUp="txtImageText_keyUpHandler(event)"/>
+</mx:Canvas>

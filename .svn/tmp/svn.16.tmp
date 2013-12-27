@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Demo </title> 
+<script type="text/javascript" src="GridOne.js"></script>
+<script type="text/javascript">
+ 
+var gridOne;
+ var test;
+/*get gridone*/
+function getGrid() {	
+    return document.GridOne; 
+}
+  
+/*********************************************init grid*********************************************/
+/*init for grid one. This function is called by GridOne internally */
+function initializeHandler() 
+{
+	gridOne = getGrid();
+	test = new GridOneWrapper();
+	
+	setData(gridOne);
+	
+	setHeader(gridOne);	
+}
+ 
+var textData="id|dob|phn|name|salary|idnumber|email|fv%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|v1%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|v2%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|v3%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|v4%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|v5%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|v6%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|v7%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|v8%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|v9%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|v10%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|v2%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|v3%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|v4%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|v5%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|v6%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|v7%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|v8%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|v9%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|v10%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|v2%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|v3%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|v4%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|v5%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|v6%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|v7%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|v8%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|v9%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|v10%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|v1%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|v2%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|v3%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|v4%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|v5%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|v6%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|v7%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|v8%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|v9%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|v10%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|v2%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|v3%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|v4%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|v5%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|v6%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|v7%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|v8%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|v9%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|v10%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|v2%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|v3%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|v4%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|v5%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|v6%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|v7%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|v8%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|v9%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|v10%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|v1%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|v2%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|v3%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|v4%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|v5%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|v6%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|v7%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|v8%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|v9%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|v10%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|v2%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|v3%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|v4%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|v5%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|v6%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|v7%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|v8%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|v9%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|v10%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|v2%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|v3%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|v4%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|v5%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|v6%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|v7%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|v8%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|v9%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|v10%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|v7%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|v8%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|v9%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|v10%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "0|20120401|01029389393|AB|C|39382738|lucy@yahoo.com|v12";
+
+ //set header in dataGrid
+//========================================================
+ function setHeader(gridOne)
+ {
+	test.addHeader(gridOne,"auto","","autonumber",20,50,false,"center");
+	test.addHeader(gridOne,"crud","CRUD","crud",20,100,true,"center");
+	test.addHeader(gridOne,"id","","checkbox",1,100,true,"center");
+    test.addHeader(gridOne,"radio","radioButton","RADIOBUTTON",12,100,true,"center");
+	test.addHeader(gridOne,"name", "Name", "text", 50, 100,true,"center");
+	test.addHeader(gridOne,"dob", "Birth Date", "date", 25, 100, true,"center");
+ 	test.addHeader(gridOne,"salary","ComboDynamic","combodynamic",10,100,true,"center");
+ 	test.addHeader(gridOne,"image1","image1","IMAGETEXTRIGHT",12,100,true,"center");
+ 	test.addHeader(gridOne,"image2","image2","IMAGETEXT",12,100,true,"center");
+    test.addHeader(gridOne,"image3","image3","HIDEIMAGETEXTRIGHT",12,100,true,"");
+ //	test.addHeader(gridOne,"textarea","textArea","TEXTAREA",10,100,true,"");
+ 	test.addHeader(gridOne,"button","button","button",12,100,true,"center");
+	test.addHeader(gridOne,"combo","Combo","combo",10,100,true,"center");
+ 	test.addHeader(gridOne,"idnumber","idnumber","text",50,100,true,"center");
+	test.addHeader(gridOne,"phn", "PhoneNumber", "text", 15, 100, true,"center");
+	test.addHeader(gridOne,"email", "Email", "text", 50, 100, false,"center");
+	test.addHeader(gridOne,"HTML","HTML","HTML",20,100,true,"");
+	test.addHeader(gridOne,"multicombobox","MULTICOMBOBOX","MULTICOMBOBOX",20,100,true,"center");
+	test.addHeader(gridOne,"multicom","multicombo","multicombo",50,150,true,"");
+	test.addHeader(gridOne,"comboHeader","comboHeader","COMBOHEADER",20,100,true,"");
+    test.boundHeader(gridOne);	
+	
+	test.setDataGridProperty(gridOne,"selectCell",false);
+	
+	test.setCRUDMode(gridOne,"crud","Create","Update","Delete"); 
+	
+	test.setDataGridProperty(gridOne,"bViewDelRowCRUD",false);  //true = view deleted row with CRUD , false = remove row from display list
+    test.addImageList(gridOne,"image1","http://localhost:8080/images/orangecircle.png");
+    test.addImageList(gridOne,"image2","http://localhost:8080/images/orangecircle.png");
+    test.addImageList(gridOne,"image3","http://localhost:8080/images/orangecircle.png");
+	test.addComboListJson(gridOne,"combo","label","value",jsonData1);
+	test.addComboList(gridOne,"multicombobox",comboArr);
+	
+	test.addComboListValue(gridOne,"multicom","Asia","AS");  
+	test.addComboListValue(gridOne,"multicom","America","AM"); 
+	test.addComboListValue(gridOne,"multicom","Euro","EU");
+	
+	test.setColumnProperty(gridOne,"comboHeader","headerRenderer","comboheader");
+	
+	test.addComboHeaderValue(gridOne,"comboHeader","HD1","H1");
+
+	test.setColumnProperty(gridOne,"id","headerRenderer","checkbox");
+	test.addDynamicComboList(gridOne,"salary","label","value",jsonData1);
+ }
+ 
+ var comboArr=[  
+               {label:"Korea",value:"KR",children:([ {label:"Seoul",value:"Seoul"},{label:"Busan",value:"Busan"}, {label:"Wangi",value:"Wangi"}])},    {label:"Japan",value:"JP",children:([ {label:"Tokyo",value:"Tokyo"},{label:"Kyoto",value:"Kyoto"}])},    {label:"Vietnam",value:"VN",children:([                   {label:"Hanoi",value:"Hanoi"},{label:"HCM",value:"HCM"},{label:"Danang",value:"DN"}])},    {label:"America",value:"America",children:([ {label:"Newyork",value:"Newyork"},{label:"Ohio",value:"Ohio"},{label:"Washington",value:"Washington"},  {label:"California",value:"California"}])},    {label:"Euro",value:"Euro",children:([{label:"Paris",value:"Paris"},{label:"London",value:"London"},{label:"Berlin",value:"Berlin"}])} ];
+ 
+ 
+ var jsonData1=[
+	              {"label":'COM',
+	               "value":'C'
+	              },
+	              {"label":"AMS",
+	               "value":"A"
+	              },
+	              {"label":"BOM",
+	               "value":"B"
+	              },
+	              {"label":"DDD",
+		           "value":"D"
+		          },
+		          {"label":"FME",
+		           "value":"E"
+		          }
+	              ];
+ 
+ 
+ 
+ //set data
+ //==========================================================
+ function setData(gridOne)
+ {
+ //set data into dataGrid
+  //  gridOne=getGrid();
+   test.setTextData(gridOne,textData);
+   
+  
+ }
+  
+</script>
+</head>
+<body>
+ 
+		<div style="height:1000px;">
+		  <script type="text/javascript">
+		     initGridOne(700,400,'GridOne','flash','','A0B0C0C6-000148-156641','false','fast');
+		  </script>
+		</div>
+ 		
+  
+</body>
+</html>

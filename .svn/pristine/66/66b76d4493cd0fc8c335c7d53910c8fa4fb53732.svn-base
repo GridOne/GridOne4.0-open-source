@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+//	This program is free software: you can redistribute it and/or modify
+//	it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or
+//	(at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+////////////////////////////////////////////////////////////////////////////////-->
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 verticalGap="0" horizontalGap="0" borderColor="0xC4CCCC" borderThickness="1" borderStyle="solid"
+		 horizontalScrollPolicy="off" verticalScrollPolicy="off" 
+		 initialize="initializeHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import kr.co.actsone.events.SAEvent;
+			
+			import mx.collections.ArrayCollection;
+			import mx.events.FlexEvent;
+			import mx.events.FlexMouseEvent;
+			import mx.events.ListEvent;
+			import mx.managers.PopUpManager;
+			
+			public var dataFieldCol : String;
+			public var rowIndex : int;
+			[Bindable]
+			public var lstMenu : ArrayCollection = new ArrayCollection();
+			[Bindable] public var rowHeight:int = 25;
+			
+			protected function itemClickHandler(event:ListEvent):void
+			{
+				var saEvent : SAEvent = new SAEvent(SAEvent.ON_SELECT_RIGHT_CLICK,true);
+				saEvent.data = event.itemRenderer.data;
+				saEvent.columnKey = this.dataFieldCol;
+				saEvent.nRow = this.rowIndex;				
+				this.dgContextMenu.selectedIndex = -1;
+				dispatchEvent(saEvent);
+				PopUpManager.removePopUp(this);
+			}
+			
+			protected function initializeHandler(event:FlexEvent):void
+			{
+				this.addEventListener(FlexMouseEvent.MOUSE_DOWN_OUTSIDE,closeContextMenu);	
+				this.addEventListener(FlexMouseEvent.MOUSE_WHEEL_OUTSIDE, closeContextMenu);				
+			}
+			
+			protected function closeContextMenu(event:FlexMouseEvent):void
+			{
+				this.dgContextMenu.selectedIndex = -1;
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function updateGrid(listMenuItemKey:ArrayCollection):void
+			{				
+				if(dgContextMenu && (dgContextMenu.dataProvider as ArrayCollection).length > 0)
+				{					
+					(dgContextMenu.dataProvider as ArrayCollection).removeAll();
+					lstMenu = listMenuItemKey;
+				}
+				else
+					lstMenu = listMenuItemKey;
+			}
+			 
+			
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>	
+	<mx:DataGrid id="dgContextMenu" dataProvider="{lstMenu}" headerHeight="0" rowCount="{lstMenu.length}" 
+				 alternatingItemColors="[0xFFFFFF,0xFFFFFF]" rowHeight="{rowHeight}" borderStyle="solid"
+				 horizontalScrollPolicy="off" itemClick="itemClickHandler(event)" allowMultipleSelection="false"
+				 verticalScrollPolicy="off" horizontalGridLines="false" verticalGridLines="false" width="100%">
+		<mx:columns>
+			<mx:DataGridColumn paddingLeft="5" paddingRight="5" dataField="label" textAlign="left" resizable="false" width="125" itemRenderer="kr.co.actsone.itemRenderers.MenuItemRenderer"/>
+		</mx:columns>
+	</mx:DataGrid>
+</mx:VBox>

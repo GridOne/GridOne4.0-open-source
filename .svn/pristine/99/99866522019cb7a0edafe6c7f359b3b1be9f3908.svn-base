@@ -1,0 +1,27 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.summarybar
+{
+	public class SummaryBarConstant
+	{
+		public static const TOTAL : String = '_tt';
+		public static const SUB_TOTAL : String = '_stt';
+		public static const SUMMARYALL : String = 'summaryall';
+		
+		public static const FUNC_SUM : String = 'sum';
+		public static const FUNC_COUNT : String = 'count';
+		public static const FUNC_AVERAGE : String = 'average';
+		public static const FUNC_CUSTOM : String = 'custom';
+		
+		public static const SUMMARY_BAR_KEY:String="strSummaryBarKey";
+		public static const SUMMARY_FUNCTION_NAME:String="strFunc";
+		public static const SUMMARY_MERGE_COLUMN:String="strMergeColumn";
+		public static const SUMMARY_COLUMN_LIST:String="strColumnList";
+	}
+}

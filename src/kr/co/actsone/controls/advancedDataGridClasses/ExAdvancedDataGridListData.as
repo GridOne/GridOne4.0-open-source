@@ -1,0 +1,205 @@
+/********************************************************************************
+ *
+ *  ACTSONE COMPANY
+ *  Copyright 2012 Actsone 
+ *  All Rights Reserved.
+ *
+ *	This program is free software: you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation, either version 3 of the License, or
+ *	(at your option) any later version.
+ *
+ *	This program is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ ***********************************************************************************/
+
+package kr.co.actsone.controls.advancedDataGridClasses
+{
+
+import mx.controls.dataGridClasses.DataGridListData;
+import mx.core.IUIComponent;
+
+/**
+ *  The ExAdvancedDataGridListData class defines the data type of the <code>listData</code> property 
+ *  implemented by drop-in item renderers or drop-in item editors for the ExAdvancedDataGrid control. 
+ *  All drop-in item renderers and drop-in item editors must implement the 
+ *  IDropInListItemRenderer interface, which defines the <code>listData</code> property.
+ *
+ *  <p>While the properties of this class are writable, you should consider them to 
+ *  be read only. They are initialized by the ExAdvancedDataGrid class, and read by an item renderer 
+ *  or item editor. Changing these values can lead to unexpected results.</p>
+ *
+ *  @see mx.controls.listClasses.IDropInListItemRenderer
+ *  @see kr.co.actsone.controls.ExAdvancedDataGrid
+ *  
+ *  @langversion 3.0
+ *  @playerversion Flash 9
+ *  @playerversion AIR 1.1
+ *  @productversion Flex 3
+ */
+public class ExAdvancedDataGridListData extends DataGridListData
+{
+    include "../../core/Version.as";
+
+    //--------------------------------------------------------------------------
+    //
+    //  Constructor
+    //
+    //--------------------------------------------------------------------------
+
+    /**
+     *  Constructor.
+     *
+     *  @param text Text representation of the item data.
+     * 
+     *  @param dataField Name of the field or property 
+     *    in the data provider associated with the column.
+     *
+     *  @param uid A unique identifier for the item.
+     *
+     *  @param owner A reference to the ExAdvancedDataGrid control.
+     *
+     *  @param rowIndex The index of the item in the data provider for the ExAdvancedDataGrid control.
+     * 
+     *  @param columnIndex The index of the column in the currently visible columns of the 
+     *  control.
+     *
+     *  
+     *  @langversion 3.0
+     *  @playerversion Flash 9
+     *  @playerversion AIR 1.1
+     *  @productversion Flex 3
+     */
+    public function ExAdvancedDataGridListData(text:String, dataField:String,
+                                 columnIndex:int, uid:String,
+                                 owner:IUIComponent, rowIndex:int = 0 )
+    {   
+        super(text, dataField, columnIndex, uid, owner, rowIndex);
+    }
+
+    //--------------------------------------------------------------------------
+    //
+    //  Properties
+    //
+    //--------------------------------------------------------------------------
+    
+    //----------------------------------
+    //  depth
+    //----------------------------------
+
+	[Bindable("__NoChangeEvent__")]
+	
+    /**
+     *  The level of the item in the ExAdvancedDataGrid control. The top level is 1.
+     *  
+     *  @langversion 3.0
+     *  @playerversion Flash 9
+     *  @playerversion AIR 1.1
+     *  @productversion Flex 3
+     */
+    public var depth:int;
+
+    //----------------------------------
+    //  disclosureIcon
+    //----------------------------------
+
+	[Bindable("__NoChangeEvent__")]
+	
+    /**
+     *  A Class representing the disclosure icon for the item in the ExAdvancedDataGrid control.
+     *  
+     *  @langversion 3.0
+     *  @playerversion Flash 9
+     *  @playerversion AIR 1.1
+     *  @productversion Flex 3
+     */
+    public var disclosureIcon:Class;
+
+    //----------------------------------
+    //  hasChildren
+    //----------------------------------
+
+	[Bindable("__NoChangeEvent__")]
+	
+    /**
+     *  Contains <code>true</code> if the item has children.
+     *  
+     *  @langversion 3.0
+     *  @playerversion Flash 9
+     *  @playerversion AIR 1.1
+     *  @productversion Flex 3
+     */
+    public var hasChildren:Boolean; 
+
+    //----------------------------------
+    //  icon
+    //----------------------------------
+    
+	[Bindable("__NoChangeEvent__")]
+	
+    /**
+     *  A Class representing the icon for the item in the ExAdvancedDataGrid control.
+     *  
+     *  @langversion 3.0
+     *  @playerversion Flash 9
+     *  @playerversion AIR 1.1
+     *  @productversion Flex 3
+     */
+    public var icon:Class;
+
+    //----------------------------------
+    //  indent
+    //----------------------------------
+
+	[Bindable("__NoChangeEvent__")]
+	
+    /**
+     *  The default indentation for this row of the ExAdvancedDataGrid control.
+     *  
+     *  @langversion 3.0
+     *  @playerversion Flash 9
+     *  @playerversion AIR 1.1
+     *  @productversion Flex 3
+     */
+    public var indent:int;
+
+    //----------------------------------
+    //  node
+    //----------------------------------
+
+	[Bindable("__NoChangeEvent__")]
+	
+    /**
+     *  The data for this item in the ExAdvancedDataGrid control.
+     *  
+     *  @langversion 3.0
+     *  @playerversion Flash 9
+     *  @playerversion AIR 1.1
+     *  @productversion Flex 3
+     */
+    public var item:Object;
+
+    //----------------------------------
+    //  open
+    //----------------------------------
+
+	[Bindable("__NoChangeEvent__")]
+	
+    /**
+     *  Contains <code>true</code> if the item is open and it has children.
+     *  
+     *  @langversion 3.0
+     *  @playerversion Flash 9
+     *  @playerversion AIR 1.1
+     *  @productversion Flex 3
+     */
+    public var open:Boolean; 
+}
+
+}

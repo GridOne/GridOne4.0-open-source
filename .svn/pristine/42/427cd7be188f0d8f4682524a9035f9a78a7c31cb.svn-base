@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/********************************************************************************
+*
+*  ACTSONE COMPANY
+*  Copyright 2012 Actsone 
+*  All Rights Reserved.
+*
+*	This program is free software: you can redistribute it and/or modify
+*	it under the terms of the GNU General Public License as published by
+*	the Free Software Foundation, either version 3 of the License, or
+*	(at your option) any later version.
+*
+*	This program is distributed in the hope that it will be useful,
+*	but WITHOUT ANY WARRANTY; without even the implied warranty of
+*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*	GNU General Public License for more details.
+*
+*	You should have received a copy of the GNU General Public License
+*	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* 
+***********************************************************************************/
+-->
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" 
+		   focusEnabled="true"
+		   verticalScrollPolicy="off"
+		   horizontalScrollPolicy="off"
+		   implements="mx.controls.listClasses.IDropInListItemRenderer"
+		   click="clickHandler(event)"
+		   creationComplete="creationCompleteHandler()" 
+		   xmlns:itemRenderers="kr.co.actsone.itemRenderers.*">
+	<mx:Script>
+		<![CDATA[
+			import flash.events.FocusEvent;
+			import flash.events.MouseEvent;
+			
+			import kr.co.actsone.controls.ExAdvancedDataGrid;
+			import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+			import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridListData;
+			import kr.co.actsone.events.SAEvent;
+			
+			import mx.controls.DateField;
+			import mx.controls.listClasses.BaseListData;
+			import mx.events.CalendarLayoutChangeEvent;
+			import mx.events.DropdownEvent;
+			
+			
+			[Bindable]
+			public var myDateFieldString:String="";
+			
+			private var _listData:BaseListData;
+			public var dataField:String;
+			private var listOwner:ExAdvancedDataGrid;
+			[Bindable] public var column:ExAdvancedDataGridColumn;
+			
+			private var _flag:Boolean=false;
+			
+			/**************************************************************************
+			 * creation complete handler
+			 **************************************************************************/
+			private function creationCompleteHandler():void
+			{
+				//				this.addEventListener(FocusEvent.FOCUS_OUT, focusOutItemHandler);
+			}
+			
+			/**************************************************************************
+			 * focus out item handler
+			 **************************************************************************/
+			private function focusOutItemHandler(event:FocusEvent):void
+			{
+				if (!_flag)
+				{
+					this.dateField.setFocus();
+					if (column.isShowCalendar)
+					{
+						this.dateField.open();
+					}
+					_flag=true;
+				}
+			}
+			
+			/**************************************************************************
+			 * set list data
+			 **************************************************************************/
+			public function set listData(value:BaseListData):void
+			{
+				this._listData=ExAdvancedDataGridListData(value);
+				if(this._listData)
+				{
+					listOwner=ExAdvancedDataGrid(this.listData.owner);
+					column=listOwner.columns[this.listData.columnIndex] as ExAdvancedDataGridColumn;
+					dataField=ExAdvancedDataGrid(this.listData.owner).columns[this.listData.columnIndex].dataField;
+				}
+			}
+			
+			/* [Bindable("dataChange")] */
+			/**************************************************************************
+			 * get list data
+			 **************************************************************************/
+			public function get listData():BaseListData
+			{
+				return _listData;
+			}
+			
+			/**************************************************************************
+			 * set data
+			 **************************************************************************/
+			override public function set data(value:Object):void
+			{
+				super.data=value;
+				this.height=this.height-3;
+				this.width = column.width;
+				if (data != null && data[dataField] != null)
+				{
+					var date:Date=DateField.stringToDate(data[dataField].toString(), column.dateInputFormatString);
+					if(column.alwayKeepFormatCalendar)
+					{
+						dateField.formatString=column.dateOutputFormatString;
+					}
+					this.myDateFieldString=data[dataField];
+					this.dateField.selectedDate=date;
+				}							
+			}
+			
+			/**************************************************************************
+			 * change handler
+			 **************************************************************************/
+			private function changeHandler(event:CalendarLayoutChangeEvent):void
+			{ 
+				var strDate:String=DateField.dateToString(this.dateField.selectedDate,column.dateInputFormatString);
+				
+				if (this.dateField.selectedDate == null && this.dateField.text != "")
+				{
+					this.myDateFieldString=data[dataField];
+					var date:Date=DateField.stringToDate(data[dataField].toString(), column.dateInputFormatString);
+					this.dateField.selectedDate=date;
+				}
+				else
+				{
+					this.myDateFieldString=strDate;
+					 
+				}     
+			}
+	 
+			/**************************************************************************
+			 * init handler
+			 **************************************************************************/
+			private function initHandler():void
+			{
+				this.dateField.setFocus();
+			}
+			
+			/**************************************************************************
+			 * click handler
+			 **************************************************************************/
+			private function clickHandler(event:MouseEvent):void
+			{
+		 
+			}
+			
+			/**************************************************************************
+			 * open handler
+			 **************************************************************************/
+			private function openHandler(event:DropdownEvent):void
+			{
+				if(this.dateField.dropdown.y<0)
+					this.dateField.dropdown.y=0;
+			}
+			
+			/**************************************************************************
+			 * close handler
+			 **************************************************************************/
+			private function closeHandler(event:DropdownEvent):void
+			{
+				//this.dateField.editable=true;
+			}
+			
+			/**
+			 * Handle keyboar event when pressing ESC to end edit cell
+			 * */
+			protected function dateField_keyDownHandler(event:SAEvent):void
+			{
+				if(event.data.hasOwnProperty('keyboardEvent'))
+				{
+					var eventKeyBoard:KeyboardEvent = event.data.keyboardEvent;
+					if(eventKeyBoard.keyCode == Keyboard.ESCAPE)
+					{
+						var kboardEvent:KeyboardEvent = new KeyboardEvent(KeyboardEvent.KEY_DOWN,true,false,eventKeyBoard.charCode,eventKeyBoard.keyCode,eventKeyBoard.keyLocation,eventKeyBoard.ctrlKey,eventKeyBoard.altKey,eventKeyBoard.shiftKey);
+						this.dispatchEvent(kboardEvent);
+					}
+				}
+			}
+			
+			/**************************************************************************
+			 * key down handler
+			 **************************************************************************/
+			protected function exDateField_keyDownHandler(event:KeyboardEvent):void
+			{
+				if(event.keyCode == Keyboard.ESCAPE)
+				{
+					var kboardEvent:KeyboardEvent = new KeyboardEvent(KeyboardEvent.KEY_DOWN,true,false,event.charCode,event.keyCode,event.keyLocation,event.ctrlKey,event.altKey,event.shiftKey);
+					this.dispatchEvent(kboardEvent);
+				}
+			}
+			
+			/**************************************************************************
+			 * key up handler
+			 **************************************************************************/
+			protected function exDataField_keyUpHandler(event:KeyboardEvent):void
+			{
+				if(listOwner.eventArr.hasOwnProperty(SAEvent.TEXT_INPUT_KEY_UP))
+				{
+					//dispatch event textInputKeyUp event to javascript
+					var saEvent:SAEvent = new SAEvent(SAEvent.TEXT_INPUT_KEY_UP,true);
+					saEvent.strText = dateField.getTextInputValue();
+					saEvent.keyCode = event.keyCode;
+					saEvent.columnKey = this.dataField;
+					saEvent.nRow = this.listOwner._selectedRowIndex; //Add property nRow for Feature #3894 (Keyup event)
+					listOwner.dispatchEvent(saEvent);
+				}
+			}
+			
+		]]>
+	</mx:Script>
+	 
+	<itemRenderers:ExDateField id="dateField" focusEnabled="true"
+							   editable="{column &amp;&amp; column.bManualEditCalendar}"
+							   width="100%"
+							   height="{this.height-1}" 
+							   horizontalCenter="0"
+							   verticalCenter="0.5"
+							   formatString="YYYYMMDD"
+							   yearNavigationEnabled="true"
+							   creationComplete="initHandler()"
+							   open="openHandler(event)"
+							   close="closeHandler(event)"
+							   change="changeHandler(event)" 
+							   click="clickHandler(event)" 
+							   textInputDateKeyDown="dateField_keyDownHandler(event)"
+							   keyDown="exDateField_keyDownHandler(event)"
+							   keyUp="exDataField_keyUpHandler(event)"
+							   />
+</mx:Canvas>

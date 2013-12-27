@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Demo Ajax with GridOne</title> 
+<script type="text/javascript" src="GridOne.js"></script>
+<script type="text/javascript">
+ 
+var gridOne;
+/*get gridone*/
+function getGrid() {	
+    return document.GridOne;		//it may be customized again
+}
+
+/*********************************************init grid*********************************************/
+/*init for grid one. This function is called by GridOne internally */
+function initializeHandler() 
+{
+	gridOne = getGrid();
+	gridOne.createEvent("boundHeaderComplete","boundHeaderCompleteHandler");
+	gridOne.createEvent("onButtonClick","onButtonClickHandler");
+	setHeader(gridOne);	
+}
+/*This function is called automatically after headers and columns are created.*/
+function boundHeaderCompleteHandler()
+{ 
+	  setGridProperty(gridOne);
+	  setData(gridOne);
+	 
+}
+
+function onButtonClickHandler(event)
+{
+	alert("" + event.nRow);
+}
+var textData="id|dob|phn|name|salary|idnumber|email|icon|link%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|http://localhost:8080/images/changeMode.gif|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|http://localhost:8080/images/changeMode.gif|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|http://localhost:8080/images/changeMode.gif|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|http://localhost:8080/images/changeMode.gif|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|http://localhost:8080/images/changeMode.gif|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|1|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr%%"
++ "0|20120401|01029389393|AB|C|39382738|lucy@yahoo.com|0|http://www.actsone.co.kr";
+ //set header in dataGrid
+//========================================================
+ function setHeader(gridOne)
+ {
+	gridOne.addHeader("no","No","autonumber",10,50,false);
+	gridOne.addHeader("crud","CRUD","crud",20,100,true);
+	gridOne.addHeader("id","","checkbox",1,100,true);
+	gridOne.addHeader("name", "Name", "text", 50, 100,true);
+	gridOne.addHeader("idnumber","idnumber","number",50,100,false);
+	gridOne.addHeader("icon","icon","IMAGE",20,100,true);
+	gridOne.addHeader("link","link","link",20,250,true);
+	gridOne.addHeader("radio","radio","radiobutton",20,100,true);
+ 	gridOne.addHeader("salary","ComboDynamic","combodynamic",10,100,true);
+	gridOne.addHeader("dob", "Birth Date", "date", 25, 100, true);
+	gridOne.addHeader("phn", "PhoneNumber", "text", 15, 100, false);
+    gridOne.addHeader("email", "Email", "button", 50, 100, false);
+    
+   
+	gridOne.boundHeader();
+	
+	gridOne.setGroupMerge("salary,idnumber");
+	gridOne.setDataGridProperty("selectCell",false);
+	gridOne.setProperty("checkboxTrueValue","Y");
+ 	gridOne.setProperty("checkboxFalseValue","N");
+ 	gridOne.setProperty("bExternalScroll",true);
+// 	gridOne.addImageList("name","changeMode.gif"); //nation_index=0
+ // 	gridOne.addImageList("icon","changeMode.gif");
+ 	gridOne.addGridImageList("http://localhost:8080/changeMode.gif");
+    gridOne.setColCellImage("icon",0);
+    gridOne.setColumnProperty("link","textAlign","left");
+    gridOne.setColumnProperty("radio","textAlign","right");
+   
+    gridOne.setDataGridProperty("strHDBgColor","#FF4500"); 
+    gridOne.setDataGridProperty("strHDFgColor","#000089");
+    gridOne.setDataGridProperty("nHDLineSize",50); 
+    gridOne.setGroupMerge("name");
+    gridOne.addSummaryBar("SUMMARY_BAR_KEY_1","Total","name","sum","idnumber");
+
+       
+ }
+ //set properties for dataGrid
+ //=======================================================
+ function setGridProperty(gridOne)
+ {
+   gridOne.createEvent("onCellClick","onCellClickHandler");
+ }
+ 
+ var jsonData1=[
+	              {"label":'COM',
+	               "value":'C'
+	              },
+	              {"label":"AMS",
+	               "value":"A"
+	              },
+	              {"label":"BOM",
+	               "value":"B"
+	              },
+	              {"label":"DDD",
+		           "value":"D"
+		          },
+		          {"label":"FME",
+		           "value":"E"
+		          }
+	              ];
+ var jsonData2=[
+	              {"label":'Korea',
+	               "value":'Korea'
+	              },
+	              {"label":"Seoul",
+	               "value":"Seoul"
+	              },
+	              {"label":"S",
+		           "value":"S"
+		          },
+		          {"label":"G",
+			       "value":"G"
+			      },
+	              {"label":"Vietnam",
+	               "value":"VN"
+	              }
+	              ];
+ //create event click
+ //=======================================================
+ function onCellClickHandler(event)
+ {
+	 var combD=gridOne.getItemAt(event.nRow);
+	 var data=combD['salary'];
+    // alert(combD['salary']);
+//	 var jsonData1=[
+//		              {"label":data,
+//		               "value":data
+//		              },
+//		              {"label":"80",
+//		               "value":"80"
+//		              },
+//		              {"label":"30",
+//		               "value":"30"
+//		              }
+//		              ];
+// 	 gridOne.addDynamicComboList("salary","label","value",jsonData1);
+ }
+ 
+ //set data
+ //==========================================================
+ function setData(gridOne)
+ {
+ //set data into dataGrid
+  gridOne.setTextData(textData);
+  gridOne.addDynamicComboList("salary","label","value",jsonData1);
+ }
+ 
+ function addComboList()
+ {
+	 var grid=getGrid();
+	
+ }
+ 
+ function addComboList2()
+ {
+	 var grid=getGrid();
+	 grid.addDynamicComboList("salary","label","value",jsonData2);
+	//alert(grid.getCheckedRowsIndex("id"));
+	//alert(grid.getCheckBoxValue("id"));
+      
+ } 
+ //Filter
+ function DoFilter()
+ {
+	 var grid=getGrid();
+     var filterText = document.getElementById("txtInput").value;
+     grid.filter(filterText, "name");
+           
+ }
+ 
+ function testsetCellValue()
+ {
+	 var grid=getGrid();
+//	 grid.setCellValue("fv",0,"7678",false);
+//	 grid.setCellValue("fv",2,"090838383",false);
+//	 grid.setCellValue("fv",3,"H@yahoo.com",false);
+	 grid.printPDF(0x000F32,100,"Test Header",true);
+ }
+</script>
+</head>
+<body>
+        <input type="text" id="txtInput"/> <input type="button" onclick="DoFilter();" value="Filter"/>
+        <input type="button" value=" addComboList" onclick=" addComboList();"/><br/><br/>
+        <input type="button" value=" addComboList2" onclick=" addComboList2();"/><br/><br/>
+        <input type="button" value=" setCellValue" onclick=" testsetCellValue();"/><br/><br/>
+		<div>
+		  <script type="text/javascript">
+		   initGridOne(600,400,'GridOne','flash','','A0B0C0C6-000148-156641','false','fast');
+		  </script>
+		</div>
+</body>
+</html>

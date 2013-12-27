@@ -1,0 +1,23 @@
+<<<<<<< HEAD
+<<<<<<< HEAD
+bin/
+=======
+=======
+>>>>>>> c2fc0860830876ed076e440616e7265b45d55f25
+# Build and Release Folders
+bin/
+bin-debug/
+bin-release/
+
+# Other files and folders
+.settings/
+
+# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
+# should NOT be excluded as they contain compiler settings and other important
+# information for Eclipse / Flash Builder.
+<<<<<<< HEAD
+>>>>>>> 05a42b3296f4d6b60e12ffdec482d00b775e442d
+bin/
+=======
+>>>>>>> c2fc0860830876ed076e440616e7265b45d55f25
+bin/

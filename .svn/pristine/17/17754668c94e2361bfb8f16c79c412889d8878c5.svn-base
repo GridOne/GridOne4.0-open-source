@@ -1,0 +1,35 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.summarybar
+{
+	import flash.utils.Dictionary;
+
+	public class SummaryBar
+	{
+		//dataField of merged column in subtotal and summaryall if it is total
+		public var colMerge : String;	
+		//public var indexColMerge : int;
+		public var type : String; //subtotal or total
+		public var strColumnList : String;
+		public var strText : String;
+		public var strFunction : String;
+		public var summaryBarKey : String;
+		public var functionList : Dictionary;
+		public var numberFormat : String;
+		public var positionTotalChange : Dictionary;
+		public var position:String;
+		public var totalColDataField:String = "";
+
+		public function SummaryBar()
+		{
+			functionList = new Dictionary();
+			positionTotalChange = new Dictionary ();
+		}
+	}
+}

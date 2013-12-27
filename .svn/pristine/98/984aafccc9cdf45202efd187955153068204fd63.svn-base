@@ -1,0 +1,27 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.footer
+{
+	import flash.utils.Dictionary;
+
+	public class FooterBar
+	{
+		public var footerBarKey : String;
+		public var isFooter : Boolean = true;	//support footer bar and header footer bar
+		public var strColumnList : String;		//save column is calculated in sum, count, average,custom
+		public var strFunction : String;
+		public var functionList : Dictionary;
+		public var numberFormat : String;
+		
+		public function FooterBar()
+		{
+			functionList = new Dictionary();
+		}
+	}
+}

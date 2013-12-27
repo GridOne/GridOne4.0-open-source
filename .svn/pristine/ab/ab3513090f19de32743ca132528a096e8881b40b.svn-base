@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Demo </title> 
+<script type="text/javascript" src="GridOne.js"></script>
+<script type="text/javascript" src="data.js"></script>
+<script type="text/javascript">
+ 
+var gridOne;
+/*get gridone*/
+function getGrid() {	
+    return document.GridOne; 
+}
+  
+/*********************************************init grid*********************************************/
+/*init for grid one. This function is called by GridOne internally */
+function initializeHandler() 
+{
+	gridOne = getGrid();
+	gridOne.createEvent("boundHeaderComplete","boundHeaderCompleteHandler");
+	setHeader(gridOne);	
+}
+/*This function is called automatically after headers and columns are created.*/
+function boundHeaderCompleteHandler()
+{ 
+	  setData(gridOne); 
+}
+ 
+ //set header in dataGrid
+//========================================================
+ function setHeader(gridOne)
+ {
+	gridOne.addHeader("radio","Radia","radiobutton",20,50,"center");
+	gridOne.addHeader("auto","","autonumber",20,50,false,"center");
+	gridOne.addHeader("crud","CRUD","crud",20,100,true,"center");
+	gridOne.addHeader("id","","checkbox",1,100,true,"center");
+	gridOne.addHeader("name", "Name", "text", 50, 100,true,"center");
+ 	gridOne.addHeader("salary","ComboDynamic","combodynamic",10,100,true,"center");
+ 	gridOne.addHeader("image1","image1","IMAGETEXTRIGHT",12,100,true,"center");
+ 	gridOne.addHeader("image2","image2","IMAGETEXT",12,100,true,"center");
+    gridOne.addHeader("image3","image3","HIDEIMAGETEXTRIGHT",12,100,true,"");
+  //	gridOne.addHeader("textarea","textArea","TEXTAREA",10,100,true,"");
+ 	gridOne.addHeader("button","button","button",12,100,true,"center");
+	gridOne.addHeader("combo","Combo","combo",10,100,true,"center");
+ 	gridOne.addHeader("idnumber","idnumber","text",50,100,true,"center");
+	gridOne.addHeader("phn", "PhoneNumber", "text", 15, 100, true,"center");
+	gridOne.addHeader("email", "Email", "text", 50, 100, false,"center");
+	gridOne.addHeader("HTML","HTML","HTML",20,100,true,"");
+	gridOne.addHeader("multicombobox","MULTICOMBOBOX","MULTICOMBOBOX",20,100,true,"center");
+	gridOne.addHeader("multicom","multicombo","multicombo",50,150,true,"");
+	gridOne.addHeader("comboHeader","comboHeader","COMBOHEADER",20,150,true,"");
+	
+    gridOne.boundHeader();	
+ 
+	gridOne.setDataGridProperty("selectCell",false);
+	
+	gridOne.setCRUDMode("crud","Create","Update","Delete"); 
+	
+	gridOne.setDataGridProperty("bViewDelRowCRUD",false);  //true = view deleted row with CRUD , false = remove //row from display list
+    gridOne.addImageList("image1","http://localhost:8080/images/orangecircle.png");
+    gridOne.addImageList("image2","http://localhost:8080/images/orangecircle.png");
+    gridOne.addImageList("image3","http://localhost:8080/images/orangecircle.png");
+    
+ 	gridOne.addComboListJson("combo","label","value",jsonData1);
+ 
+	gridOne.setColumnProperty("id","headerRenderer","checkbox");
+
+    gridOne.setColumnProperty("comboHeader","headerRenderer","comboheader");
+	
+	gridOne.addComboHeaderValue("comboHeader","HD1","H1");
+	
+	gridOne.addComboListValue("multicom","Asia","AS");  
+	gridOne.addComboListValue("multicom","America","AM"); 
+	gridOne.addComboListValue("multicom","Euro","EU");
+	gridOne.setProperty("bExternalScroll",true);
+	   	
+//	gridOne.setProperty('variableRowHeight',true);
+ }
+ 
+ var comboArr=[  
+               {label:"Korea",value:"KR",children:([ {label:"Seoul",value:"Seoul"},{label:"Busan",value:"Busan"}, {label:"Wangi",value:"Wangi"}])},    {label:"Japan",value:"JP",children:([ {label:"Tokyo",value:"Tokyo"},{label:"Kyoto",value:"Kyoto"}])},    {label:"Vietnam",value:"VN",children:([                   {label:"Hanoi",value:"Hanoi"},{label:"HCM",value:"HCM"},{label:"Danang",value:"DN"}])},    {label:"America",value:"America",children:([ {label:"Newyork",value:"Newyork"},{label:"Ohio",value:"Ohio"},{label:"Washington",value:"Washington"},  {label:"California",value:"California"}])},    {label:"Euro",value:"Euro",children:([{label:"Paris",value:"Paris"},{label:"London",value:"London"},{label:"Berlin",value:"Berlin"}])} ];
+ 
+ var jsonData1=[
+	              {"label":'COM',
+	               "value":'C'
+	              },
+	              {"label":"AMS",
+	               "value":"A"
+	              },
+	              {"label":"BOM",
+	               "value":"B"
+	              },
+	              {"label":"DDD",
+		           "value":"D"
+		          },
+		          {"label":"FME",
+		           "value":"E"
+		          }
+	              ];
+ 
+ 
+ 
+ //set data
+ //==========================================================
+ function setData(gridOne)
+ {
+ //set data into dataGrid
+    gridOne=getGrid();
+    gridOne.setTextData(textData);
+   
+    gridOne.addComboList("multicombobox",comboArr);
+   
+    gridOne.addDynamicComboList("salary","label","value",jsonData1);
+  
+ }
+ 
+</script>
+</head>
+<body>
+         
+		<div>
+		  <script type="text/javascript">
+		     initGridOne(500,400,'GridOne','flash','','A0B0C0C6-000148-156641','false','fast');
+		  </script>
+		</div>
+ 		
+  
+</body>
+</html>

@@ -1,0 +1,1248 @@
+/**
+ * MaskedInput
+ * 
+ * This class extends TextInput and provides input masking. For example,
+ * to enter a US telephone number, you can set up a mask for (617) 555-1212
+ * such that the parentheses, space, and hyphen are present. All the user
+ * has to do it enter 6175551212 and the insertion point moves along.
+ * 
+ * The mask can consist of any characters except:
+ * 
+ * # which stands for single digit
+ * C which capitalizes a letter (no digits allowed)
+ * c which forces a letter to lowercase (no digits allowed)
+ * A or a which allows any character.
+ * 
+ * The mask for a phone number would be: (###) ###-####
+ * 
+ * Properties: (in addition to those of TextInput)
+ * 
+ * inputMask - the string to use to mask typed characters.
+ * blankChar - (default '_') the character used to represent the typable fields
+ *      so users know input is expected.
+ * defaultChar - (default '_') the character used in place of blankChar when
+ *      actualText is returned.
+ * text - the text to display or the text entered, without the mask. For example,
+ *      given the phone number mask, the text would be "6175551212".
+ * actualText (read only) - the text as displayed and entered, including the
+ *      mask: "(617) 555-1212" or "(__) 555-1212". If defaultChar is different
+ *      than blankChar, defaultChar is substituted for the blankChar in the
+ *      actual text: "(000) 555-1212".
+ * 
+ * Events: (in addition to those of TextInput)
+ * 
+ * inputMaskEnd - dispatched when the last character is entered that completes
+ *      the mask. In the example, it would be the final 2.
+ * 
+ * Styles: (no new styles)
+ * 
+ * Keyboard:
+ * 
+ * Backspace moves the insertion point back a single space, replacing
+ *     the character with the blankChar character.
+ * 
+ * Delete replaces the character to the right of the insertion point with
+ *     the blankChar character and then advances the insertion point to
+ *     the next viable input position.
+ * 
+ * Space replaces the next visbale input position with the defaultChar.
+ * 
+ * Left and Right Arrow move the insertion point to the previous or next
+ *     viable input position.
+ * 
+ * Home moves the insertion point to the first viable input character
+ *     in the field.
+ * 
+ * End moves the insertion point to the last viable input character
+ *     in the field.
+ */
+package kr.co.actsone.itemRenderers
+{
+	import flash.events.Event;
+	import flash.events.FocusEvent;
+	import flash.events.KeyboardEvent;
+	import flash.events.MouseEvent;
+	import flash.events.TextEvent;
+	import flash.ui.Keyboard;
+	
+	import kr.co.actsone.controls.ExAdvancedDataGrid;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+	import kr.co.actsone.events.SAEvent;
+	
+	import mx.controls.TextInput;
+	
+	[Event(name="inputMaskEnd")]
+	
+	public class MaskedInput extends TextInput
+	{
+		//added by Thuan 20130314
+		//No meaning property: For no bug happen
+		public var myDateFieldString: String = "";
+		
+		
+		//No meaning property: For no bug happen
+		public var myComboString:Object=null;
+		//No meaning property: For no bug happen
+		public var textAreaValue:String="";
+		
+		public function MaskedInput()
+		{
+			super();
+			addEventListener(TextEvent.TEXT_INPUT,interceptChar,true,0);
+			addEventListener(MouseEvent.CLICK,reposition,true);
+			addEventListener(KeyboardEvent.KEY_DOWN,interceptKey,true);
+			addEventListener(KeyboardEvent.KEY_UP,interceptKeyUp,true);
+			addEventListener(FocusEvent.FOCUS_IN,interceptFocus,false);
+		}
+		
+		/*
+		 * private vars
+		 */
+		private var _working:Array = [];
+		private var _position:Number = 0;
+		private var bWorkingUpdated:Boolean = false;
+		private var bMaskUpdated:Boolean = false;
+		private var bTextUpdated:Boolean = false;
+		
+		private static var __blankChar:String = "_";
+		
+		/**
+		 * blankChar
+		 */
+		private var _blankChar:String = "_";
+		public function get blankChar() : String
+		{
+			return _blankChar;
+		}
+		public function set blankChar( s:String ) : void
+		{
+			if( s.length == 0 ) return;
+			_blankChar = s.charAt(0);
+			__blankChar = _blankChar;
+			//invalidateDisplayList();
+		}
+		
+
+		/**
+		 * returnNumber
+		 */
+		private var _returnNumber:Boolean = false;
+		public function get returnNumber() : Boolean
+		{
+			return _returnNumber;
+		}
+		public function set returnNumber( value:Boolean ) : void
+		{
+			_returnNumber = value;
+		}
+
+		/**
+		 * defaultChar
+		 */
+		private var _defaultChar:String = "_";
+		public function set defaultChar( s:String ) : void
+		{
+			_defaultChar = s;
+		}
+		public function get defaultChar() : String
+		{
+			return _defaultChar;
+		}
+		
+		/**
+		 * inputMask
+		 */
+		private var _inputMask:String;
+		public function get inputMask() : String
+		{
+			return _inputMask;
+		}
+		public function set inputMask(s:String) : void
+		{			
+			if(_inputMask != s)
+			{
+				_inputMask = s;
+				bMaskUpdated = true;
+				invalidateDisplayList();
+				
+				//Long add on 2009/08/28
+				if(_inputMask!="MONEY")			
+					resetInputMask();
+			}	
+		}
+		
+		//Long add on 2009/08/28
+		private function resetInputMask():void
+		{				
+			_working = [];
+			var s:String = _inputMask;
+			for(var i:int=0; i < s.length; i++) {
+				var c:String = s.charAt(i);
+				if( isMask(c) ) {
+					c = _blankChar;
+				}
+				_working.push(c);
+			}	
+		}
+		
+		
+		//Long modify on 2008/02/22	
+		private var _focusAtFirstPos:Boolean = false;
+		public function get focusAtFirstPos() : Boolean
+		{
+			return _focusAtFirstPos;
+		}
+		public function set focusAtFirstPos(value:Boolean) : void
+		{
+			_focusAtFirstPos = value;
+			this.invalidateProperties();
+			
+		}
+
+		private var _maxByte : Number=0;
+		
+		public function get maxByte() : Number{
+			return _maxByte;
+		}
+
+		public function set maxByte(value : Number) : void {
+			_maxByte = value;
+			addEventListener(TextEvent.TEXT_INPUT,interceptChar2,true,0);
+			
+		}
+
+		
+		private function interceptChar2( event:TextEvent ) : void
+		{
+			bWorkingUpdated = true;
+			invalidateDisplayList();
+		}	
+		
+		
+		/**
+		 * text
+		 */
+		private var _text:String = "";
+		override public function get text():String
+		{
+			if(!_ctrlPressed&&_inputMask=="MONEY")
+			{
+				var result:String = "";
+				for(var i:Number=0; i < _working.length; i++) {
+					var c:String = _working[i];
+					if((c>="0"&&c<="9")||(i==0&&c=="-")||(c=="."))
+					{
+						if( c == _blankChar ) c = _defaultChar;
+						result += c;
+					}
+				}
+
+				if(Number(result).toString()=="NaN")
+					return "0";
+					
+				//Long modify on 2008/02/22
+				var s:String = get_number(result);
+				return _returnNumber? Number(s).toString() : s;
+				
+			}
+			else if(!_ctrlPressed&&_inputMask&&_inputMask.length>0)
+			{
+				result = "";
+
+				//Long modify on 2007/01/17
+				if(_returnNumber)
+				{
+					for(i=0; i < _working.length; i++) {
+						c = _working[i];
+						
+						if( c == _blankChar ) continue;
+						result += c;
+					}
+					
+					if(Number(result).toString()=="NaN")
+						return "0";
+					return Number(result).toString();
+				}
+				else
+				{
+					
+					for(i=0; i < _working.length; i++) {
+						c = _working[i];
+						if( _inputMask.charAt(i) == c ) continue;
+						if( c == _blankChar ) c = " ";
+						result += c;
+					}
+					
+					return result;
+				}	
+				
+			}
+			else
+			{
+				
+				//Long add on 2007/03/15
+				if(_returnNumber)
+				{
+					
+					if(Number(super.text).toString()=="NaN")
+						return "0";
+					return Number(super.text).toString();
+				}
+				else
+					return super.text;
+			}
+		}
+		
+		override public function set text(value:String):void
+		{
+			
+			if(!_ctrlPressed&&_inputMask&&_inputMask.length>0)
+			{
+				_text = value;			
+				//Long modify on 2010/06/16
+				//Long add on 2009/08/28
+				resetWorkingText(_text);
+				
+				bTextUpdated = true;
+				invalidateDisplayList();
+				
+			}
+			else
+			{
+				_text = value;
+				
+				super.text = (maxChars>0&&value!=null)? value.substr(0,maxChars):value;
+				//super.text = value;			
+			}					
+		}
+		
+		//Long modify on 2010/06/16
+		//Long add on 2009/08/28
+		private function resetWorkingText(value:String):void 
+		{
+			var t:int = 0;					
+			
+			//Long modify on 2010/06/11
+			//var value:String = _text;
+			//var value:String = text;
+			
+								
+			for(var j:int=0; j < _inputMask.length; j++) {
+				var m:String = _inputMask.charAt(j);
+				if( isMask(m) ) {
+					
+					if( t >= value.length ) _working[j] = _blankChar;
+					else _working[j] = value.charAt(t);
+					++t;
+				} else {
+					_working[j] = m;
+					if( t<value.length&&_working[j]== value.charAt(t)) 
+						++t;
+				}
+			}
+			super.text = _working.join("");
+		}
+		
+		/**
+		 * actualText (read only)
+		 */
+		public function get actualText() : String
+		{	
+			if(_inputMask=="MONEY")
+			{
+				var result:String = "";
+				for(var i:Number=0; i < _working.length; i++) {
+					var c:String = _working[i];
+					if( c == _blankChar ) c = _defaultChar;
+					result += c;
+				}
+				return result;
+			}
+			else if(_inputMask&&_inputMask.length>0)
+			{
+				result = "";
+				for(i = 0; i < _working.length; i++) {
+					c = _working[i];
+					if( c == _blankChar ) c = _defaultChar;
+					result += c;
+				}
+				return result;
+			}
+			else
+				return super.text;
+		}
+		
+		/*
+		 * event handlers
+		 */
+		
+		/**
+		 * reposition
+		 * 
+		 * Handles MOUSE_CLICK event; repositions the insertion point
+		 */
+		private function reposition( event:flash.events.MouseEvent ) : void
+		{
+			if(_inputMask&&_inputMask.length>0)
+			{
+				var p:Number = this.selectionBeginIndex;
+				_position = p;
+			}
+			
+		}
+		
+		
+		private var _ctrlPressed:Boolean = false;
+		
+		/**
+		 * interceptKey
+		 * 
+		 * Looks for special keys and modifies the insertion point
+		 */
+		private function interceptKey( event:flash.events.KeyboardEvent ) : void
+		{
+						
+			if(event.ctrlKey)
+			{
+				_ctrlPressed = true;
+				return;
+			}
+			
+			if(_inputMask&&_inputMask.length>0)
+			{
+				
+				if( event.keyCode == Keyboard.BACKSPACE ) 
+				{
+					//Long modify on 2007/11/11/15
+					if(_inputMask=="MONEY")//&&_position>0)
+					{
+						
+						_position = selectionBeginIndex;
+						retreatPosition();
+						allowChar(_blankChar,(selectionEndIndex - selectionBeginIndex));
+
+					}
+					//Long modify on 2007/11/15
+					else //if(_position>0)
+					{					
+						
+						_position = selectionBeginIndex;						
+						//Long modify on 2007/11/15
+						retreatPosition();
+						//Long modify on 2007/09/18
+						allowChar(_blankChar,(selectionEndIndex - selectionBeginIndex));
+						_position = selectionBeginIndex;
+					}
+				}
+				
+				else if( event.keyCode == Keyboard.SPACE ) 
+				{
+					allowChar(_defaultChar);
+					advancePosition();
+				}
+				else if( event.keyCode == Keyboard.DELETE ) 
+				{
+
+					//Long modify on 2007/11/11/15
+					if(_inputMask=="MONEY")//&&_position<_working.length)
+					{
+						
+						allowChar(_blankChar,(selectionEndIndex - selectionBeginIndex));
+
+					}
+					//Long modify on 2007/11/11/15
+					else if(_inputMask!="MONEY")//&& _position < _inputMask.length )
+					{
+						
+						//Long add on 2007/11/15
+						_position = selectionBeginIndex;
+						//Long modify on 2007/09/18
+						allowChar(_blankChar,(selectionEndIndex - selectionBeginIndex));
+						//advancePosition(true);
+					
+					}
+				}
+				
+				else if( event.keyCode == Keyboard.LEFT ) {
+					_position = this.selectionBeginIndex;
+					retreatPosition();
+					//event.preventDefault();
+				}
+				else if( event.keyCode == Keyboard.RIGHT ) {
+					
+					advancePosition(true);
+					//event.preventDefault();
+				}
+				else if( event.keyCode == Keyboard.END ) {
+					_position = _working.length;
+					//event.preventDefault();
+				}
+				else if( event.keyCode == Keyboard.HOME ) {
+					_position = -1;
+					advancePosition(true);
+				}
+				
+				if( event.keyCode != Keyboard.TAB )
+				{
+					bWorkingUpdated = true;						
+					invalidateDisplayList();
+				}
+			}
+			
+		}
+		
+		
+		private function interceptKeyUp( event:flash.events.KeyboardEvent ) : void
+		{			
+			if(_ctrlPressed&&!event.ctrlKey && event.keyCode != Keyboard.TAB)
+			{								
+				_ctrlPressed =false;
+				//trace('text: '+ super.text);
+				var s:String = super.text;
+				
+				for(var i:int=0;i<s.length;i++)
+				{
+					_working[i] = s.charAt(i);
+				}				
+				
+				_position = s.length-1+((s.length-1)/3);
+				if(_position<0)	_position = 0;
+				
+				this.invalidateDisplayList();
+				
+			}	
+			
+			//Duong modify to dispatch event textInputKeyUp event to javascript			
+			var grid:ExAdvancedDataGrid = this.listData.owner as ExAdvancedDataGrid;
+			if(grid  && grid.eventArr.hasOwnProperty(SAEvent.TEXT_INPUT_KEY_UP))
+			{
+				var saEvent:SAEvent = new SAEvent(SAEvent.TEXT_INPUT_KEY_UP,true);
+				saEvent.strText = super.text;
+				saEvent.keyCode = event.keyCode;
+				if (this.listData)
+				{
+					var colIndex:int = this.listData.columnIndex;
+					saEvent.columnKey = grid.columns[colIndex].dataField;
+					saEvent.nRow = grid._selectedRowIndex; //Add property nRow for Feature #3894 (Keyup event)
+				}				
+				grid.dispatchEvent(saEvent);
+			}
+		}
+			
+		
+		/**
+		 * interceptFocus
+		 * 
+		 * Consumes the FOCUS_IN event and repositions the insertion
+		 * point.
+		 */
+		private function interceptFocus( event:FocusEvent ) : void
+		{
+			if(_inputMask&&_inputMask.length>0)
+			{
+
+				var start:Number = selectionBeginIndex;
+				if( event.relatedObject != null ) start = 0;
+				
+				//Long modify on 2008/02/22
+				//Long modify on 2007/12/26
+				//_position = start - 1;
+				_position = _focusAtFirstPos? 0:start;
+				
+				//Long modify on 2008/02/22				
+				if(_focusAtFirstPos)
+					setSelection( 0, 0);
+				
+			}
+			
+		}
+		
+		/**
+		 * interceptChar
+		 * 
+		 * Handle TEXT_INPUT events by matching the character with
+		 * the mask and either blocking or allowing the character.
+		 */
+		 private var bInsertChar:Boolean = false;
+
+		private function interceptChar( event:TextEvent ) : void
+		{
+
+			if(_inputMask&&_inputMask.length>0)
+			{
+
+				var input:String = event.text;
+				var bAdvance:Boolean = true;
+				var c:String = input.charAt(0);
+				
+				if(_inputMask=="MONEY")
+				{	
+					var sTempByte : String;
+					var iByteNum :  Number;
+
+					if(_maxByte>0&&(selectionEndIndex - selectionBeginIndex)<=0)
+					{
+						
+						sTempByte = get_number(actualText); 
+						if (sTempByte != null)
+						{
+							var sLocation:String = get_number(actualText.substr(0,_position));
+							var iByteLoc:Number = checkByte(sLocation);
+
+							iByteNum = checkByte(sTempByte);
+							if ( iByteNum >= _maxByte&&iByteLoc>=_maxByte) {
+								
+								event.preventDefault();
+								dispatchEvent(new Event("inputMaskEnd"));
+								return;
+							}	
+						}
+					}
+				
+				//Long modify on 2007/11/15	
+					else if(maxChars>0&&_position >= maxChars&&(selectionEndIndex - selectionBeginIndex)<=0)
+					{
+						event.preventDefault();
+						dispatchEvent(new Event("inputMaskEnd"));
+						
+						return;
+					}
+					
+
+					if( isDigit(c)||c=="-"||c==".") {
+						
+						
+						//Long add on 2010/06/17
+						if(c=="." && this.restrict!=null && this.restrict.search(/\./)<0 )
+						{							
+							event.preventDefault();
+							bAdvance = false;
+							return;
+						}
+						else if(c=="-" && this.restrict!=null && this.restrict.search(/\\\-/)<0)
+						{							
+							event.preventDefault();
+							bAdvance = false;
+							return;
+						}
+
+						//Long add on 2007/11/15
+						if(Math.abs(selectionEndIndex - selectionBeginIndex)>0)
+						{
+							_position = selectionBeginIndex;//Math.max(selectionBeginIndex-1,0);
+							allowChar(_blankChar,(selectionEndIndex - selectionBeginIndex));	
+						}
+						
+						allowChar(c);						
+						bInsertChar = true;
+						
+					} else {
+						event.preventDefault();
+						bAdvance = false;
+					}
+					
+				}
+				else
+				{
+					//Long add on 2007/11/15
+					_position = selectionBeginIndex;					
+					if(Math.abs(selectionEndIndex - selectionBeginIndex)>0)
+					{
+						//_position = selectionBeginIndex;//Math.max(selectionBeginIndex-1,0);
+						allowChar(_blankChar,(selectionEndIndex - selectionBeginIndex));	
+					}
+						
+					if( _inputMask.length <= _position ) {
+						event.preventDefault();
+						dispatchEvent(new Event("inputMaskEnd"));
+						return;
+					}
+					
+					c = input.charAt(0);
+					var m:String = _inputMask.charAt(_position);
+					
+					switch(m) 
+					{
+						case "#":
+							if( isDigit(c) ) {
+								allowChar(c);
+							} else {
+								event.preventDefault();
+								bAdvance = false;
+							}
+							break;
+						case "C":
+							if( isDigit(c) ) {
+								event.preventDefault();
+								bAdvance = false;
+							} else {
+								allowChar(c.toUpperCase());
+							}
+							break;
+						case "c":
+							if( isDigit(c) ) {
+								event.preventDefault();
+								bAdvance = false;
+							} else {
+								allowChar(c.toLowerCase());
+							}
+							break;
+						case "A","a":
+							allowChar( c.toLowerCase() );
+							break;
+						default:
+							break;
+					}
+				}
+				
+				if( bAdvance ) {
+					advancePosition();
+				}
+				
+				bWorkingUpdated = true;
+				invalidateDisplayList();
+			}
+			
+			else
+			{
+				
+				if(_maxByte>0&&(selectionEndIndex - selectionBeginIndex)<=0)
+				{
+					//Long modify on 2010/06/17
+					sTempByte  = text ;//_text;
+
+					iByteNum  = checkByte(sTempByte);
+					if ( iByteNum >= _maxByte) {
+						
+						sTempByte = cutMaxByte(sTempByte, _maxByte);
+						super.text = sTempByte;
+						event.preventDefault();
+						dispatchEvent(new Event("inputMaskEnd"));
+					}
+					
+				}
+				else if(maxChars>0&&text.length>=maxChars&&
+					//(selectionEndIndex - selectionBeginIndex)<=0&&selectionBeginIndex>=maxChars-1)
+					(selectionEndIndex - selectionBeginIndex)<=0)
+				{
+					event.preventDefault();
+					dispatchEvent(new Event("inputMaskEnd"));
+				}
+			}
+			
+		}
+		
+		/**
+		 * advancePosition
+		 * 
+		 * Moves the insertion point forward (if possible) to the next viable
+		 * input position.
+		 */
+		protected function advancePosition(byArrow:Boolean=false) : void
+		{
+			var p:Number = _position;
+			if ( _inputMask == "MONEY")
+			{	
+				p = p + 1;
+				while ((p < _working.length)  && (_working[p]<"0"|| _working[p]>"9"))
+				{
+					p = p + 1;
+				}
+				_position = p;
+
+				if( p > _working.length && !byArrow ) {
+					dispatchEvent(new Event("inputMaskEnd"));
+				}
+				
+				//Long modify on 2007/11/15
+				//setSelection(_position,_position);			
+			}
+			else if(_inputMask&&_inputMask.length>0)
+			{
+				//var p:Number = _position;
+				p = p + 1;
+				while ((p < _inputMask.length) && (!isMask(_inputMask.charAt(p)))) 
+				{
+					p = p + 1;
+				}
+				_position = p;
+				if( p > _inputMask.length && !byArrow ) {
+					dispatchEvent(new Event("inputMaskEnd"));
+				}
+				
+				//Long modify on 2007/11/15
+				if(!byArrow)
+					setSelection(_position,_position);
+			}
+		}
+		
+		/**
+		 * retreatPosition
+		 * 
+		 * Moves the insertion point backward (if possible) to the previous
+		 * viable input position.
+		 */
+		protected function retreatPosition() : void
+		{
+			if(_inputMask=="MONEY")
+			{
+				var p:Number = _position;
+				p = p -1;
+				while( (p > 0) &&( _working[p]<"0"|| _working[p]>"9") ) 
+				{
+					p = p - 1;
+				}
+				
+				if(p<0)	p=0;
+
+				_position = p;
+				//Long modify on 2007/09/28
+				//setSelection(_position,_position);
+			}
+			
+			else if(_inputMask.length>0)
+			{
+				p = _position;
+				p = p - 1;
+				while((p > 0) && (!isMask(_inputMask.charAt(p))))
+				{
+					p = p-1;
+				}
+				if (p < 0)	
+					p = 0;
+				_position = p;
+				//Long modify on 2007/09
+				//setSelection(_position,_position);
+			}
+		}
+		
+		/**
+		 * isMask
+		 * 
+		 * Returns true if the given character is a masking character.
+		 */
+		protected function isMask( c:String ) : Boolean
+		{
+			return c == "#" || c == "A" || c == "C" || c == "c";
+		}
+		
+		/**
+		 * isDigit
+		 * 
+		 * Returns true if the given character is a digit.
+		 */
+		protected function isDigit( c:String ) : Boolean
+		{
+			return c == "0" || c == "1" || c == "2" || c == "3" ||
+			       c == "4" || c == "5" || c == "6" || c == "7" ||
+			       c == "8" || c == "9";
+		}
+		
+		/**
+		 * allowChar
+		 * 
+		 * Inserts the character into the working array.
+		 */
+		private function allowChar( c:String,len:int=0) : void
+		{
+						
+			if(len==0)
+			{
+				if(!isInMaskInput(_working[_position]))
+				{
+					_working[_position] = c;	
+					
+					//Long add on 2009/08/20
+					if(_inputMask!="MONEY")
+					{
+						var e:Event = new Event(Event.CHANGE);
+						this.dispatchEvent(e);
+					}			
+				}
+					
+				if(_inputMask=="MONEY")
+					bInsertChar  = true;
+				
+				return;
+			}			
+						
+			//Long modify on 2007/11/15			
+			//len>0
+			if(_inputMask=="MONEY")
+			{
+				for(var k:int = selectionBeginIndex;k<selectionEndIndex;k++)
+					_working[k] = c;
+				bInsertChar  = true;			
+			}
+			
+			//Long modify on 2007/11/15			
+			else
+			{
+				for(var i:int = selectionBeginIndex;i<selectionEndIndex;i++)
+				
+					if(!isInMaskInput(_working[i]))
+						_working[i] = c;
+				
+				//Long add on 2009/08/20
+				e = new Event(Event.CHANGE);
+				this.dispatchEvent(e);
+												
+			}
+		}
+
+
+		private function isInMaskInput(c:String):Boolean
+		{
+			for(var i:int=0;i<_inputMask.length;i++)
+			{
+				if(c== _inputMask.charAt(i))
+					return true;
+			}
+
+			return false;
+		}
+		
+		public static function add_comma(oldStr : String) : String {
+			
+			var num : String;
+			var bMinus:Boolean = false;
+
+			var decStr:String="";
+			
+			var dotIndex:int = oldStr.indexOf(".");
+			if(dotIndex>=0)
+			{
+				var decStr2:String = oldStr.substr(dotIndex);
+				
+				//remove other dot
+				for(var j:int=0;j<decStr2.length;j++)
+				{
+					if(j==0||decStr2.charAt(j)!=".")
+						decStr += decStr2.charAt(j);
+				}
+
+				oldStr = oldStr.substr(0,dotIndex);
+			}
+
+			if(oldStr.charAt(0)=="-")
+			{
+				num  = oldStr.substr(1);
+				bMinus = true;
+			}
+			else 
+				num = oldStr;	
+			
+
+		       
+		       if(num.length <=3)
+		       {
+					if(dotIndex>=0)
+						num += decStr;
+		
+					if(bMinus)
+						return ("-"+num);
+		
+					return num;
+				}
+
+		       var loop : Number = Math.ceil(num.length / 3);
+		       var offset : Number = num.length % 3;
+		       if(offset==0) offset = 3;
+		       var str : String = num.substring(0, offset);
+		       for(var i : Number = 1;i<loop;i++) {
+			   str += "," + num.substring(offset, offset+3);
+			   offset += 3;
+		       }
+			//_position  = offset + (loop-1);
+			//super.setSelection(_position,_position);       
+			
+			if(dotIndex>=0)
+				str += decStr;
+
+			if(bMinus)
+				str = "-" + str; 
+			
+
+			return str;
+		   }
+		   
+		   public static function get_number(str : String) : String {
+		       var temp : String = "";
+		       var num : String = "";
+		       for(var i : Number = 0; i< str.length; i++) {
+				   temp = str.charAt(i);
+				   
+				   
+				   if(temp==__blankChar)
+				   		continue;
+				   
+				   		
+				   if(i==1&&temp!="0"&&temp!="."&&str.charAt(0)=="0")
+				   {
+				   	 num = num.substr(1);
+				   }
+				   				
+				   		
+				   if ((i==0 && temp=="-")||(temp >= "0" && temp <= "9")||(temp==".")) {
+				       num += temp;
+				   }
+		       }
+		       
+		       
+		       
+		       if ( (num != null) && (num != "")) {
+				   return num; 
+			   } else {
+				   return "";
+		       }
+		   }
+		   
+		   public function checkByte(str : String) : Number {
+			var k : Number = 0;
+			for( var i : Number = 0;  i < str.length; i++) {
+				k += ( str.charCodeAt(i) > 128) ? 2:1;
+			}
+			return k;
+		}
+		
+		public function cutMaxByte(str : String, maxLen : Number) : String {
+			var k : Number = 0;
+			for( var i : Number = 0;  i < str.length; i++) {
+				   k += (str.charCodeAt(i) > 128) ? 2 : 1;
+				   if (k > maxLen) return str.substring(0,i);					
+			}
+			return str;
+		}
+		
+		public function cutMaxByteOfNumber(str : String, maxLen : Number) : String {
+			var k : Number = 0;
+			for( var i : Number = 0;  i < str.length; i++) {
+				if(str.charAt(i) >= "0" && str.charAt(i) <= "9" )
+				   k += (str.charCodeAt(i) > 128) ? 2 : 1;
+				   if (k > maxLen) return str.substring(0,i);					
+			}
+			return str;
+		}
+
+	
+		/**
+		 * updateDisplayList
+		 * 
+		 * Modifies the display according to how flags are set: if
+		 * text has been updated, fold the text according to the mask. If
+		 * the mask has been updated, modify the display.
+		 */
+		override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+		{
+			//long add on 2010/06/11
+			if(_ctrlPressed&&_inputMask!=null&&_inputMask.length>0){				
+				//Long modify on 2010/06/16
+				resetWorkingText(text);										
+				bWorkingUpdated = true;	
+			}
+			
+			if(!_ctrlPressed&&_inputMask!=null&&_inputMask.length>0)
+			{
+				
+				if( bMaskUpdated&&_inputMask) {
+					if(_inputMask!="MONEY")
+					{
+						bMaskUpdated = false;
+						
+						//Long add on 2009/08/28
+						resetInputMask();
+						
+						/*
+						_working = [];
+						var s:String = _inputMask;
+						for(var i:int=0; i < s.length; i++) {
+							var c:String = s.charAt(i);
+							if( isMask(c) ) {
+								c = _blankChar;
+							}
+							_working.push(c);
+						}
+						*/
+						
+						bWorkingUpdated = true;
+					}
+				}
+				
+				//if(bTextUpdated&&_inputMask=="MONEY")
+				if(_inputMask=="MONEY")
+				{
+					
+					if(bTextUpdated)
+					{						
+						bTextUpdated = false;
+						var sTemp : String = "";
+						var sNum : String = get_number(_text); 
+						//if ( (sNum != null) && (sNum != "") && (sNum != "0") ) {
+						//Long modify on 2007/11/07
+						if ( (sNum != null) && (sNum != "") && (sNum != ".") ) { 
+							sTemp = add_comma(sNum);
+						} else {
+							sTemp = "";
+						}
+						
+						
+						_working = new Array();
+						for(var k: Number = 0; k < sTemp.length; k++) {
+							_working[k] = sTemp.charAt(k);
+							
+						}
+						
+						bWorkingUpdated = true;
+					}
+					else if(bInsertChar)
+					{
+							
+						bInsertChar = false;
+						sTemp  = _working.join("");
+						sNum  = get_number(sTemp); 
+						
+						//Long modify on 2007/11/07
+						//if ( (sNum != null) && (sNum != "") && (sNum != "0") ) {
+						if ( (sNum != null) && (sNum != "") && (sNum != ".") ) {
+							sTemp = add_comma(sNum);
+						} else {
+							sTemp = "";
+						}
+						
+
+						//Long modify on 2007/09/28
+						if(sTemp.length>_working.length)
+							++_position;
+						
+						else if(sTemp.length<_working.length-1)
+						{
+							--_position;							
+						}
+						
+
+						_working = new Array();
+						for( k = 0; k < sTemp.length; k++) {
+							_working[k] = sTemp.charAt(k);
+						}
+
+						if(_position>_working.length)
+						{
+							_position=_working.length;
+						}
+
+						if(_position<0)
+						{
+							_position=0;
+						}
+
+						
+
+						super.setSelection(_position,_position); 
+						
+					}
+				}
+				else if(bTextUpdated&&_inputMask!=null) {
+					bTextUpdated = false;
+					
+					//Long modify on 2010/06/16
+					//Long add on 2009/08/28
+					resetWorkingText(_text);									
+					bWorkingUpdated = true;
+				}
+				
+				
+				if( bWorkingUpdated ) {
+					super.text = _working.join("");
+					bWorkingUpdated = false;
+					
+				}
+			}
+			
+			//process max byte
+			if ( _maxByte != 0 ) {
+				
+				var sTempByte : String;
+				var iByteNum :  Number;
+
+				if(_inputMask=="MONEY")
+				{
+					sTempByte = get_number(actualText); 
+					
+					if (sTempByte != null)
+					{
+						iByteNum = checkByte(sTempByte);
+						if ( iByteNum > _maxByte) {
+							sTempByte = cutMaxByteOfNumber(actualText,_maxByte);
+							super.text = sTempByte;
+						}
+						
+					}
+
+				}
+				else
+				{
+					sTempByte = super.text;
+					iByteNum  = checkByte(sTempByte);
+					if ( iByteNum > _maxByte) {
+						sTempByte = cutMaxByte(sTempByte, _maxByte);
+						super.text = sTempByte;
+					}
+				}
+			}
+			
+			
+			super.updateDisplayList( unscaledWidth, unscaledHeight );
+			
+		}
+		
+		
+		
+		/**
+		 *  return new string which  input string <code><b>s</b> has been inserted comma.</code> 
+		 * @param s input string.
+		 * @return new string has been inserted comma.
+		 * 
+		 */
+		public static function addComma(s : String) : String
+		{	
+			return add_comma(s);
+		}
+		   
+		/**
+		 * Return string of only digits from input string <code>str</code> but not get characters.
+		 * @param str input string will be processed.
+		 * @return output string has been processed.
+		 * 
+		 */
+		public static function getNumber(str : String) : String 
+		{
+			
+			return get_number(str);
+	   	}
+		
+		override public function set data(value:Object):void
+		{
+			if(this.listData)
+			{
+				var grid:ExAdvancedDataGrid = this.listData.owner as ExAdvancedDataGrid;
+				var colIndex:int = this.listData.columnIndex;
+				this.inputMask = (grid.columns[colIndex] as ExAdvancedDataGridColumn).inputMask;
+				var col:ExAdvancedDataGridColumn = grid.columns[colIndex];
+				if(col && col.editorMaxChars)
+				{
+					this.maxChars = col.editorMaxChars;					
+				}		
+				super.data = value;
+				this.text = data[col.dataField];
+			}
+		}
+	}
+}
+
+
+
+
+
+
+
+

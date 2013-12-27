@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Demo</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+ 
+<script type="text/javascript" src="GridOne.js"></script>
+<script type="text/javascript" src="resizedata.js"></script>
+
+<script type="text/javascript">
+
+	//Functions is used for initial:
+	//=========================================================================
+	function createPrivateEvent(grid)
+	{
+	}
+
+	function setPrivateSetting(grid)
+	{			  
+	    grid.setDataGridProperty("strHDFgColor","#000000");
+		grid.setColumnProperty("city", "headerRenderer", "comboHeader");
+		grid.setDataGridProperty("selectCell",true);
+		grid.setColHDCheckBoxVisible("select", true);
+		//grid.setDataGridProperty("strHDClickAction","select");
+	}
+	//=========================================================================
+		
+	//Functions is used in HTML body:
+	//=========================================================================
+	
+	function setAccessReader(columnKey)  
+	{
+		vGrid.setAccessReader(columnKey,"Headertext is %HEADERTEXT%. Columntype is %COLUMNTYPE%. Control is %CONTROLTYPE%. " + columnKey + " is %CELLVALUE%");	
+	}
+
+	function setEditabe(isEditable)
+	{
+		vGrid.setColumnProperty("lastname","editable",isEditable);
+		vGrid.setColumnProperty("firstname","editable",isEditable);
+		vGrid.setColumnProperty("address","editable",isEditable);
+		vGrid.setColumnProperty("birthdate","editable",isEditable);
+		vGrid.setColumnProperty("area","editable",isEditable);
+		vGrid.setColumnProperty("city","editable",isEditable);
+		vGrid.setColumnProperty("salary","editable",isEditable);
+	}
+	
+	function setGroupMerge(columnKeyListString)
+	{
+		vGrid.setGroupMerge(columnKeyListString)
+ 	}
+
+	function addSummaryBar(strSummaryBarKey, strText, strMergeColumn, strFunc, strColumnList, position)
+	{
+		vGrid.addSummaryBar(strSummaryBarKey, strText, strMergeColumn, strFunc, strColumnList, position);
+	}
+	
+	function createSummaryBar()
+	{
+		
+	}
+	//=========================================================================
+</script>
+</head>
+<body onload="setParams('idTag');">
+void	
+<span class='title1'>setAccessReader
+</span>
+<span>
+	METHOD	
+</span><br>
+<span style="margin-left:10px">
+			Supported Version: 3.0.4
+		</span>
+<div class="hr"></div>
+
+<div class="Description">
+	<div><span class='title1'>Description</span></div>
+	<div style="margin-left:30px;margin-top:10px;">
+	Setting the syntax for sense reader to read cell of grid.
+	This is feature of accessibility. So please using speaker for listening.<br/>
+	In this version we only test with <a href="http://www.evengrounds.com/articles/testing-with-jaws" style="color:red; size:20px;">JAWS Tool</a>.
+	(we are not sure with other tools)
+	</div>		
+</div>
+<div class="hr"></div>
+<div class="Definition">
+	<div><span class='title1'>Definition</span></div>
+			<div class="docConstructor">
+				<span class="defMetType">void</span>
+				
+				<span class="defMetName">setAccessReader</span>(	
+				<br/>
+						<span class="defRtnTString">String</span>
+						<span class="defRtnName">strColumnKey</span>,<br/>
+						<span class="defRtnTString">String</span>
+						<span class="defRtnName">strAccReader</span>
+					<span class="defEnd">);</span><br/>
+			</div>
+</div>
+ 
+<div class="hr"></div>
+
+<div class="Parameters">
+	<div><span class='title1'>Parameters</span></div>
+	<div style="padding-left:20px;padding-top:5px;">			
+		<div style="">
+			<span class="">String</span>
+			<span>strColumnKey</span><br/>
+			</div>
+			<div style="margin-top:5px;margin-bottom:5px;">
+			<span style="margin-left:30px;">:</span> <span>column key </span>
+		</div>	
+		<div style="">
+			<span class="">String</span>
+			<span>strAccReader</span><br/>
+			</div>
+			<div style="margin-top:5px;margin-bottom:5px;">
+			<span style="margin-left:30px;">:</span>
+			<span>Parameter in strAccReader: %HEADERTEXT%, %COLUMNTYPE%, %CONTROLTYPE%, %CELLVALUE%</span>
+		</div>	
+	</div>
+</div>
+<div class="hr"></div>
+<div class="Examples">
+	<div class="examSources"id='grid'>
+		<img src="../images/icons/pointer.png" align="bottom" /><script type="text/javascript">document.write(vClickOnSteps);</script>
+		<div style="margin-left:20px">
+		<a href="javascript:void(0);" onclick="setAccessReader('lastname');">Grid.setAccessReader("lastname","Headertext is %HEADERTEXT%. Columntype is %COLUMNTYPE%. Control is %CONTROLTYPE%. Last name is %CELLVALUE%");</a><br/>	
+		<a href="javascript:void(0);" onclick="setAccessReader('firstname');">Grid.setAccessReader("firstname","Headertext is %HEADERTEXT%. Columntype is %COLUMNTYPE%. Control is %CONTROLTYPE%. First name is %CELLVALUE%");</a><br/>	
+		<a href="javascript:void(0);" onclick="setAccessReader('area');">Grid.setAccessReader("area","Headertext is %HEADERTEXT%. Columntype is %COLUMNTYPE%. Control is %CONTROLTYPE%. Area is %CELLVALUE%");</a><br/>
+		<a href="javascript:void(0);" onclick="setAccessReader('city');">Grid.setAccessReader("city","Headertext is %HEADERTEXT%. Columntype is %COLUMNTYPE%. Control is %CONTROLTYPE%. City is %CELLVALUE%");</a><br/>
+		<a href="javascript:void(0);" onclick="setAccessReader('birthdate');">Grid.setAccessReader("birthdate","Headertext is %HEADERTEXT%. Columntype is %COLUMNTYPE%. Control is %CONTROLTYPE%. Birth date is %CELLVALUE%");</a><br/>
+		<span style="font-weight: bold;">Mode Select Cell</span><br>
+		<a href="javascript:void(0);" onclick="vGrid.setDataGridProperty('selectCell',true);">Grid.setDataGridProperty("selectCell",true);</a><br/>
+		<span style="font-weight: bold;">Mode Select Row</span><br>
+		<a href="javascript:void(0);" onclick="vGrid.setDataGridProperty('selectCell',false);">Grid.setDataGridProperty("selectCell",false);</a><br/>
+		<span style="font-weight: bold;">Mode Editable</span><br>
+		<a href="javascript:void(0);" onclick="setEditabe(true);">Editable</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:void(0);" onclick="setEditabe(false);">None editable</a>
+		</div>
+		<table border="0" width="100%">
+			<tr valign="top">
+				<td>
+					<div>
+						<script type="text/javascript">					
+						initGridOne(vGridOneWidth, vGridOneHeight, vObjectName,
+								vBridgeName, vXmlConfig, vSerialKey, vDebugMode);				
+						</script>        			
+					</div>			
+				</td>
+		</table>
+	</div>
+</div>
+<div class="Examples">
+<div><span class='title1'>Java Script code to interact with demo</span></div>
+</div>
+</div>
+</body>
+</html>

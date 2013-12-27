@@ -1,0 +1,677 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+//	This program is free software: you can redistribute it and/or modify
+//	it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or
+//	(at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.export
+{
+	import kr.co.actsone.common.ColumnType;
+	import kr.co.actsone.common.Global;
+	import kr.co.actsone.controls.ExAdvancedDataGrid;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+	import kr.co.actsone.summarybar.SummaryBarConstant;
+	import kr.co.actsone.utils.UtilFunc;
+	
+	import mx.controls.DateField;
+	import mx.styles.CSSStyleDeclaration;
+	
+	public class ExportUtils
+	{
+		protected var datagrid:ExAdvancedDataGrid;
+		
+		public function ExportUtils(dgApp:ExAdvancedDataGrid)
+		{
+			datagrid = dgApp;
+		}
+		
+		/*************************************************************
+		 * verify column is exported or not
+		 * @param exportedColumns columns to be exported
+		 * @return dataField 
+		 * @author Duong Pham
+		 * ***********************************************************/
+		private function isExportColumn(exportedColumns:Array, dataField:String):Boolean
+		{
+			for (var i:int = 0; i < exportedColumns.length; i++)
+			{
+				if (exportedColumns[i].dataField == dataField)
+					return true;
+			}
+			return false;
+		}
+		
+		/*************************************************************
+		 * Count of leaf of a grouped columns
+		 * @param columnGroups Grouped columns
+		 * @return exportedColumns
+		 * @author Thuan
+		 * ***********************************************************/
+		public function countLeafs(columnGroups:Array, exportedColumns:Array):int
+		{
+			var leafCount:int = 0;
+			
+			for (var i:int = 0; i < columnGroups.length; i++)
+			{
+				if (!columnGroups[i].hasOwnProperty('children') && isExportColumn(exportedColumns, columnGroups[i].dataField) == true)
+				{
+					leafCount = leafCount + 1; //Increase count of leaf
+				}
+				else if (columnGroups[i].hasOwnProperty('children') && columnGroups[i].children.length > 0) 
+				{
+					leafCount += countLeafs(columnGroups[i].children, exportedColumns);
+				}
+			}
+			return leafCount;
+		}
+		
+		/*************************************************************
+		 * Make header column in html format
+		 * @param headerValue Header text
+		 * @param rowspan Number of rows to span
+		 * @param colspan Number of cols to span
+		 * @return String of column in html format
+		 * @author Thuan
+		 * @modify Duong Pham
+		 * ***********************************************************/
+		public function makeHeaderColumn(col:Object, rowspan:int, colspan:int):String
+		{
+			//Duong add
+			var headerStyle:String = "";
+			headerStyle = getDataHeaderStyle(col);
+			if(colspan == 1)
+			{
+				headerStyle = headerStyle.substr(0,headerStyle.length-1);
+				if(col.width < 10)
+					headerStyle += " width:10;\"";
+				else
+					headerStyle += " width:" + col.width + ";\"";
+			}
+			
+			var strTD:String = "<td " + headerStyle;
+			
+			if (rowspan > 1)
+				strTD += " rowspan='" + rowspan + "'";
+			if (colspan > 1)
+				strTD += " colspan='" + colspan + "'";
+			strTD += ">" + col.headerText + "</td>";
+			
+			return strTD;
+		}
+		
+		/*************************************************************
+		 * Make header rows
+		 * @param colGroups Columns in multi rows header
+		 * @param maxDepth  Max of depth of multi rows header
+		 * @param exportedColumns list column to be exported
+		 * @param currentDepth Current depth of colGroups
+		 * @return String of Header in html format
+		 * @author Thuan
+		 * @modify Duong Pham
+		 * ***********************************************************/
+		public function makeHeaderRows(colGroups:Array, maxDepth:int, currentDepth:int, exportedColumns:Array):String
+		{
+			var groupCount:int = 0;
+			if(colGroups)
+				groupCount = colGroups.length;
+			var groupArr:Array = new Array();
+			var strHeader:String;
+			var rowspan:int;
+			var colspan:int;
+			var headerStyle:String="";
+			//Add new row:
+			strHeader = "<tr>";
+			for (var i:int = 0; i < groupCount; i++)
+			{
+				for (var j:int = 0; j < colGroups[i].length; j++)
+				{
+					//AddColumn:
+					colspan = 0;
+					if (!colGroups[i][j].hasOwnProperty('children') && isExportColumn(exportedColumns, colGroups[i][j].dataField)) // Don't have children
+					{
+						rowspan = maxDepth - currentDepth + 1;
+						colspan = 1;
+					}
+					else if (colGroups[i][j].hasOwnProperty('children') && colGroups[i][j].children.length > 0)// Have children
+					{
+						colspan = countLeafs(colGroups[i][j].children, exportedColumns); 
+						rowspan = 1;
+						groupArr.push(colGroups[i][j].children);
+					}
+					if (colspan > 0)
+						strHeader += makeHeaderColumn(colGroups[i][j], rowspan, colspan);
+				}
+			}
+			//Add end row:
+			strHeader += "</tr>";
+			
+			if (currentDepth + 1 <= maxDepth)
+			{
+				strHeader += makeHeaderRows(groupArr, maxDepth, currentDepth + 1, exportedColumns);
+			}
+			
+			return strHeader;
+		}
+		
+		/*************************************************************
+		 * Make header in multi rows or single row
+		 * @param maxDepth Max of depth of multi rows header
+		 * @param exportedColumns list columns to be exported
+		 * @author Thuan
+		 * @modify Duong Pham
+		 * ***********************************************************/
+		public function makeHeader(maxDepth:int, exportedColumns:Array):String
+		{
+			var groupColumns:Array = datagrid.groupedColumns;
+			var columns: Array = datagrid.columns;
+			var groupArr:Array = new Array();
+			var colspan:int;
+			var rowspan:int;
+			var curDepth:int = 1;
+			var strHeader:String = "";
+			if (groupColumns == null) //Single row header
+			{
+				var headerStyle:String = "";
+				strHeader += '<tr width="'+datagrid.width+'">';
+				for(var j:int = 0; j < exportedColumns.length; j++)
+				{					
+					headerStyle = getDataHeaderStyle(exportedColumns[j]);
+					headerStyle = headerStyle.substr(0,headerStyle.length-1);
+					headerStyle += " width:" + exportedColumns[j].width + ";\"";
+					if(exportedColumns[j].headerText != "" && exportedColumns[j].headerText != null) 
+						strHeader += makeHeaderColumn(exportedColumns[j],1,1);
+					else
+						strHeader += makeHeaderColumn(exportedColumns[j],1,1);
+				}
+				strHeader += "</tr>";
+			}
+			else //Multi rows header
+			{
+				var groupCount:int = groupColumns.length;
+				strHeader += '<tr width="'+datagrid.width+'">';
+				for (var k:int = 0; k < groupCount; k++)
+				{ 
+					//AddColumn:
+					colspan = 0;
+					if (!groupColumns[k].hasOwnProperty('children') && isExportColumn(exportedColumns, groupColumns[k].dataField))
+					{
+						colspan = 1;
+						rowspan = maxDepth - curDepth + 1;
+					}
+					else if (groupColumns[k].hasOwnProperty('children') && groupColumns[k].children.length > 0) // Have children
+					{
+						colspan = countLeafs(groupColumns[k].children, exportedColumns);  
+						rowspan = 1;
+						groupArr.push(groupColumns[k].children);
+					}
+					if (colspan > 0)
+						strHeader += makeHeaderColumn(groupColumns[k], rowspan, colspan);
+				}
+				strHeader += "</tr>";
+				curDepth = 2;
+				strHeader += makeHeaderRows(groupArr, maxDepth, curDepth, exportedColumns);	
+			}
+			
+			return strHeader;
+		}
+		
+		/*************************************************************
+		 * Make data column in html format
+		 * @param col Column which need to get data
+		 * @param data Row data  need to get data
+		 * @param columnInfor
+		 * @param exportInfor
+		 * @param dataStyle
+		 * @return String
+		 * @author Thuan
+		 * @modified Duong Pham
+		 * ***********************************************************/
+		public function makeDataColumn(col:ExAdvancedDataGridColumn,data:Object, dataStyle:String, rowspan:int=0, colspan:int=0, isCalculatedColumn:Boolean=false):String
+		{
+			if(data == null)
+				return "";
+			
+			if(col.excelFormat == "string")
+			{
+				dataStyle = dataStyle.substr(0,dataStyle.length-1);
+				dataStyle += " mso-number-format:\\@\"";
+			}
+			var cellValue:String;
+			//need to review in case total or subtotal
+			if((data.hasOwnProperty(SummaryBarConstant.TOTAL) || data.hasOwnProperty(SummaryBarConstant.SUB_TOTAL))
+				&& col.dataField == data[SummaryBarConstant.SUMMARY_MERGE_COLUMN])
+			{
+				cellValue = datagrid.lstSummaryBar[data[SummaryBarConstant.SUMMARY_BAR_KEY]].strText;
+			}
+			else if(data.hasOwnProperty(col.dataField))
+				cellValue = data[col.dataField].toString();
+			else
+				cellValue = "";
+			if(cellValue == null)
+				cellValue = "";
+			if(datagrid.excelExportInfo.bDataFormat == true)
+			{
+				if (col.type == ColumnType.DATETIME)
+				{
+					cellValue = UtilFunc.stringToDateTime(cellValue);	
+				}
+				else if (col.type == ColumnType.DATE && cellValue != "")
+				{
+					var date:Date = DateField.stringToDate(cellValue, col.dateInputFormatString);
+					cellValue = DateField.dateToString(date, col.dateOutputFormatString);
+				}
+				else if (col.type == ColumnType.PERCENT)
+				{
+					dataStyle = dataStyle.substr(0,dataStyle.length-1);
+					dataStyle += " mso-number-format:Percent";				
+				}			
+				else if (col.type == ColumnType.NUMBER)
+				{
+					cellValue =  col.itemToLabel(data);
+				}
+			}
+			if(col.type == ColumnType.CHECKBOX)
+			{
+				cellValue = data[col.dataField];
+			}
+			else if(col.type == ColumnType.AUTONUMBER)
+			{
+				cellValue = col.itemToLabel(data);
+			}
+			else if(col.type == ColumnType.COMBOBOX || col.type == ColumnType.MULTICOMBO)
+			{
+				cellValue = col.getLabelFromCombo(cellValue);
+			}
+			
+			// calculate value of these cells in case row data is total or subtotal and column type is Number 
+			if(isCalculatedColumn && datagrid.excelExportInfo.bDataFormat==false && col.type == ColumnType.NUMBER)
+			{
+				var labelData:String = col.itemToLabel(data);	
+				//because data is not formatted. It will use original data.
+				cellValue = data[col.dataField];
+			}
+			
+			//using for setColCellExcelAsterisk: Asia 2,3 -> As**   i=2,3 stop
+			cellValue = datagrid.replaceCellValueWithAsterisk(col,cellValue,"*");
+			
+			if(col.merge)
+			{
+				return "<td " + dataStyle + " rowspan='" + rowspan + "' colspan='" + colspan + "'>"  + cellValue + "</td>";
+			}
+			return "<td " + dataStyle + ">"  + cellValue + "</td>";
+		}
+		
+		/*************************************************************
+		 * get data HTML format. If datagrid is merged, the merge function will follow priority of column to merge.
+		 * @param acData Data provider of ExAdvancedDataGrid
+		 * @param exportedColumns List of column to be exported
+		 * @return data in html format
+		 * @author Thuan
+		 * @modify Duong Pham
+		 * ***********************************************************/
+		public function makeDataOrderInMerged(acData:Object, exportedColumns:Array):String
+		{
+			var arrRowspanTo:Array = new Array(); // arrRowspanTo[columnIndex] contain rowIndex for rowspan to
+			var columnCount:int = exportedColumns.length;			
+			var rowCount:int=0;
+			if(acData && acData.length > 0)
+				rowCount= acData.length;
+			var r:int;
+			var c:int;
+			var row:int;
+			var rowspan:int;
+			var maxRowspan:int;
+			var strData:String = "";
+			var data:Object;
+			var cellDataStyle:String;
+			var i:int = 0;
+			//Init arrRowspanTo
+			for(i=0; i < columnCount; i++)
+			{
+				arrRowspanTo[i] = 0;
+			}
+			
+			for (r = 0; r < rowCount; r++)
+			{
+				data = acData[r];
+				if(data == null)
+					continue;
+				maxRowspan = 0;
+				//add new row
+				strData += "<tr " + getDataRowStyle(data) + ">";
+				
+				//get data in case row is total or sub total
+				if(data[SummaryBarConstant.TOTAL] != null || data[SummaryBarConstant.SUB_TOTAL] != null)
+				{
+					var isMapped:Boolean;
+					var columnArr:Array=datagrid.lstSummaryBar[data[SummaryBarConstant.SUMMARY_BAR_KEY]].strColumnList.split(",");
+					for (c = 0; c < columnCount; c++)
+					{
+						isMapped = false;
+						cellDataStyle = getDataCellStyle(exportedColumns[c],data);
+						for(i=0; i<columnArr.length; i++)
+						{
+							if(columnArr[i] == exportedColumns[c].dataField)
+							{
+								isMapped = true;
+								strData += makeDataColumn(exportedColumns[c], data, cellDataStyle,0,0,true);// Add Column
+								break;
+							}
+						}
+						if(!isMapped)
+							strData += makeDataColumn(exportedColumns[c], data, cellDataStyle);// Add Column
+					}
+				}
+				else
+				{
+					for (c = 0; c < columnCount; c++)
+					{
+						cellDataStyle = getDataCellStyle(exportedColumns[c],data);
+						if (!exportedColumns[c].merge)
+						{
+							strData += makeDataColumn(exportedColumns[c], data, cellDataStyle);// Add Column
+						}
+						else // if is merged column
+						{
+							if (r + 1 < rowCount) // if not last row
+							{
+								if (r <= arrRowspanTo[c])  // r is in rowspan
+								{
+									maxRowspan = arrRowspanTo[c] - r + 1;
+								}
+								if (r > arrRowspanTo[c] || arrRowspanTo[c] == 0)  // r is out of rowspan
+								{
+									if (acData.getItemAt(r)[exportedColumns[c].dataField] != acData.getItemAt(r+1)[exportedColumns[c].dataField]) // Cell[r][c] != Cell[r+1][c]
+									{
+										maxRowspan = 1;
+										arrRowspanTo[c] = r;
+										strData += makeDataColumn(exportedColumns[c],data, cellDataStyle);// Add Column
+									}
+									else // Cell[r][c] == Cell[r+1][c]
+									{
+										row = r;
+										rowspan = 1;
+										//Loop to find rowspan
+										while (acData.getItemAt(r)[exportedColumns[c].dataField] == acData.getItemAt(row + 1)[exportedColumns[c].dataField])
+										{
+											row = row + 1;
+											rowspan = rowspan + 1;
+											if (row + 1 == rowCount || rowspan == maxRowspan) // don't need to check maxRowspan == 0 
+												break;
+										}
+										if (maxRowspan < rowspan || maxRowspan <= 0)
+											maxRowspan = rowspan;
+										
+										arrRowspanTo[c] = r + maxRowspan - 1;
+										strData += makeDataColumn(exportedColumns[c],data, cellDataStyle, maxRowspan, 1); // Add Column
+									}
+								}
+							}
+							else // last row
+								if (r > arrRowspanTo[c]) // check to add column to last row
+									strData += makeDataColumn(exportedColumns[c],data, cellDataStyle);// Add Column
+						}
+					}
+				}
+				//add end row
+				strData += "</tr>";
+			}
+			
+			return strData;
+		}
+		
+		/************************************************************************************
+		 * get data in HTML format of row datas. If datagrid is merged, the merge function will merge all datas without caring about the order of column
+		 * @param acData collection data of dataProvider
+		 * @param exportedColumns list column to be exported
+		 * @author Thuan Phan
+		 * @modified Duong Pham
+		 * *************************************************************************************/
+		public function makeDataWithoutOrderInMerged(acData:Object, exportedColumns:Array):String
+		{
+			var rowStatus:Array = new Array(); //rowStatus[i] == true: column [i] is merging; rowStatus[i] == false: column [i] don't merged.
+			var columnCount:int = exportedColumns.length;
+			var rowCount:int = acData.length;
+			var rowspan:int;
+			var strData:String = "";
+			var r:int;
+			var data:Object;
+			var cellDataStyle:String;
+			for(var i:int = 0; i < columnCount; i++)
+			{
+				rowStatus[i] = false;
+			}
+			
+			for (r = 0; r <  rowCount; r++)
+			{
+				data = acData[r];
+				if(data == null)
+					continue;
+				//Add New Row
+				strData += "<tr " + getDataRowStyle(data) + ">";
+				//get data in case row is total or sub total
+				if(data[SummaryBarConstant.TOTAL] != null || data[SummaryBarConstant.SUB_TOTAL] != null)
+				{
+					var isMapped:Boolean;
+					var columnArr:Array=datagrid.lstSummaryBar[data[SummaryBarConstant.SUMMARY_BAR_KEY]].strColumnList.split(",");
+					for (c = 0; c < columnCount; c++)
+					{
+						isMapped = false;
+						cellDataStyle = getDataCellStyle(exportedColumns[c],data);
+						for(i=0; i<columnArr.length; i++)
+						{
+							if(columnArr[i] == exportedColumns[c].dataField)
+							{
+								isMapped = true;
+								strData += makeDataColumn(exportedColumns[c], data, cellDataStyle,0,0,true);// Add Column
+								break;
+							}
+						}
+						if(!isMapped)
+							strData += makeDataColumn(exportedColumns[c], data, cellDataStyle);// Add Column
+					}
+				}
+				else
+				{
+					for (var c:int = 0; c < columnCount; c++)
+					{
+						cellDataStyle = getDataCellStyle(exportedColumns[c],data);
+						if (r + 1 < rowCount)
+						{
+							if (acData.getItemAt(r)[exportedColumns[c].dataField] != acData.getItemAt(r + 1)[exportedColumns[c].dataField])
+							{
+								if (rowStatus[c] == true)
+									rowStatus[c] = false;
+								else //rowStatus[c] == false mean to add column:
+									strData += makeDataColumn(exportedColumns[c],data, cellDataStyle);
+							}
+							else
+							{
+								if (rowStatus[c] == false)
+								{
+									rowspan = 1;
+									var row:int = r;
+									while (acData.getItemAt(r)[exportedColumns[c].dataField] == acData.getItemAt(row + 1)[exportedColumns[c].dataField])
+									{
+										rowspan = rowspan + 1;
+										row = row + 1;
+										if (row + 1 == rowCount)
+										{
+											break;
+										}
+									}
+									rowStatus[c] = true;
+									//AddColumn
+									strData += makeDataColumn(exportedColumns[c],data, cellDataStyle, rowspan, 1);
+								}
+							}
+						}
+						else
+						{
+							if (rowStatus[c] == false)
+							{
+								//AddColumn
+								strData += makeDataColumn(exportedColumns[c],data, cellDataStyle);
+							}
+						}
+					}
+				}
+				strData += "</tr>";
+			}
+			return strData;
+		}
+		
+		/************************************************************************************
+		 * get row style to migrate style into exporting excel
+		 * @param data row data
+		 * @return all styles information of that row
+		 * @author Duong Pham
+		 * *************************************************************************************/
+		public function getDataRowStyle(data:Object):String
+		{
+			if(datagrid == null || data == null)
+				return "";
+			var rowStyle:String = " style=\"";
+			var itemStyle:String = "";
+			
+			var keyObj:String=data[Global.ACTSONE_INTERNAL];
+			if(datagrid._rowStyleDic[keyObj])
+			{
+				for (var styleName:String in datagrid._rowStyleDic[keyObj])
+				{
+					itemStyle += mappingExcelStyleName(styleName) + ":" + datagrid._rowStyleDic[keyObj][styleName] + ";";
+				}
+			}
+			rowStyle += itemStyle + "\"";
+			return rowStyle;
+		}
+		
+		/************************************************************************************
+		 * get cell style to migrate style into exporting excel
+		 * @param col column information
+		 * @param data row data
+		 * @return all styles information of that cell
+		 * @author Duong Pham
+		 * *************************************************************************************/
+		public function getDataCellStyle(col:ExAdvancedDataGridColumn,data:Object):String
+		{
+			//			var styleNameArr:Array = new Array("fontFamily","fontSize","fontWeight","fontStyle","textAlign","textDecoration","color","backgroundColor","borderStyle");
+			var styleNameArr:Array = new Array("fontFamily","fontSize","fontWeight","fontStyle","textAlign","textDecoration","borderStyle");
+			var cellStyle:String = " style=\"";
+			var itemStyle:String = "";
+			var keyObj:String=data[Global.ACTSONE_INTERNAL] + "," + col.dataField;
+			var styleName:String;
+			var styleValue:*;
+			var i:int;
+			
+			for (i=0; i<styleNameArr.length; i++)
+			{
+				styleName = styleNameArr[i];
+				if (datagrid._cellDict[keyObj] && datagrid._cellDict[keyObj][styleName])
+					styleValue = datagrid._cellDict[keyObj][styleName];
+				else if(col.getStyle(styleName))
+					styleValue = col.getStyle(styleName);
+				else
+				{
+					styleValue = datagrid.getStyle(styleName);
+				}
+				//				if(styleValue != null && (styleName == "color" || styleName == "backgroundColor"))
+				//				{
+				//					if(styleValue is uint)
+				//						styleValue = "#" + styleValue.toString(16);
+				//					else if(styleValue is String && String(styleValue).indexOf("0x") > -1)
+				//						styleValue = styleValue.toString().replace("0x", "#");
+				//				}
+				if(styleValue != null && styleValue != undefined)
+					itemStyle += mappingExcelStyleName(styleName) + ":" + styleValue + ";";
+			}
+			cellStyle += itemStyle + "\"";
+			return cellStyle;
+		}
+		
+		/************************************************************************************
+		 * Mapping style name inside datagrid with styleName in excel html format
+		 * @param gridOneStyleName name of style inside GridOne
+		 * @return provide correctly styleName inside excel html format
+		 * @author Duong Pham
+		 * *************************************************************************************/
+		public function mappingExcelStyleName(gridOneStyleName:String):String
+		{
+			var excelStyleName:String="";
+			if(gridOneStyleName == 'fontFamily')
+				excelStyleName = "font-family";
+			else if(gridOneStyleName == 'fontSize')
+				excelStyleName = "font-size";
+			else if(gridOneStyleName == 'fontWeight')
+				excelStyleName = "font-weight";
+			else if(gridOneStyleName == 'fontStyle')
+				excelStyleName = "font-style";
+			else if(gridOneStyleName == 'textAlign' || gridOneStyleName == 'headerTextAlign')
+				excelStyleName = "text-align";
+			else if(gridOneStyleName == 'textDecoration')
+				excelStyleName = "text-decoration";
+			else if(gridOneStyleName == 'color' || gridOneStyleName == 'headerColor')
+				excelStyleName = "color";
+			else if(gridOneStyleName == 'backgroundColor' || gridOneStyleName == "headerBackgroundColor")
+				excelStyleName = "background-color";
+			else if(gridOneStyleName == "borderStyle")
+				excelStyleName = "borderStyle";
+			return excelStyleName;
+		}
+		
+		/************************************************************************************
+		 * get header style to migrate style into exporting excel
+		 * @return col column information
+		 * @author Duong Pham
+		 * *************************************************************************************/
+		public function getDataHeaderStyle(col:Object):String
+		{
+			var styleNameArr:Array = new Array("fontFamily","fontSize","fontWeight","fontStyle","headerTextAlign","textDecoration","headerColor","headerBackgroundColor","borderStyle");
+			var rowStyle:String = " style=\"";
+			var itemStyle:String = "";
+			var styleName:String;
+			var styleValue:*;
+			var i:int;
+			
+			var sName:String = "." + datagrid.getStyle("headerStyleName");					
+			var myHeaderStyles:CSSStyleDeclaration = datagrid.styleManager.getStyleDeclaration(sName);
+			
+			for (i=0; i<styleNameArr.length; i++)
+			{
+				styleName = styleNameArr[i];
+				if(col.getStyle(styleName))
+					styleValue = col.getStyle(styleName);
+				else if(datagrid.getStyle(styleName))
+					styleValue = datagrid.getStyle(styleName);
+				else if(myHeaderStyles.getStyle(styleName))							
+					styleValue = myHeaderStyles.getStyle(styleName);
+				if(styleValue != null && (styleName == "headerColor" || styleName == "headerBackgroundColor"))
+				{
+					if(styleValue is uint)
+						styleValue = "#" + styleValue.toString(16);
+					else if(styleValue is String && String(styleValue).indexOf("0x") > -1)
+						styleValue = styleValue.toString().replace("0x", "#");
+				}
+				if(styleValue != null && styleValue != undefined)
+					itemStyle += mappingExcelStyleName(styleName) + ":" + styleValue + ";";
+			}
+			rowStyle += itemStyle + "\"";
+			return rowStyle;
+		}
+	}
+}

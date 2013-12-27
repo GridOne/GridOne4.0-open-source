@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Demo Ajax with GridOne</title> 
+<script type="text/javascript" src="GridOne.js"></script>
+<script type="text/javascript">
+ 
+var gridOne;
+/*get gridone*/
+function getGrid() {	
+    return document.GridOne;		//it may be customized again
+}
+
+/*********************************************init grid*********************************************/
+/*init for grid one. This function is called by GridOne internally */
+function initializeHandler() 
+{
+	gridOne = getGrid();
+	gridOne.createEvent("boundHeaderComplete","boundHeaderCompleteHandler");
+	gridOne.createEvent("onButtonClick","onButtonClickHandler");
+	setHeader(gridOne);	
+}
+/*This function is called automatically after headers and columns are created.*/
+function boundHeaderCompleteHandler()
+{ 
+	  setGridProperty(gridOne);
+	  setData(gridOne);
+	 
+}
+
+function onButtonClickHandler(event)
+{
+	alert("" + event.nRow);
+}
+var textData="id|dob|phn|name|salary|idnumber|email|fv%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|v1%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|v2%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|v3%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|v4%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|v5%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|v6%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|v7%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|v8%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|v9%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|v10%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|v1%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|v2%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|v3%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|v4%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|v5%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|v6%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|v7%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|v8%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|v9%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|v10%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|v1%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|v2%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|v3%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|v4%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|v5%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|v6%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|v7%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|v8%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|v9%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|v10%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "0|20120401|01029389393|AB|A|39382738|lucy@yahoo.com|v1%%"	
++ "1|20120401|01029389393|AB|B|39382738|lucy@yahoo.com|v2%%"
++ "0|20120401|01029389393|BC|C|39382738|lucy@yahoo.com|v3%%"
++ "0|20120401|01029389393|CD|D|39382738|lucy@yahoo.com|v4%%"
++ "1|20120401|01029389393|CD|E|39382738|lucy@yahoo.com|v5%%"
++ "0|20120401|01029389393|FG|A|39382738|lucy@yahoo.com|v6%%"	
++ "0|20120401|01029389393|FE|A|39382738|lucy@yahoo.com|v7%%"	
++ "1|20120401|01029389393|WE|B|39382738|lucy@yahoo.com|v8%%"
++ "0|20120401|01029389393|AW|C|39382738|lucy@yahoo.com|v9%%"
++ "0|20120401|01029389393|AW|D|39382738|lucy@yahoo.com|v10%%"
++ "1|20120401|01029389393|RT|E|39382738|lucy@yahoo.com|v11%%"
++ "0|20120401|01029389393|AB|C|39382738|lucy@yahoo.com|v12";
+ //set header in dataGrid
+//========================================================
+ function setHeader(gridOne)
+ {
+	gridOne.addHeader("crud","CRUD","crud",20,100,true);
+	gridOne.addHeader("id","","checkbox",1,100,true);
+	gridOne.addHeader("name", "Name", "text", 50, 100,true);
+ 	gridOne.addHeader("salary","ComboDynamic","combodynamic",10,100,true);
+	gridOne.addHeader("idnumber","idnumber","text",50,100,false);
+	gridOne.addHeader("dob", "Birth Date", "date", 25, 100, true);
+	gridOne.addHeader("phn", "PhoneNumber", "text", 15, 100, false);
+    gridOne.addHeader("email", "Email", "button", 50, 100, false);
+	gridOne.boundHeader();		
+	gridOne.setDataGridProperty("selectCell",false);
+	gridOne.setProperty("checkboxTrueValue","Y");
+ 	gridOne.setProperty("checkboxFalseValue","N");
+ 	gridOne.setProperty("bExternalScroll",true);
+ 
+	
+ }
+ //set properties for dataGrid
+ //=======================================================
+ function setGridProperty(gridOne)
+ {
+   gridOne.createEvent("onCellClick","onCellClickHandler");
+ }
+ 
+ var jsonData1=[
+	              {"label":'COM',
+	               "value":'C'
+	              },
+	              {"label":"AMS",
+	               "value":"A"
+	              },
+	              {"label":"BOM",
+	               "value":"B"
+	              },
+	              {"label":"DDD",
+		           "value":"D"
+		          },
+		          {"label":"FME",
+		           "value":"E"
+		          }
+	              ];
+ var jsonData2=[
+	              {"label":'Korea',
+	               "value":'Korea'
+	              },
+	              {"label":"Seoul",
+	               "value":"Seoul"
+	              },
+	              {"label":"S",
+		           "value":"S"
+		          },
+		          {"label":"G",
+			       "value":"G"
+			      },
+	              {"label":"Vietnam",
+	               "value":"VN"
+	              }
+	              ];
+ //create event click
+ //=======================================================
+ function onCellClickHandler(event)
+ {
+	 var combD=gridOne.getItemAt(event.nRow);
+	 var data=combD['salary'];
+    // alert(combD['salary']);
+//	 var jsonData1=[
+//		              {"label":data,
+//		               "value":data
+//		              },
+//		              {"label":"80",
+//		               "value":"80"
+//		              },
+//		              {"label":"30",
+//		               "value":"30"
+//		              }
+//		              ];
+// 	 gridOne.addDynamicComboList("salary","label","value",jsonData1);
+ }
+ 
+ //set data
+ //==========================================================
+ function setData(gridOne)
+ {
+ //set data into dataGrid
+  gridOne.setTextData(textData);
+  gridOne.addDynamicComboList("salary","label","value",jsonData1);
+ }
+ 
+ function addComboList()
+ {
+	 var grid=getGrid();
+	
+ }
+ 
+ function addComboList2()
+ {
+	 var grid=getGrid();
+	 grid.addDynamicComboList("salary","label","value",jsonData2);
+	//alert(grid.getCheckedRowsIndex("id"));
+	//alert(grid.getCheckBoxValue("id"));
+      
+ } 
+ //Filter
+ function DoFilter()
+ {
+	 var grid=getGrid();
+     var filterText = document.getElementById("txtInput").value;
+     grid.filter(filterText, "name");
+           
+ }
+ 
+ function testsetCellValue()
+ {
+	 var grid=getGrid();
+	 grid.setCellValue("fv",0,"7678",false);
+	 grid.setCellValue("fv",2,"090838383",false);
+	 grid.setCellValue("fv",3,"H@yahoo.com",false);
+ }
+</script>
+</head>
+<body>
+        <input type="text" id="txtInput"/> <input type="button" onclick="DoFilter();" value="Filter"/>
+        <input type="button" value=" addComboList" onclick=" addComboList();"/><br/><br/>
+        <input type="button" value=" addComboList2" onclick=" addComboList2();"/><br/><br/>
+        <input type="button" value=" setCellValue" onclick=" testsetCellValue();"/><br/><br/>
+		<div>
+		  <script type="text/javascript">
+		   initGridOne(600,400,'GridOne','flash','','A0B0C0C6-000148-156641','false','fast');
+		  </script>
+		</div>
+</body>
+</html>

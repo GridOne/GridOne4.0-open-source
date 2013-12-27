@@ -1,0 +1,29 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.protocol
+{
+	public class DataProtocol extends ProtocolBase
+	{
+		public function DataProtocol(flexApp:Object)
+		{
+			super(flexApp)
+		}
+		
+		override public function decode(value:String):Object
+		{
+			return super.decode(value);
+		}
+		
+		override public function encode(obj:Object):String
+		{
+			return super.encode(obj);
+		}
+
+	}
+}

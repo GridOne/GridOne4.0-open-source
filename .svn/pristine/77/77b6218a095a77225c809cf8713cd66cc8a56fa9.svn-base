@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+-->
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="{this.height}"
+		   verticalScrollPolicy="off"
+		   horizontalScrollPolicy="off"
+		   focusEnabled="true"
+		   implements="mx.controls.listClasses.IDropInListItemRenderer" 
+		   xmlns:dataGridClasses="com.controls.dataGridClasses.*" backgroundAlpha="1"
+		   initialize="init()">
+	
+	<mx:Script>
+		<![CDATA[
+			import flash.events.Event;
+			
+			import kr.co.actsone.controls.ExAdvancedDataGrid;
+			import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+			import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridListData;
+			import kr.co.actsone.events.SAEvent;
+			
+			import mx.controls.Alert;
+			import mx.controls.listClasses.BaseListData;
+			import mx.events.ValidationResultEvent;
+			import mx.validators.ValidationResult;
+			
+			[Bindable]
+			public var myNumberString:String="";
+			[Bindable]
+			public var col:ExAdvancedDataGridColumn;
+						
+			private var _flag:Boolean=false;
+			private function init():void
+			{
+//				this.addEventListener(FocusEvent.FOCUS_OUT, focusOutItemHandler);
+			}
+			
+			private function focusOutItemHandler(event:FocusEvent):void
+			{
+				if (!_flag)
+				{
+					this.numberEditor.setFocus();
+					_flag=true;
+				}
+			}
+			
+			private var _listData:ExAdvancedDataGridListData;
+			[Bindable("dataChange")]
+			
+			/**
+			 *  The implementation of the <code>listData</code> property as
+			 *  defined by the IDropInListItemRenderer interface.
+			 *  The text of the renderer is set to the <code>label</code>
+			 *  property of the listData.
+			 *
+			 *  @see mx.controls.listClasses.IDropInListItemRenderer
+			 */
+			public function get listData():BaseListData
+			{
+				return _listData;
+			}
+			
+			protected var dataField:String="";
+			
+			public function set listData(value:BaseListData):void
+			{
+				_listData=ExAdvancedDataGridListData(value);
+				if (_listData)
+				{	
+					var dg:ExAdvancedDataGrid = ExAdvancedDataGrid(listData.owner);					
+					dataField=(dg.columns[_listData.columnIndex] as ExAdvancedDataGridColumn).dataField;					
+				}
+			}
+			
+			override public function set data(value:Object):void
+			{
+				super.data=value;
+				this.height=(this.listData.owner as ExAdvancedDataGrid).rowHeight;
+				if((this.listData.owner as ExAdvancedDataGrid).bDisplayZeroToNull && data[dataField] == "0")
+					this.myNumberString="";
+				else
+					this.myNumberString=data[dataField];				
+				this.col=(this.listData.owner as ExAdvancedDataGrid).columns[this.listData.columnIndex];
+				//this.parent.setChildIndex(this,this.parent.numChildren - 1);											
+			}		
+			
+			private function validHandler():void
+			{
+				this.myNumberString=this.numberEditor.text==""?"":Number(this.numberEditor.text).toString();
+			}
+			
+			private function inValidHandler(event:ValidationResultEvent):void
+			{
+				this.myNumberString=this.data[dataField];
+				for each(var item:ValidationResult in event.results)
+				{
+					if(item.errorCode=="precision")
+					{
+						Alert.show("The amount entered has too many digits beyond the dicimal point");
+					}
+					else if(item.errorCode=="exceedsMax")
+					{
+						Alert.show("The number entered is too large");
+					}
+				}
+			}
+			
+			private function initHandler():void
+			{
+				this.numberEditor.setFocus();
+				//Alert.show(this.numberEditor.textHeight.toString());
+			}
+			
+			private function changeHandler(event:Event):void
+			{
+				
+			}
+			
+			protected function numberEditor_keyUpHandler(event:KeyboardEvent):void
+			{
+				var listOwner:ExAdvancedDataGrid = this.listData.owner as ExAdvancedDataGrid;
+				if(listOwner.eventArr.hasOwnProperty(SAEvent.TEXT_INPUT_KEY_UP))
+				{
+					//dispatch event textInputKeyUp event to javascript
+					var saEvent:SAEvent = new SAEvent(SAEvent.TEXT_INPUT_KEY_UP,true);
+					saEvent.strText = numberEditor.text;
+					saEvent.keyCode = event.keyCode;
+					saEvent.columnKey = this.dataField;
+					saEvent.nRow = (listData.owner as ExAdvancedDataGrid)._selectedRowIndex; //Add property nRow for Feature #3894 (Keyup event)
+					listOwner.dispatchEvent(saEvent);
+				}
+			}
+			
+		]]>
+	</mx:Script>
+		
+	<mx:NumberFormatter id="formatter"/>
+	<mx:NumberValidator id="validator" source="{numberEditor}" precision="{col.checkPrecision}"  property="text" trigger="{numberEditor}" triggerEvent="{Event.CHANGE}" valid="validHandler()"
+						invalid="inValidHandler(event)"  required="false" maxValue="{this.col.maxValue}"/>
+	<mx:TextInput width="{this.width}"  id="numberEditor" text="{myNumberString}" restrict="0-9\.\-" height="{this.height-1.5}"
+				  creationComplete="initHandler()" change="changeHandler(event)"  horizontalCenter="0" verticalCenter="-1" keyUp="numberEditor_keyUpHandler(event)" />
+</mx:Canvas>

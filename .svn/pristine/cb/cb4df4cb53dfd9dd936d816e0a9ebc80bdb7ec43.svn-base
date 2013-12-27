@@ -1,0 +1,4260 @@
+﻿﻿﻿	/**************************************************************************
+		Flash player version require minimum 11.3.0
+	**************************************************************************/
+	var minimumVersion='11,3';
+	/**************************************************************************
+		*  Function to support get flash player version in javascript
+	**************************************************************************/
+	function getFlashVersion(){
+	  try {
+	    try {
+	      var axo = new ActiveXObject('ShockwaveFlash.ShockwaveFlash.6');
+	      try { axo.AllowScriptAccess = 'always'; }
+	      catch(e) { return '6,0,0'; }
+	    } catch(e) {}
+	    return new ActiveXObject('ShockwaveFlash.ShockwaveFlash').GetVariable('$version').replace(/\D+/g, ',').match(/^,?(.+),?$/)[1];
+	  } catch(e) {
+	    try {
+	      if(navigator.mimeTypes["application/x-shockwave-flash"].enabledPlugin){
+	        return (navigator.plugins["Shockwave Flash 2.0"] || navigator.plugins["Shockwave Flash"]).description.replace(/\D+/g, ",").match(/^,?(.+),?$/)[1];
+	      }
+	    } catch(e) {}
+	  }
+	  return '0,0,0';
+	}
+	 
+	var currentVersionArr= getFlashVersion().split(',');
+	var minVersionArr=minimumVersion.split(',');
+	
+	if(currentVersionArr[0] < minVersionArr[0] || (currentVersionArr[0] == minVersionArr[0] && currentVersionArr[1] < minVersionArr[1] ))
+	{
+		//Please change to korean language in case you want to customize this message
+	  	var answer = confirm ("Your current FlashPlayer is out of date. Do you want to update Flash Player?");
+		if (answer)
+			window.location="http://get.adobe.com/flashplayer/";
+	}
+
+	//달력아이프레임위치를 위해 마우스 이동시 좌표값(for KRX)
+	var screenX;
+	var screenY;
+	//브라우저 종류 체크
+	var browser = navigator.userAgent.toLowerCase();
+	var grdObj = new Array();
+	var debug=false;
+	var container="";
+
+	/**************************************************************************
+    *  함  수  명 : initGridOne
+    *  입력 필드
+    *        objName     : GridOne Object명
+    *        width       : GridOne Width
+    *        height      : GridOne Height
+    *        bridgeName  : FA Bridge 명
+    *        xmlConfig   : GridOne config.xml 파일의 경로
+    *        serialKey   : GridOne release or developer version
+    *        debugMode   : GridOne debuge (false)(optional)
+    *        performanceMode : fast or normal (optional)
+    *        containerid : use for multiple GridOne. (optional)
+    *  리  턴  값 : 없음
+    *  설      명 : 그리드 Object를 생성한다.
+    **************************************************************************/
+
+	function initGridOne(width,height,objName,bridgeName,xmlConfig,serialKey,debugMode,performanceMode,containerid)
+	{
+		gridOne_path="";
+		debug=debugMode;
+		grdObj.push(objName);
+		if (!containerid)
+			container="";
+		else
+			container=containerid;
+		
+		var gridTag="<object classid='clsid:D27CDB6E-AE6D-11cf-96B8-444553540000' id='"+objName+"' width="+width+" height="+height;
+		gridTag+=" codebase='http://fpdownload.macromedia.com/get/flashplayer/current/swflash.cab'>";
+		gridTag+="<param name='movie' value='"+gridOne_path+"GridOne.swf'/>";
+		gridTag+="<param name='quality' value='high' />";
+		gridTag+="<param name='autocomplete' value='on' />";
+		gridTag+="<param name='bgcolor' value='#e0e0e0'/>";
+		gridTag+="<param name='allowScriptAccess' value='samedomain' />";
+		gridTag+="<param name='wmode' value='window' />";
+		gridTag+="<param name='flashVars' value='initialize="+container+"initializeHandler&bridgeName="+bridgeName+"&configURL="+xmlConfig+"&serialKey="+serialKey+"&bDebugMode="+debugMode+"'/>";
+		gridTag+="<embed src='"+gridOne_path+"GridOne.swf' quality='high' bgcolor='#e0e0e0' width="+width+" height="+height+" name='"+objName+"' id='"+objName+"1' align='middle' play='true' loop='false'";
+		gridTag+=" quality='high' allowScriptAccess='samedomain' wmode='window' type='application/x-shockwave-flash' pluginspage='http://www.adobe.com/go/getflashplayer'";
+		gridTag+=" flashVars='initialize="+container+"initializeHandler&performanceMode=" + performanceMode +"&bridgeName="+bridgeName+"&configURL="+xmlConfig+"&serialKey="+serialKey+"&bDebugMode="+debugMode+"'> </embed> </object>";
+		document.write(gridTag);
+	}
+ 
+	var arrList =new Array();
+	////////////////////////////test wrapper class/////////////////////////
+	 function GridOneWrapper()
+     {        this.setProperty=setProperty;
+     		  this.setDataGridProperty=setDataGridProperty;
+     		  this.getDataGridProperty=getDataGridProperty;
+     		  this.addHeader=addHeader;
+     		  this.boundHeader=boundHeader;
+     		  this.addTextData=addTextData;
+		      this.setTextData =setTextData;
+		      this.setGridData=setGridData;
+		      this.createEvent=createEvent;
+		      this.refresh=refresh;
+		      this.addComboListValue=addComboListValue;
+		      this.loadGridData=loadGridData;
+		      this.getGridData=getGridData;
+		      this.setJSonData=setJSonData;
+		      this.isColHide=isColHide;
+		      this.setColWidth=setColWidth;
+		      this.getColWidth=getColWidth;
+		      this.setColFix=setColFix;
+		      this.setRowFix=setRowFix;
+		      this.resetColFix=resetColFix;
+		      this.resetRowFix=resetRowFix;
+		      this.getColCount=getColCount;
+		      this.setColCellAlign=setColCellAlign;
+		      this.getColType=getColType;
+		      this.setColCellBgColor=setColCellBgColor;
+		      this.setColCellFgColor=setColCellFgColor;
+		      this.setColCellFont=setColCellFont;
+		      this.setColCellFontBold=setColCellFontBold;
+		      this.setColCellFontItalic=setColCellFontItalic;
+		      this.setColCellFontName=setColCellFontName;
+		      this.setColCellFontSize=setColCellFontSize;
+		      this.setColCellFontULine=setColCellFontULine;
+		      this.setColCellActivation=setColCellActivation;
+		      this.getColCellActivation=getColCellActivation;
+		      this.changeColumnSeparator=changeColumnSeparator;
+		      this.addDefaultContextMenuItem=addDefaultContextMenuItem;
+		      this.addUserContextMenuItem=addUserContextMenuItem;
+		      this.addContextMenuSeparator=addContextMenuSeparator;
+		      this.removeAllContextMenuItem=removeAllContextMenuItem;
+		      this.setColHDCheckBoxVisible=setColHDCheckBoxVisible;
+		      this.addGroup=addGroup;
+		      this.appendHeader=appendHeader;
+		      this.appendGroup=appendGroup;
+		      this.setGroupHDText=setGroupHDText;
+		      this.getGroupHDText=getGroupHDText;
+		      this.setColHDAlign=setColHDAlign;
+		      this.getColHDKey=getColHDKey;
+		      this.getColHDVisibleIndex=getColHDVisibleIndex;
+		      this.setColHDCheckBoxValue=setColHDCheckBoxValue;
+		      this.getColHDVisibleKey=getColHDVisibleKey;
+		      this.getColHDText=getColHDText;
+		      this.setColHDText=setColHDText;
+		      this.getColHDIndex=getColHDIndex;
+		      this.setColHDBgColor=setColHDBgColor;
+		      this.setColHDFgColor=setColHDFgColor;
+		      this.setGroupHDColor=setGroupHDColor;
+		      this.setGroupHDFont=setGroupHDFont;
+		      this.setTreeMode=setTreeMode;
+		      this.addRow=addRow;
+		      this.insertRow=insertRow;
+		      this.addRowAt=addRowAt;
+		      this.deleteRow=deleteRow;
+		      this.moveRow=moveRow;
+		      this.getRowCount=getRowCount;
+		      this.setActiveRowIndex=setActiveRowIndex;
+		      this.getActiveRowIndex=getActiveRowIndex;
+		      this.setRowActivation=setRowActivation;
+		      this.setRowBgColor=setRowBgColor;
+		      this.setRowFgColor=setRowFgColor;
+		      this.setRowHide=setRowHide;
+		      this.isRowHide=isRowHide;
+		      this.filter=filter;
+		      this.search=search;
+		      this.setNumberFormat=setNumberFormat;
+		      this.setColumnProperty=setColumnProperty;
+		      this.getColumnProperty=getColumnProperty;
+		      this.setCRUDMode=setCRUDMode;
+		      this.cancelCRUD=cancelCRUD;
+		      this.clearCRUDMode=clearCRUDMode;
+		      this.cancelCRUDRow=cancelCRUDRow;
+		      this.getCellValueIndex=getCellValueIndex;
+		      this.setCellValueIndex=setCellValueIndex;
+		      this.getCellValue=getCellValue;
+		      this.setCellValue=setCellValue;
+		      this.getCellHiddenValueIndex=getCellHiddenValueIndex;
+		      this.setCellHiddenValueIndex=setCellHiddenValueIndex;
+		      this.getCellHiddenValue=getCellHiddenValue;
+		      this.setCellHiddenValue=setCellHiddenValue;
+		      this.setCellImage=setCellImage;
+		      this.getCellImage=getCellImage;
+		      this.setCellBgColor=setCellBgColor;
+		      this.setCellFgColor=setCellFgColor;
+		      this.setCellFont=setCellFont;
+		      this.setCellFontBold=setCellFontBold;
+		      this.setCellFontCLine=setCellFontCLine;
+		      this.setCellFontItalic=setCellFontItalic;
+		      this.setCellFontName=setCellFontName;
+		      this.setCellFontSize=setCellFontSize;
+		      this.setCellFontULine=setCellFontULine;
+		      this.allowDrawUpdate=allowDrawUpdate;
+		      this.addComboList=addComboList;
+		      this.setMultiComboData=setMultiComboData;
+		      this.getComboListKey=getComboListKey;
+		      this.getComboSelectedListKey=getComboSelectedListKey;
+		      this.getComboListCount=getComboListCount;
+		      this.getComboHiddenValue=getComboHiddenValue;
+		      this.getComboText=getComboText;
+		      this.getComboSelectedIndex=getComboSelectedIndex;
+		      this.setComboSelectedIndex=setComboSelectedIndex;
+		      this.setComboSelectedHiddenValue=setComboSelectedHiddenValue;
+		      this.getComboSelectedHiddenValue=getComboSelectedHiddenValue;
+		      this.addComboHeaderValue=addComboHeaderValue;
+		      this.hasComboList=hasComboList;
+		      this.clearComboList=clearComboList;
+		      this.setComboRowCount=setComboRowCount;
+		      this.getActiveColKey=getActiveColKey;
+		      this.addImageList=addImageList;
+		      this.removeImageList=removeImageList;
+		      this.getImageListURL=getImageListURL;
+		      this.setImageListSize=setImageListSize;
+		      this.clearImageList=clearImageList;
+		      this.getImageListCount=getImageListCount;
+		      this.addGridImageList=addGridImageList;
+		      this.setColCellGridImageList=setColCellGridImageList;
+		      this.clearGridImageList=clearGridImageList;
+		      this.setGridImageListSize=setGridImageListSize;
+		      this.clearGrid=clearGrid;
+		      this.setDateFormat=setDateFormat;
+		      this.getTreeMode=getTreeMode;
+		      this.collapseTreeAll=collapseTreeAll;
+		      this.expandTreeAll=expandTreeAll;
+		      this.expandTreeNode=expandTreeNode;
+		      this.collapseTreeNode=collapseTreeNode;
+		      this.deleteTreeNode=deleteTreeNode;
+		      this.getRowIndexFromTreeKey=getRowIndexFromTreeKey;
+		      this.getTreeChildNodeCount=getTreeChildNodeCount;
+		      this.getTreeChildNodeKey=getTreeChildNodeKey;
+		      this.getTreeFirstNodeKey=getTreeFirstNodeKey;
+		      this.getTreeKeyFromRowIndex=getTreeKeyFromRowIndex;
+		      this.getTreeNextNodeKey=getTreeNextNodeKey;
+		      this.getTreeNodeDepth=getTreeNodeDepth;
+		      this.getTreeParentNodeKey=getTreeParentNodeKey;
+		      this.getTreePrevNodeKey=getTreePrevNodeKey;
+		      this.getTreeSummaryValue=getTreeSummaryValue;
+		      this.hasTreeChildNode=hasTreeChildNode;
+		      this.hasTreeNextNode=hasTreeNextNode;
+		      this.hasTreeParentNode=hasTreeParentNode;
+		      this.hasTreePrevNode=hasTreePrevNode;
+		      this.insertTreeNode=insertTreeNode;
+		      this.isTreeNodeCollapse=isTreeNodeCollapse;
+		      this.isTreeNodeExpand=isTreeNodeExpand;
+		      this.isTreeNodeKey=isTreeNodeKey;
+		      this.moveTreeNode=moveTreeNode;
+		      this.setTreeClickAction=setTreeClickAction;
+		      this.excelExport=excelExport;
+		      this.excelImport=excelImport;
+		      this.setImagetextAlign=setImagetextAlign;
+		      this.setColCellFontCLine=setColCellFontCLine;
+		      this.setColCellMerge=setColCellMerge;
+		      this.getColMaxLength=getColMaxLength;
+		      this.setCellFocus=setCellFocus;
+		      this.setGroupMerge=setGroupMerge;
+		      this.clearGroupMerge=clearGroupMerge;
+		      this.isGroupMergeColumn=isGroupMergeColumn;
+		      this.hasGroupMerge=hasGroupMerge;
+		      this.addSummaryBar=addSummaryBar;
+		      this.clearSummaryBar=clearSummaryBar;
+		      this.getSummaryBarValue=getSummaryBarValue;
+		      this.hasSummaryBar=hasSummaryBar;
+		      this.setSummaryBarColor=setSummaryBarColor;
+		      this.setSummaryBarFont=setSummaryBarFont;
+		      this.setSummaryBarFormat=setSummaryBarFormat;
+		      this.setSummaryBarFunction=setSummaryBarFunction;
+		      this.setSummaryBarText=setSummaryBarText;
+		      this.setSummaryBarValue=setSummaryBarValue;
+		      this.setColCellExcelAsterisk=setColCellExcelAsterisk;
+		      this.clearExcelInfo=clearExcelInfo;
+		      this.setExcelFooter=setExcelFooter;
+		      this.setExcelHeader=setExcelHeader;
+		      this.setAccessReader=setAccessReader;
+		      this.setAccessReaderHeader=setAccessReaderHeader;
+		      this.setColCellSort=setColCellSort;
+		      this.setColIndex=setColIndex;
+		      this.setColCellRadio=setColCellRadio;
+		      this.clearData=clearData;
+		      this.showBusyBar=showBusyBar;
+		      this.closeBusyBar=closeBusyBar;
+		      this.setProtocolData=setProtocolData;
+		      this.setDataObject=setDataObject;
+		      this.addEvent=addEvent;
+		      this.removeEvent=removeEvent;
+		      this.loseFocus=loseFocus;
+		      this.getDataObject=getDataObject;
+		      this.getProtocolData=getProtocolData;
+		      this.setXMLData=setXMLData;
+		      this.getXMLData=getXMLData;
+		      this.addFooter=addFooter;
+		      this.clearFooter=clearFooter;
+		      this.hasFooter=hasFooter;
+		      this.setStatus=setStatus;
+		      this.getStatus=getStatus;
+		      this.setParams=setParams;
+		      this.getParams=getParams;
+		      this.getParamCount=getParamCount;
+		      this.getParamKey=getParamKey;
+		      this.setMessage=setMessage;
+		      this.getMessage=getMessage;
+		      this.doQuery=doQuery;
+		      this.isDoQuery=isDoQuery;
+		      this.addComboListJson=addComboListJson;
+		      this.getCheckedRowsIndex=getCheckedRowsIndex;
+		      this.setComboJSONData=setComboJSONData;
+		      this.refreshGrid=refreshGrid;
+		      this.setColCellImage=setColCellImage;
+		      this.getColumn=getColumn;
+		      this.insertHeader=insertHeader;
+		      this.addHeaders=addHeaders;
+		      this.createGroup=createGroup;
+		      this.getColumnIndex=getColumnIndex;
+		      this.getColumnType=getColumnType;
+		      this.setWaitingLogoValue=setWaitingLogoValue;
+		      this.showWaitingLogo=showWaitingLogo;
+		      this.hideWaitingLogo=hideWaitingLogo;
+		      this.addComboDataAtColumn=addComboDataAtColumn;
+		      this.addComboDataAtColumnIndex=addComboDataAtColumnIndex;
+		      this.destroyEventListener=destroyEventListener;
+		      this.changeRowSeparator=changeRowSeparator;
+		      this.setTextDataByService=setTextDataByService;
+		      this.getAllData=getAllData;
+		      this.removeAllData=removeAllData;
+		      this.deleteRows=deleteRows;
+		      this.doStartQuery=doStartQuery;
+		      this.getGridProtocolText=getGridProtocolText;
+		      this.loadGridData=loadGridData;
+		      this.queryTextData=queryTextData;
+		      this.queryComboTextData=queryComboTextData;
+		      this.getCell=getCell;
+		      this.getCellValues=getCellValues;
+		      this.setButtonVisible=setButtonVisible;
+		      this.setCheckBoxVisible=setCheckBoxVisible;
+		      this.getCellBackgroundColor=getCellBackgroundColor;
+		      this.hideColumnIndex=hideColumnIndex;
+		      this.showColumnIndex=showColumnIndex;
+		      this.getComboNameAtColumn=getComboNameAtColumn;
+		      this.getComboNameAtColumnIndex=getComboNameAtColumnIndex;
+		      this.getDataGridString=getDataGridString;
+		      this.getDeletedRows=getDeletedRows;
+		      this.getInsertedRows=getInsertedRows;
+		      this.getRow=getRow;
+		      this.getUpdatedRows=getUpdatedRows;
+		      this.getCurrentPage=getCurrentPage;
+		      this.getPageTotal=getPageTotal;
+		      this.getPagingCount=getPagingCount;
+		      this.scrollToRow=scrollToRow;
+		      this.setCell=setCell;
+		      this.getCellIndexArray=getCellIndexArray;
+		      this.setCellArray=setCellArray;
+		      this.setCellPaddingLeft=setCellPaddingLeft;
+		      this.showProgressBar=showProgressBar;
+		      this.hideProgressBar=hideProgressBar;
+		      this.getVersion=getVersion;
+		      this.getSelectedIndex=getSelectedIndex;
+		      this.getSelectedItem=getSelectedItem;
+		      this.getColumns=getColumns;
+		      this.getColumnCount=getColumnCount;
+		      this.importExcelByActiveX=importExcelByActiveX;
+		      this.exportExcelByActiveX=exportExcelByActiveX;
+		      this.getDataObject=getDataObject;
+		      this.getProtocolData=getProtocolData;
+		      this.doEndQuery=doEndQuery;
+		      this.setCellActivation=setCellActivation;
+		      this.getCellActivation=getCellActivation;
+		      this.getTextData=getTextData;
+		      this.handlePressOutOfGridOne=handlePressOutOfGridOne;
+		      this.generateTestData=generateTestData;
+		      this.insertColumn=insertColumn;
+		      this.getClientDataString=getClientDataString;
+		      this.undoRowHide=undoRowHide;
+		      this.setMultiRowsHide=setMultiRowsHide;
+		      this.setArrayData=setArrayData;
+		      this.getArrayData=getArrayData;
+		      this.getItemAt=getItemAt;
+		      this.setItemAt=setItemAt;
+		      this.getCheckBoxValue=getCheckBoxValue;
+		      this.getSelectedIndexs=getSelectedIndexs;
+		      this.getCellGroupMergeInfo=getCellGroupMergeInfo;
+		      this.dispatchCustomEvent=dispatchCustomEvent;
+		      this.setHeaderContent=setHeaderContent;
+		      this.addDynamicComboList=addDynamicComboList;
+		      this.setGridOneHeaderVisible=setGridOneHeaderVisible;
+		      this.setGridOneHeaderImage=setGridOneHeaderImage;
+		      this.setGridOneHeaderTitle=setGridOneHeaderTitle;
+		      this.getDataFieldIndex=getDataFieldIndex;
+		      this.endEditWithReason=endEditWithReason;
+		      this.enableDataGrid=enableDataGrid;
+		      this.setRowHeight=setRowHeight;
+	          this.setColHide=setColHide;
+	         
+     }
+	 
+	 /*************************************************************
+		 * Set property or style for DataGrid.
+		 * @param gridId Object : GridOne object 
+		 * @param name String : name of property
+		 * @param value Object : value of property
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setProperty(gridId, name, value)
+	 {
+		 gridId.setProperty(name, value);
+	 }
+	 
+	 /*************************************************************
+		 * Set property or style for DataGrid.
+		 * @param gridId Object : GridOne object 
+		 * @param name String : name of property
+		 * @param value Object : value of property
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setDataGridProperty(gridId, name, value)
+	 {
+		 gridId.setDataGridProperty(name, value);
+	 }
+	 
+	 /*************************************************************
+		 * get value of property of DataGrid.
+		 * @param gridId Object : GridOne object
+		 * @param property String : name of property.
+		 * @return value of property as a object
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getDataGridProperty(gridId, property)
+	 {
+		 gridId.registerFunc(arrList,"getDataGridProperty");
+		 return gridId.getDataGridProperty(property);
+	 }
+	 
+	 /*************************************************************
+		 * Create column for datagrid
+		 * @param gridId Object : GridOne object 
+		 * @param columnKey String : column dataField 
+		 * @param columnText String : header text
+		 * @param columnType String : column type such as combo, text, calendar...
+		 * @param maxLength String : length of text in a cell, or length of a number
+		 * @param columnWidth String : column width
+		 * @param editable Boolean : indicate whether column is editable or not
+		 * @param textAlign String : define text align "left", "right","center". (Optional)
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function addHeader(gridId, columnKey, columnText, columnType, maxLength, columnwidth, editable,textAlign)
+	 {
+		 gridId.addHeader(columnKey, columnText, columnType, maxLength, columnwidth, editable,textAlign);
+	 }
+	 
+	 /*************************************************************
+		 * bound header after addHeader
+		 * @param gridId Object : GridOne object 
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function boundHeader(gridId)
+	 {
+		 gridId.boundHeader();
+	 }
+	 
+	/*************************************************************
+		 * add text data
+		 * @param gridId Object : GridOne object
+		 * @param data String : data from javascript
+		 * @param bValidation Boolean :indicate where validate data or not
+		 * @param isFormatDate Boolean : indicate where format date column or not
+		 * @param isFormatDateTime Boolean : indicate where validate date time column or not 
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function addTextData(gridId, data, bValidation,isFormatDate,isFormatDateTime)
+	 {
+		 gridId.addTextData(data, bValidation,isFormatDate,isFormatDateTime);
+	 }
+	 
+	/*************************************************************
+		 * Set json data
+		 * @param gridId Object : GridOne object
+		 * @param jsonData Object : Data from javascript
+		 * @param bValidation Boolean : indicate where validate data or not
+		 * @author Thoeun Chheav hun
+		 *  */	
+	 function  setGridData(gridId, jsonData, bValidation)
+	 {
+		 gridId.setGridData(jsonData, bValidation);
+	 }
+	 
+	/*************************************************************
+		 * control event according to  External Interface
+		 * @param gridId Object : GridOne object
+		 * @param type String : event's name
+		 * @param listener String : function's name
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function createEvent(gridId, type, listener)
+	 {
+		 gridId.createEvent(type, listener);
+	 }
+	 
+	/*************************************************************
+		 * Set text data
+		 * @param gridId Object : GridOne object
+		 * @param data String : data from javascript
+		 * @param bValidation Boolean : indicate where validate data or not. Default=false. (Optional)
+		 * @param isFormatDate Boolean : indicate where format date column or not.Default=false. (Optional)
+		 * @param isFormatDateTime Boolean : indicate where validate date time column or not.Default=false. (Optional)  
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setTextData(gridId, data, bValidation,isFormatDate,isFormatDateTime)
+     {
+		 gridId.setTextData(data, bValidation,isFormatDate,isFormatDateTime); 
+		 
+     }
+	 
+	/*************************************************************
+		 * refresh datagrid
+		 * @param gridId Object : GridOne object
+		 * @Author:Thoeun Chheav hun
+		 *  */
+	 function refresh(gridId)
+	 {
+		 gridId.refresh(); 
+	 }
+	 
+	/*************************************************************
+		 * Add a item data to combo in column
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : Column name
+		 * @param strText String : Item text
+		 * @param strValue String : Item value
+		 * @param listkey String : Combo name (Default name = "default")	
+		 * @Author:Thoeun Chheav hun
+		 *  */
+	 function addComboListValue(gridId, columnKey, strText, strValue, listKey)
+	 {
+		 gridId.registerFunc(arrList,"addComboListValue");
+		 gridId.addComboListValue(columnKey, strText, strValue, listKey);
+	 }
+	 
+	/*************************************************************
+		 * Get grid data
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : ColumnKey name (Default=null). (Optional) 
+		 * @returns String : of data
+		 * @author Thoeun Chheav hun
+		 *  */	
+	 function getGridData(gridId, columnKey)
+	 {
+		 gridId.registerFunc(arrList,"getGridData");
+		 return gridId.getGridData(columnKey);  
+	 }
+	 
+	 /*************************************************************
+		 * Set json data
+		 * @param gridId Object : GridOne object
+		 * @param jsonData Object : Data from javascript
+		 * @param bValidation Boolean : indicate where validate data or not.(Default=true). (Optional)
+		 * @author Thoeun Chheav hun
+		 * */	
+	 function setJSonData(gridId, jsonData, bValidation)
+	 {
+		 gridId.setJSonData(jsonData, bValidation); 
+	 }
+	 
+	 /*************************************************************
+		 * Check column is visible or not 
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @author Thoeun Chheav hun
+		 *  */	
+	 function isColHide(gridId, columnKey)
+	 {
+		 gridId.registerFunc(arrList,"isColHide");
+		 gridId.isColHide(columnKey); 
+	 }
+	 
+	 /*************************************************************
+		 * Set the column width
+		 * @param gridId Object : GridOne object
+		 * @param columnkey String : columnKey name
+		 * @param width String : The width of column 
+		 * @author Thoeun Chheav hun
+		 *  */	
+	 function setColWidth(gridId, columnkey, width)
+	 {
+		 gridId.registerFunc(arrList,"setColWidth");
+		 gridId.setColWidth(columnkey, width); 
+	 }
+	 
+	/*************************************************************
+		 * Get the column width
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @returns Number : of column width
+		 * @author Thoeun Chheav hun 
+		 * */	
+	 function getColWidth(gridId, columnKey)
+	 {
+		 gridId.registerFunc(arrList,"getColWidth");
+		 return  gridId.getColWidth(columnKey); 
+	 }
+	 
+	/*************************************************************
+		 * Set the col fix: Keep column(s) is visible while using horizontal scrolls
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : colunmKey name
+		 * @author Thoeun Chheav hun 
+		 *  */	
+	 function setColFix(gridId, columnKey)
+	 {
+		 gridId.registerFunc(arrList,"setColFix");
+		 gridId.setColFix(columnKey);
+	 }
+	 
+	/*************************************************************
+		 * Set the row fix: Keep row(s) is visible while using vertical scrolls
+		 * @param gridId Object : GridOne object
+		 * @param rowIndex int : row index number
+		 * @author Thoeun Chheav hun 
+		 * */	
+	 function setRowFix(gridId, rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"setRowFix");
+		 gridId.setRowFix(rowIndex);
+	 }
+	 
+	 /*************************************************************
+		 * column unfix
+		 * @param gridId Object : GridOne object  
+		 * @author Thoeun Chheav hun 
+		 *  */
+	 function resetColFix(gridId)
+	 {
+		 gridId.registerFunc(arrList,"resetColFix");
+		 gridId.resetColFix();
+	 }
+	 
+	/*************************************************************
+		 * Row unfix
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 *  */	
+	 function resetRowFix(gridId)
+	 {
+		 gridId.registerFunc(arrList,"resetRowFix");
+		 gridId.resetRowFix();
+	 }
+	 
+	/*************************************************************
+		 * getColCount: get specifies the number of visible columns.
+		 * @param gridId Object : GridOne object 
+		 * @returns Number : of visible columns
+		 * @author Thoeun Chheav hun
+		 *  */	
+	 function getColCount(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getColCount");
+		 return gridId.getColCount(); 
+	 }
+	 
+	 /*************************************************************
+		 * setColCellAlign: Set alignment of a column text
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param strAlign String : Left/Center/Right/Justify
+		 * @author Thoeun Chheav hun
+		 * */
+	 function setColCellAlign(gridId, columnKey, strAlign)
+	 {
+		 gridId.registerFunc(arrList,"setColCellAlign");
+		 gridId.setColCellAlign(columnKey, strAlign); 
+	 }
+	 
+	/*************************************************************
+		 * getColType: Get Type of Column
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @returns String : type of column
+		 * @author Thoeun Chheav hun
+		 *  */	
+	 function getColType(gridId, columnKey)
+	 {
+		 gridId.registerFunc(arrList,"getColType");
+		 return gridId.getColType(columnKey); 
+	 }
+	 
+	 /*************************************************************
+		 * setColCellBgColor: Set background color to column
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param color String : color code. (Ex: 0x899DC8)
+		 * @author Thoeun Chheav hun
+		 * */
+	 function setColCellBgColor(gridId, columnKey, color)
+	 {
+		 gridId.registerFunc(arrList,"setColCellBgColor");
+		 gridId.setColCellBgColor(columnKey, color);
+	 }
+	 
+	 /*************************************************************
+		 * set column cell font
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param fontName String : Font name
+		 * @param nSize Number : Font size
+		 * @param bBold Boolean : Whether font bold
+		 * @param bItalic Boolean :  Whether font italic
+		 * @param bUnderLine Boolean : Whether font underline
+		 * @param bCenterLine Boolean : Whether font strikethrough
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setColCellFont(gridId, columnKey, fontName, nSize, bBold, bItalic, bUnderLine, bCenterLine)
+	 {
+		 gridId.registerFunc(arrList,"setColCellFont");
+		 gridId.setColCellFont(columnKey, fontName, nSize, bBold, bItalic, bUnderLine, bCenterLine);
+	 }
+	 
+	 /*************************************************************
+		 * set column cell font bold
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param bBold Boolean : Whether font is bold
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setColCellFontBold(gridId, columnKey, bBold)
+	 {
+		 gridId.registerFunc(arrList,"setColCellFontBold");
+		 gridId.setColCellFontBold(columnKey, bBold);
+	 }
+	 
+	 /*************************************************************
+		 * set column cell font italic
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String :  columnKey name
+		 * @param bItalic Boolean :  Whether font is italic
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setColCellFontItalic(gridId, columnKey, bItalic)
+	 {
+		 gridId.registerFunc(arrList,"setColCellFontItalic");
+		 gridId.setColCellFontItalic(columnKey, bItalic); 
+	 }
+	 
+	/*************************************************************
+		 * set column cell font name
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param fontName String : Font name  
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function  setColCellFontName(gridId, columnKey, fontName)
+	 {
+		 gridId.registerFunc(arrList,"setColCellFontName");
+		 gridId.setColCellFontName(columnKey, fontName);
+	 }
+	 
+	/*************************************************************
+		 * set column cell font size
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String :  columnKey name
+		 * @param nSize Number :  Font size in column
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setColCellFontSize(gridId, columnKey, nSize)
+	 {
+		 gridId.registerFunc(arrList,"setColCellFontSize");
+		 gridId.setColCellFontSize(columnKey, nSize);
+	 }
+	 
+	 /*************************************************************
+		 * set column cell font underline
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param bUnderLine Boolean : Whether font is underline
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setColCellFontULine(gridId, columnKey, bUnderLine)
+	 {
+		 gridId.registerFunc(arrList,"setColCellFontULine");
+		 gridId.setColCellFontULine(columnKey, bUnderLine);
+	 }
+	 
+	/*************************************************************
+		 * set column cell activation
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : columnKey name
+		 * @param strValue String : activation type "EDIT", "ACTIVATEONLY", "DISABLE"
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setColCellActivation(gridId, strColumnKey, strValue)
+	 {
+		 gridId.registerFunc(arrList,"setColCellActivation");
+		 gridId.setColCellActivation(strColumnKey, strValue);
+	 }
+	 
+	/*************************************************************
+		 * get column cell activation
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : columnKey name
+		 * @returns String : of column cell activation type
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getColCellActivation(gridId, strColumnKey)
+	 {
+		 gridId.registerFunc(arrList,"getColCellActivation");
+		 return gridId.getColCellActivation(strColumnKey);
+	 }
+	 
+	 /*************************************************************
+		 * change column separator in text data which will be used in text parser.
+		 * @param gridId Object : GridOne object
+		 * @param sep String : New separator (Ex: "%%", "||")
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function changeColumnSeparator(gridId, sep)
+	 {
+		 gridId.registerFunc(arrList,"changeColumnSeparator");
+		 gridId.changeColumnSeparator(sep);
+	 }
+	 
+	/*************************************************************
+		 * add Default Context Menu Item
+		 * @param gridId Object : GridOne object
+		 * @param strMenuItemKey String : data of context menu item
+		 * @author Thoeun Chheav hun		 
+		 *  */
+	 function addDefaultContextMenuItem(gridId, strMenuItemKey)
+	 {
+		 gridId.registerFunc(arrList,"addDefaultContextMenuItem");
+		 gridId.addDefaultContextMenuItem(strMenuItemKey);
+	 }
+	 
+	 /*************************************************************
+		 * add user context menu item
+		 * @param gridId Object : GridOne object
+		 * @param strMenuKey String : data of menu key
+		 * @param strMenuItemKey String : data of context menu item
+		 * @param strText String : data of content menu
+		 * @author Thoeun Chheav hun
+		 * */
+	 function addUserContextMenuItem(gridId, strMenuKey, strMenuItemKey, strText)
+	 {
+		 gridId.registerFunc(arrList,"addUserContextMenuItem");
+		 gridId.addUserContextMenuItem(strMenuKey, strMenuItemKey, strText);
+	 }
+	 
+	/*************************************************************
+		 * add context menu item separator
+		 * @param gridId Object : GridOne object
+		 * @param strMenuKey String : data of menu key
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function addContextMenuSeparator(gridId, strMenuKey)
+	 {
+		 gridId.registerFunc(arrList,"addContextMenuSeparator");
+		 gridId.addContextMenuSeparator(strMenuKey);
+	 }
+	 
+	 /*************************************************************
+		 * remove all context menu item
+		 * @param gridId Object : GridOne object
+		 * @param strMenuKey String : data of menu key
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function removeAllContextMenuItem(gridId, strMenuKey)
+	 {
+		 gridId.registerFunc(arrList,"removeAllContextMenuItem");
+		 gridId.removeAllContextMenuItem(strMenuKey);
+	 }
+	 
+	/*************************************************************
+		 * set Colunm checkBox header visible
+		 * @param gridId Object : GridOne object
+		 * @param strColKey String : columnKey name
+		 * @param bVisible boolean : visible =true , unvisible =false  
+		 * @param bChangeCellEvent boolean : Default = false (Optional)
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function  setColHDCheckBoxVisible(gridId, strColKey, bVisible, bChangeCellEvent)
+	 {
+		 gridId.registerFunc(arrList,"setColHDCheckBoxVisible");
+		 gridId.setColHDCheckBoxVisible(strColKey, bVisible, bChangeCellEvent); 
+	 }
+	 
+	/*************************************************************
+		 * add group in header
+		 * @param gridId Object : GridOne object
+		 * @param groupKey String : dataField of group column
+		 * @param groupName String : grive name of group column
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function addGroup(gridId, groupKey, groupName)
+	 {
+		 gridId.registerFunc(arrList,"addGroup");
+		 gridId.addGroup(groupKey, groupName); 
+	 }
+	 
+	 /*************************************************************
+		 * append header into group column
+		 * @param gridId Object : GridOne object
+		 * @param groupKey String : dataField of group column
+		 * @param columnKey String : columnKey name
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function appendHeader(gridId, groupKey, columnKey)
+	 {
+		 gridId.registerFunc(arrList,"appendHeader");
+		 gridId.appendHeader(groupKey, columnKey);
+	 }
+	 
+	/*************************************************************
+		 * append group column into group column
+		 * @param gridId Object : GridOne object
+		 * @param parentGroupKey String : dataField of parent group column
+		 * @param childGroupKey String : dataField of child group column
+		 * @author Thoeun Chheav hun			  
+		 *  */
+	 function appendGroup(gridId, parentGroupKey, childGroupKey)
+	 {
+		 gridId.registerFunc(arrList,"appendGroup");
+		 gridId.appendGroup(parentGroupKey, childGroupKey);
+	 }
+	 
+	 /*************************************************************
+		 * set name for group header
+		 * @param gridId Object : GridOne object
+		 * @param strGroupKey String : dataField of group column
+		 * @param strText String : give title for Group Header 
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setGroupHDText(gridId, strGroupKey, strText)
+	 {
+		 gridId.registerFunc(arrList,"setGroupHDText");
+		 gridId.setGroupHDText(strGroupKey, strText);
+	 }
+	 
+	 /*************************************************************
+		 * get name for group header
+		 * @param gridId Object : GridOne object
+		 * @param strGroupKey String : dataField of group column
+		 * @returns String : of text group header	
+		 * @author Thoeun Chheav hun		
+		 *  */
+	 function getGroupHDText(gridId, strGroupKey)
+	 {
+		 gridId.registerFunc(arrList,"getGroupHDText");
+		 return gridId.getGroupHDText(strGroupKey);
+	 }
+	 
+	/*************************************************************
+		 * set column header align
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : columnKey name
+		 * @param strAlign String : text header align ("left", "right", "center").
+		 * @author Thoeun Chheav hun			 
+		 *  */
+	 function setColHDAlign(gridId, strColumnKey, strAlign)
+	 {
+		 gridId.registerFunc(arrList,"setColHDAlign");
+		 gridId.setColHDAlign(strColumnKey, strAlign);
+	 }
+	 
+	/*************************************************************
+		 * get column header key by column index number
+		 * @param gridId Object : GridOne object
+		 * @param nColunmIndex Number : index of column
+		 * @returns String : of columnKey name
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getColHDKey(gridId, nColunmIndex)
+	 {
+		 gridId.registerFunc(arrList,"getColHDKey");
+		 return gridId.getColHDKey(nColunmIndex);
+	 }
+	 
+	 /*************************************************************
+		 * get column header visible index
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : columnKey name
+		 * @returns int : of index visible column
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getColHDVisibleIndex(gridId, strColumnKey)
+	 {
+		 gridId.registerFunc(arrList,"getColHDVisibleIndex");
+		 return gridId.getColHDVisibleIndex(strColumnKey);
+	 }
+	 
+	 /*************************************************************
+		 * setColHDCheckBoxValue
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : columnKey name
+		 * @param bValue boolean : set value true or false	
+		 * @author Thoeun Chheav hun		 
+		 *  */
+	 function setColHDCheckBoxValue(gridId, strColumnKey, bValue)
+	 {
+		 gridId.registerFunc(arrList,"setColHDCheckBoxValue");
+		 gridId.setColHDCheckBoxValue(strColumnKey, bValue);
+	 }
+		
+	/*************************************************************
+		 * get column header visible key
+		 * @param gridId Object : GridOne object
+		 * @param index int:  position of column 
+		 * @returns String : columnKey name
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getColHDVisibleKey(gridId, index)
+	 {
+		 gridId.registerFunc(arrList,"getColHDVisibleKey");
+		 return gridId.getColHDVisibleKey(index);
+	 }
+	 
+	 /*************************************************************
+		 * get column header text
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : columnKey name
+		 * @returns String : of text header
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getColHDText(gridId, strColumnKey)
+	 {
+		 gridId.registerFunc(arrList,"getColHDText");
+		 return gridId.getColHDText(strColumnKey); 
+	 }
+	 
+	/*************************************************************
+		 * set column header text
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : columnKey name
+		 * @param strText String : text for header
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setColHDText(gridId, strColumnKey, strText)
+	 {
+		 gridId.registerFunc(arrList,"setColHDText");
+		 gridId.setColHDText(strColumnKey, strText); 
+	 }
+	 
+	 /*************************************************************
+		 * Get column header index
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @returns int : index of column
+		 * @author: Thoeun Chheav hun
+		 *  */
+	 function getColHDIndex(gridId, columnKey)
+	 {
+		 gridId.registerFunc(arrList,"getColHDIndex");
+		 return gridId.getColHDIndex(columnKey);
+	 }
+	 
+	/*************************************************************
+		 * Get column header background color
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @author: Thoeun Chheav hun
+		 *  */
+	 function setColHDBgColor(gridId, columnKey, strColor)
+	 {
+		 gridId.registerFunc(arrList,"setColHDBgColor");
+		 gridId.setColHDBgColor(columnKey, strColor);
+	 }
+	 
+	/*************************************************************
+		 * set color of column header
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param color String : color code (Ex: 0x9808D9)
+		 * @author: Thoeun Chheav hun
+		 *  */
+	 function setColHDFgColor(gridId, columnKey, color)
+	 {
+		 gridId.registerFunc(arrList,"setColHDFgColor");
+		 gridId.setColHDFgColor(columnKey, color);
+	 }
+	 
+	/*************************************************************
+		 * set group header font color and background color
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param strFgColor String : Font color
+		 * @param strBgColor String : Background color
+		 * @author: Thoeun Chheav hun
+		 * */
+	 function setGroupHDColor(gridId, strGroupKey, strFgColor, strBgColor)
+	 {
+		 gridId.registerFunc(arrList,"setGroupHDColor");
+		 gridId.setGroupHDColor(strGroupKey, strFgColor, strBgColor);
+	 }
+	 
+	/*************************************************************
+		 * set group header font color and background color
+		 * @param gridId Object : GridOne object
+		 * @param strGroupKey String  : DataField of column
+		 * @param strFontName String : Font color
+		 * @param nSize String : Font size
+		 * @param bBold Boolean : Font weight
+		 * @param bItalic Boolean : Font style
+		 * @param bUnderLine Boolean : Text decoration
+		 * @param bCenterLine Boolean : Center line
+		 * @author: Thoeun Chheav hun
+		 *  */
+	 function setGroupHDFont(gridId, strGroupKey, strFontName, nSize, bBold, bItalic, bUnderLine, bCenterLine)
+	 {
+		 gridId.registerFunc(arrList,"setGroupHDFont");
+		 gridId.setGroupHDFont(strGroupKey, strFontName, nSize, bBold, bItalic, bUnderLine, bCenterLine); 
+	 }
+	 
+	 /*************************************************************
+		 * set Tree Mode
+		 * @param gridId Object : GridOne object
+		 * @param strTreeColumnKey String : dataField of column which tree is displayed 
+		 * @param strRootKey String : Root key
+		 * @param strDelimiter String : Delimeter
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setTreeMode(gridId, strTreeColumnKey, strRootKey, strDelimiter)
+	 {
+		 gridId.registerFunc(arrList,"setTreeMode");
+		 gridId.setTreeMode(strTreeColumnKey, strRootKey, strDelimiter);
+	 }
+	 
+	/*************************************************************
+		 * add one row into DataGrid. If rowObj= null , one empty row will be added. 
+		 * @param gridId Object : GridOne object
+		 * @param rowObj Object : data row object (Default = null). (Optional)
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function addRow(gridId, rowObj)
+	 {
+		 gridId.registerFunc(arrList,"addRow");
+		 gridId.addRow(rowObj);
+	 }
+	 
+	/*************************************************************
+		 * add an empty row at specific row index
+		 * @param gridId Object : GridOne object
+		 * @param index int :  index number of row will be added.
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function insertRow(gridId, index)
+	 {
+		 gridId.registerFunc(arrList,"insertRow");
+		 gridId.insertRow(index);
+	 }
+	 
+	/*************************************************************
+		 * add one row with or without data into specific row index
+		 * @param gridId Object : GridOne object
+		 * @param index int : index row number will be added.
+		 * @author Thoeun Chheav hun
+		 * */
+	 function addRowAt(gridId, row, index)
+	 {
+		 gridId.registerFunc(arrList,"addRowAt");
+		 gridId.addRowAt(row, index);
+	 }
+	 
+	/*************************************************************
+		 * delete a row at an pre-defined index or selected index. If not declare index then current selected index will be used.
+		 * @param gridId Object : GridOne object
+		 * @param index int:  Index of row will be deleted. (Optional)
+		 * @param bViewDelRowCRUD Boolean : is a property use for CRUDmode.
+		 * 	      If (true): item row that delete will disapear from screen.
+		 *        If (false): item row that delete still display on screen.
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function deleteRow(gridId, index)
+	 {
+		 gridId.registerFunc(arrList,"deleteRow");
+		 gridId.deleteRow(index);
+	 }
+	 
+	 /*************************************************************
+		 * move cusor to row index
+		 * @param gridId Object : GridOne object
+		 * @param index int: index number of row will be moved to .
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function moveRow(gridId, nRow)
+	 {
+		 gridId.registerFunc(arrList,"moveRow");
+		 gridId.moveRow(nRow);
+	 }
+	 
+	/*************************************************************
+		 * get row count
+		 * @param gridId Object : GridOne object
+		 * @param isFilter boolean : true = get all rows include deleted row(Default=false). (Optional)
+		 * @return Number : of row count in datagrid
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getRowCount(gridId, isFilter)
+	 {
+		 gridId.registerFunc(arrList,"getRowCount");
+		 return gridId.getRowCount(isFilter);
+	 }
+	 
+	/*************************************************************
+		 * set active for row index
+		 * @param gridId Object : GridOne object
+		 * @param rowIndex int : row index number to be activate.
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setActiveRowIndex(gridId, rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"setActiveRowIndex");
+		 gridId.setActiveRowIndex(rowIndex);
+	 }
+	 
+	 /*************************************************************
+		 * get active for row index
+		 * @param gridId Object : GridOne object
+		 * @returns Number : of row index
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getActiveRowIndex(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getActiveRowIndex");
+		 return gridId.getActiveRowIndex();
+	 }
+	 
+	/*************************************************************
+		 * set active for row index
+		 * @param gridId Object : GridOne object
+		 * @param rowIndex int : row index number
+		 * @param strActivation String : set activation (Ex: edit , activateonly , disable).
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setRowActivation(gridId, rowIndex, strActivation)
+	 {
+		 gridId.registerFunc(arrList,"setRowActivation");
+		 gridId.setRowActivation(rowIndex, strActivation);
+	 }
+	 
+	/*************************************************************
+		 * set row background color
+		 * @param gridId Object : GridOne object
+		 * @param rowIndex int : row index number
+		 * @param color String : color code (Ex: 0x8989DE)
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setRowBgColor(gridId, rowIndex, color)
+	 {
+		 gridId.registerFunc(arrList,"setRowBgColor");
+		 gridId.setRowBgColor(rowIndex, color);
+	 }
+	 
+	/*************************************************************
+		 * set row font color
+		 * @param gridId Object : GridOne object
+		 * @param rowIndex int : row index number
+		 * @param color String : color code (Ex: 0x9898DC).
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setRowFgColor(gridId, rowIndex, color)
+	 {
+		 gridId.registerFunc(arrList,"setRowFgColor");
+		 gridId.setRowFgColor(rowIndex, color);
+	 }
+	 
+	 /*************************************************************
+		 * set row hide
+		 * @param gridId Object : GridOne object
+		 * @param rowIndex int : row index number
+		 * @param bHide Boolean : value , true = hide , false = not hide
+		 * @param isHandleBkDp Boolean : false = not save to backup (Default =true).(Optional) 
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setRowHide(gridId, rowIndex, bHide,isHandleBkDp)
+	 {
+		 gridId.registerFunc(arrList,"setRowHide");
+		 gridId.setRowHide(rowIndex, bHide,isHandleBkDp);
+	 }
+	 
+	 /*************************************************************
+		 * is row hide
+		 * @param gridId Object : GridOne object
+		 * @param rowIndex int : row index number 		 
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function isRowHide(gridId, rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"isRowHide");
+		 gridId.isRowHide(rowIndex);
+	 }
+	 
+	 /*************************************************************
+		 * filter data in DataGrid within a specific column. if not set columnKey, filter will do with all column in DataGrid.
+		 * @param gridId Object : GridOne object
+		 * @param searchText String : key word for seach
+		 * @param columnKey String : columnKey name. (Optional)
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function filter(gridId, searchText,columnKey)
+	 {
+		 gridId.registerFunc(arrList,"filter");
+		 gridId.filter(searchText,columnKey);
+	 }
+	 
+	/*************************************************************
+		 * search data
+		 * @param gridId Object : GridOne object
+		 * @param searchText String : key word for seach
+		 * @param isDown String : (default = ""). (Optional) 
+		 * @param columnKey String : columnKey name. (Optional)
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function search(gridId, searchText,isDown,columnKey)
+	 {
+		 gridId.registerFunc(arrList,"search");
+		 gridId.search(searchText,isDown,columnKey);
+	 }
+	 
+	/*************************************************************
+		 * Set number format for column
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param value String : set number format
+		 * @author Thoeun Chheav hun
+		 * */
+	 function setNumberFormat(gridId, columnKey, value)
+	 {
+		 gridId.registerFunc(arrList,"setNumberFormat");
+		 gridId.setNumberFormat(columnKey, value);
+	 }
+	 
+	/*************************************************************
+		 * Set property or style for column
+		 * @param gridId Object : GridOne object
+		 * @param dataField String :  columnKey name
+		 * @param proName String : name of property.
+		 * @param value Object : value of property
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function  setColumnProperty (gridId,dataField, proName, value)
+	 {
+		 gridId.setColumnProperty(dataField, proName, value);
+	 }
+	 
+	 /*************************************************************
+		 * set CRUD mode
+		 * @param gridId Object : GridOne object
+		 * @param strCRUDColumnKey String : columnKey name
+		 * @param strInsertRowText String : (Default = "C")
+		 * @param strUpdateRowText String : (Default = "U")
+		 * @param strDeleteRowText String : (Default = "D")
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setCRUDMode(gridId, strCRUDColumnKey, strInsertRowText, strUpdateRowText, strDeleteRowText)
+	 {
+		 gridId.registerFunc(arrList,"setCRUDMode");
+		 gridId.setCRUDMode(strCRUDColumnKey, strInsertRowText, strUpdateRowText, strDeleteRowText); 
+	 }
+	 
+	 /*************************************************************
+		 * cancel CRUD
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function cancelCRUD(gridId)
+	 {
+		 gridId.registerFunc(arrList,"cancelCRUD");
+		 gridId.cancelCRUD(); 
+	 }
+	 
+	/*************************************************************
+		 * disable CRUD mode
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function clearCRUDMode(gridId)
+	 {
+		 gridId.registerFunc(arrList,"clearCRUDMode");
+		 gridId.clearCRUDMode(); 
+	 }
+	 
+	 /*************************************************************
+		 * reset value for a specified cell in CRUD column
+		 * @param gridId Object : GridOne object
+		 * @param rowIndex int :  index of row
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function cancelCRUDRow(gridId, rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"cancelCRUDRow");
+		 gridId.cancelCRUDRow(rowIndex);
+	 }
+	 
+	 /*************************************************************
+		 * get cell value index
+		 * @param gridId Object : GridOne object
+		 * @param nColumnIndex int : index of column
+		 * @param rowIndex int : index of row
+		 * @returns String : value of cell
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getCellValueIndex(gridId, nColumnIndex, rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"getCellValueIndex");
+		 return gridId.getCellValueIndex(nColumnIndex, rowIndex); 
+	 }
+	 
+	 /*************************************************************
+		 * set value to one cell 
+		 * @param gridId Object : GridOne object
+		 * @param nColumnIndex int : index of column
+		 * @param rowIndex int : index of row
+		 * @param strValue String : data from javascript
+		 * @author Thoeun Chheav hun
+		 * */
+	 function setCellValueIndex (gridId, nColumnIndex, rowIndex, strValue)
+	 {
+		 gridId.registerFunc(arrList,"setCellValueIndex");
+		 gridId.setCellValueIndex(nColumnIndex, rowIndex, strValue);
+	 }
+	 
+	 /*************************************************************
+		 * get cell value
+		 * @param gridId Object : GridOne object
+		 * @param listColumKey String : list of column key name
+		 * @param rowIndex int : index of row
+		 * @returns String : value of cell	
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getCellValue(gridId, listColumKey, rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"getCellValue");
+		 return gridId.getCellValue(listColumKey, rowIndex);
+	 }
+	 
+	/*************************************************************
+		 * set value of specified cell that is visible in grid
+		 * @param gridId Object : GridOne object
+		 * @param nColumnIndex int : index of column
+		 * @param rowIndex int : index of row	
+		 * @param strValue String : data from javascript	
+		 * @param belongVisibleCol Boolean:  to validate cell data in two cases. 
+		 *  If (true) : cell data is displayed in grid.
+		 *  If (false) : cell data is not displayed in grid (Default).	(Optional)
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setCellValue(gridId, columnKey, rowIndex, value, belongVisibleCol)
+	 {
+		 gridId.registerFunc(arrList,"setCellValue");
+		 gridId.setCellValue(columnKey, rowIndex, value, belongVisibleCol);
+	 }
+	 
+	 /*************************************************************
+		 * get data from cell hidden index
+		 * @param gridId Object : GridOne object
+		 * @param nColumnIndex int : index of column
+		 * @param rowIndex int :  index of row	
+		 * @returns String : value of cell		
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getCellHiddenValueIndex(gridId, nColumnIndex, rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"getCellHiddenValueIndex");
+		 return gridId.getCellHiddenValueIndex(nColumnIndex, rowIndex);
+	 }
+	 
+	 /*************************************************************
+		 * set cell hidden value index
+		 * @param gridId Object : GridOne object
+		 * @param nColumnIndex int : index of column
+		 * @param rowIndex int : index of row	
+		 * @param strValue String : data from javascript		
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setCellHiddenValueIndex(gridId, nColumnIndex, rowIndex, strValue)
+	 {
+		 gridId.registerFunc(arrList,"setCellHiddenValueIndex");
+		 gridId.setCellHiddenValueIndex(nColumnIndex, rowIndex, strValue);
+	 }
+	 
+	 /*************************************************************
+		 * get cell hidden value
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String :  columnKey name
+		 * @param rowIndex int : index of row			
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getCellHiddenValue(gridId, strColumnKey, rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"getCellHiddenValue");
+		 return gridId.getCellHiddenValue(strColumnKey, rowIndex);
+	 }
+	 
+	 /*************************************************************
+		 * set cell hidden value
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : columnKey name
+		 * @param rowIndex int : index of row	
+		 * @param strValue String : data from javascript		
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setCellHiddenValue(gridId, strColumnKey, rowIndex, strValue)
+	 {
+		 gridId.registerFunc(arrList,"setCellHiddenValue");
+		 gridId.setCellHiddenValue(strColumnKey, rowIndex, strValue);
+	 }
+	 
+		
+	/*************************************************************
+		 * set cell image 
+		 * @param gridId Object : GridOne object
+		 * @param strColKey int : index of column
+		 * @param rowIndex int : index of row	
+		 * @param nImageIndex int : Index of image inside image list
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setCellImage(gridId, strColKey, nRow, nImageIndex)
+	 {
+		 gridId.registerFunc(arrList,"setCellImage");
+		 gridId.setCellImage(strColKey, nRow, nImageIndex);
+	 }
+	 
+	 /*************************************************************
+		 * get cell image
+		 * @param gridId Object : GridOne object
+		 * @param strColKey int : index of column
+		 * @param rowIndex int : index of row	
+		 * @returns String : of image name + _index			 
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getCellImage(gridId, strColKey, rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"getCellImage");
+		 return gridId.getCellImage(strColKey, rowIndex); 
+	 }
+	 
+	 /*************************************************************
+		 * set cell background color
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param nRow int : Index of row
+		 * @param color String : data of color				 
+		 * @author Thoeun Chheav hun
+		 * */
+	 function setCellBgColor(gridId, columnKey, nRow, color)
+	 {
+		 gridId.registerFunc(arrList,"setCellBgColor");
+		 gridId.setCellBgColor(columnKey, nRow, color);
+	 }
+	 
+	 /*************************************************************
+		 * set cell font color
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param nRow int : Index of row	
+		 * @param color String : data of color			 
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function  setCellFgColor(gridId, columnKey, nRow, color)
+	 {
+		 gridId.registerFunc(arrList,"setCellFgColor");
+		 gridId.setCellFgColor(columnKey, nRow, color);
+	 }
+	 
+	/*************************************************************
+		 * set cell font
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param nRow int : Index of row	
+		 * @param fontName String : font name
+		 * @param nSize Number : size number
+		 * @param bBold Boolean : whether bold or not
+		 * @param bItalic Boolean : whether italic or not
+		 * @param bUnderLine Boolean : whether underline or not
+		 * @param bCenterLine Boolean : whether center line or not
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setCellFont(gridId, columnKey, nRow, fontName, nSize, bBold, bItalic, bUnderLine, bCenterLine)
+	 {
+		 gridId.registerFunc(arrList,"setCellFont");
+		 gridId.setCellFont(columnKey, nRow, fontName, nSize, bBold, bItalic, bUnderLine, bCenterLine);
+	 }
+	 
+	/*************************************************************
+		 * set cell font bold
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : data field of column
+		 * @param nRow int : Index of row	
+		 * @param bBold Boolean : whether bold or not
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setCellFontBold(gridId, columnKey, nRow, bBold)
+	 {
+		 gridId.registerFunc(arrList,"setCellFontBold");
+		 gridId.setCellFontBold(columnKey, nRow, bBold); 
+	 }
+	 
+	 /*************************************************************
+		 * set cell font center line
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param nRow int : Index of row	
+		 * @param bValue boolean : whether center line or not
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setCellFontCLine(gridId, columnKey, nRow, bValue)
+	 {
+		 gridId.registerFunc(arrList,"setCellFontCLine");
+		 gridId.setCellFontCLine(columnKey, nRow, bValue); 
+	 }
+	 
+	 /*************************************************************
+		 * set cell font style
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param nRow int : Index of row	
+		 * @param bValue boolean
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setCellFontItalic(gridId, columnKey, nRow, bValue)
+	 {
+		 gridId.registerFunc(arrList,"setCellFontItalic");
+		 gridId.setCellFontItalic(columnKey, nRow, bValue);
+	 }
+	 
+	 /*************************************************************
+		 * set cell font name
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param nRow int : Index of row	
+		 * @param value String
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setCellFontName(gridId, columnKey, nRow, value)
+	 {
+		 gridId.registerFunc(arrList,"setCellFontName");
+		 gridId.setCellFontName(columnKey, nRow, value);
+	 }
+	 
+	 /*************************************************************
+		 * set cell font size
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param nRow int : Index of row	
+		 * @param value String
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setCellFontSize(gridId, columnKey, nRow, value)
+	 {
+		 gridId.registerFunc(arrList,"setCellFontSize");
+		 gridId.setCellFontSize(columnKey, nRow, value);
+	 }
+	 
+	 /*************************************************************
+		 * set cell font underline
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param nRow int : Index of row	
+		 * @param bValue boolean 
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setCellFontULine(gridId, columnKey, nRow, value)
+	 {
+		 gridId.registerFunc(arrList,"setCellFontULine");
+		 gridId.setCellFontULine(columnKey, nRow, value);
+	 }
+	 
+	 /*************************************************************
+		 * Update dataGrid
+		 * @param gridId Object : GridOne object
+		 * @param boolDraw Boolean
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function allowDrawUpdate(gridId, boolDraw)
+	 {
+		 gridId.registerFunc(arrList,"allowDrawUpdate");
+		 gridId.allowDrawUpdate(boolDraw); 
+	 }
+	 
+	 /*************************************************************
+		 * Add a combo to column
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : Column Name
+		 * @param value Object : list of combo data	
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function addComboList(gridId, columnKey, value)
+	 {
+		 gridId.registerFunc(arrList,"addComboList");
+		 gridId.addComboList(columnKey,value); 
+	 }
+	 
+	 /*************************************************************
+		 * set array data into combo column
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : Column Name
+		 * @param value Object	
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setMultiComboData(gridId, columnKey,value)
+	 {
+		 gridId.registerFunc(arrList,"setMultiComboData");
+		 gridId.setMultiComboData(columnKey,value);
+	 }
+	 
+	 /*************************************************************
+		 * Get combo list key
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : Column name
+		 * @param listKey : combo list name	
+		 * @return Combo list key
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getComboListKey(gridId, columnKey, listKey)
+	 {
+		 gridId.registerFunc(arrList,"getComboListKey");
+		 return gridId.getComboListKey(columnKey, listKey);
+	 }
+	 
+	/*************************************************************
+		 * Get combo selected key
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : Column name
+		 * @param rowIndex int : row index	
+		 * @return Combo selected key
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function  getComboSelectedListKey(gridId, columnKey, rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"getComboSelectedListKey");
+		 return gridId.getComboSelectedListKey(columnKey, rowIndex);
+	 }
+	 
+	 /*************************************************************
+		 * Get combo list count
+		 * @param gridId Object : GridOne object 
+		 * @param columnKey String : Column name
+		 * @param listKey String : Combo name	
+		 * @return Combo list count
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getComboListCount(gridId, columnKey, listKey)
+	 {
+		 gridId.registerFunc(arrList,"getComboListCount");
+		 return gridId.getComboListCount(columnKey, listKey);
+	 }
+	 
+	 /*************************************************************
+		 * Get item value in combo
+		 * @param gridId Object : GridOne object 
+		 * @param columnKey String : Column name
+		 * @param comboIndex int : Item value index in combox
+		 * @param listKey String : ComboList name	
+		 * @return String : of item value in combo
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getComboHiddenValue(gridId, columnKey, comboIndex, listKey)
+	 {
+		 gridId.registerFunc(arrList,"getComboHiddenValue");
+		 return  gridId.getComboHiddenValue(columnKey, comboIndex, listKey);
+	 }
+	 
+	 /*************************************************************
+		 * Get item text in combo
+		 * @param gridId Object : GridOne object 
+		 * @param columnKey String : Column name
+		 * @param comboIndex int : combo index number
+		 * @param listKey String : Combo name
+		 * @return String : of item text in combo	
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getComboText(gridId, columnKey, comboIndex, listKey)
+	 {
+		 gridId.registerFunc(arrList,"getComboText");
+		 gridId.getComboText(columnKey, comboIndex, listKey); 
+	 }
+	 
+	 /*************************************************************
+		 * Get combo selected index
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : Column name
+		 * @param rowIndex int : Row index 
+		 * @return int : Combo selected index
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getComboSelectedIndex(gridId, columnKey, rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"getComboSelectedIndex");
+		 gridId.getComboSelectedIndex(columnKey, rowIndex); 
+	 }
+	 
+	/*************************************************************
+		 * Get combo selected index
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : Column name
+		 * @param rowIndex int : Row index
+		 * @param comboIndex int : Combo index
+		 * @param listKey String : Combo name	
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function  setComboSelectedIndex(gridId, columnKey, rowIndex, comboIndex, listKey)
+	 {
+		 gridId.registerFunc(arrList,"setComboSelectedIndex");
+		 gridId.setComboSelectedIndex( columnKey, rowIndex, comboIndex, listKey); 
+	 }
+	 
+	/*************************************************************
+		 * Set an item value of combo is hidden value for row index of grid
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : Column name
+		 * @param rowIndex int : Row index of Grid
+		 * @param hiddenValue Hidden value is the item value of combo
+		 * @param listKey String :  ComboList name	
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setComboSelectedHiddenValue(gridId, columnKey, rowIndex, hiddenValue, listKey)
+	 {
+		 gridId.registerFunc(arrList,"setComboSelectedHiddenValue");
+		 gridId.setComboSelectedHiddenValue(columnKey, rowIndex, hiddenValue, listKey);
+	 }
+	 
+	 /*************************************************************
+		 * Get an item value of combo is hidden value for row index of grid
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : Column name
+		 * @param rowIndex int : Row index number  
+		 * @param listKey String : ComboList name	
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getComboSelectedHiddenValue(gridId, columnKey, rowIndex, listKey)
+	 {
+		 gridId.registerFunc(arrList,"getComboSelectedHiddenValue");
+		 return gridId.getComboSelectedHiddenValue(columnKey, rowIndex, listKey);
+	 }
+ 
+	 /*************************************************************
+		 * Whether column has combo
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : Column name
+		 * @param listKey String : ComboList name	
+		 * @return Boolean : Whether has column key has combolist[listKey]
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function hasComboList(gridId, columnKey, listKey)
+	 {
+		 gridId.registerFunc(arrList,"hasComboList");
+		 gridId.hasComboList(columnKey, listKey);
+	 }
+	 
+	 /*************************************************************
+		 * Clear combo list
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : Column name
+		 * @param listKey String : Combo name	
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function  clearComboList(gridId, columnKey, listKey)
+	 {
+		 gridId.registerFunc(arrList,"clearComboList");
+		 gridId.clearComboList(columnKey, listKey);
+	 }
+	 
+	 /*************************************************************
+		 * Set combo row count
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : Column name
+		 * @param rowCount Rows of combo are displayed at the same time 
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setComboRowCount(gridId, columnKey, rowCount)
+	 {
+		 gridId.registerFunc(arrList,"setComboRowCount");
+		 gridId.setComboRowCount(columnKey, rowCount);
+	 }
+	 
+	 /*************************************************************
+		 * Get Active Column Key
+		 * @param gridId Object : GridOne object
+		 * @return Boolean : Active column key
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getActiveColKey(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getActiveColKey");
+		 return gridId.getActiveColKey();
+	 }
+	 
+	 /*************************************************************
+		 * add image list
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param strUrl String : of URL file
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function addImageList(gridId, columnKey, strUrl)
+	 {
+		 gridId.registerFunc(arrList,"addImageList");
+		 gridId.addImageList(columnKey, strUrl);
+	 }
+	 
+	 /*************************************************************
+		 * remove image list
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param imageIndex int : index of image
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function removeImageList(gridId, columnKey, imageIndex)
+	 {
+		 gridId.registerFunc(arrList,"removeImageList");
+		 gridId.removeImageList(columnKey, imageIndex);
+	 }
+	 
+	 /*************************************************************
+		 * get image list URL
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param imageIndex int : index of image
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getImageListURL(gridId, columnKey, imageIndex)
+	 {
+		 gridId.registerFunc(arrList,"getImageListURL");
+		 return gridId.getImageListURL(columnKey, imageIndex);
+	 }
+	 
+	 /*************************************************************
+		 * get image list size
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param iwidth int : number of width
+		 * @param iHeight int : number of Height
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setImageListSize(gridId, columnKey, iwidth, iHeight)
+	 {
+		 gridId.registerFunc(arrList,"setImageListSize");
+		 gridId.setImageListSize(columnKey, iwidth, iHeight);
+	 }
+	 
+	/*************************************************************
+		 * clear image list
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function clearImageList(gridId, columnKey)
+	 {
+		 gridId.registerFunc(arrList,"clearImageList");
+		 gridId.clearImageList(columnKey);
+	 }
+	 
+	 /*************************************************************
+		 * get image list count
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @returns int : count of image  
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getImageListCount(gridId, columnKey)
+	 {
+		 gridId.registerFunc(arrList,"getImageListCount");
+		 return gridId.getImageListCount(columnKey);
+	 }
+	 
+	/*************************************************************
+		 * add grid image list
+		 * @param gridId Object : GridOne object
+		 * @param url String : of image file
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function addGridImageList(gridId, url)
+	 {
+		 gridId.registerFunc(arrList,"addGridImageList");
+		 gridId.addGridImageList(url);
+	 }
+	 
+	 /*************************************************************
+		 * add column grid image list
+		 * @param gridId Object : GridOne object
+		 * @param url String : of image file
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setColCellGridImageList(gridId, columnKey, bValue)
+	 {
+		 gridId.registerFunc(arrList,"setColCellGridImageList");
+		 gridId.setColCellGridImageList(columnKey, bValue);
+	 }
+	 
+	 /*************************************************************
+		 * clear grid image list
+		 * @param gridId Object : GridOne object
+		 * @param url String : of image file
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function clearGridImageList(gridId)
+	 {
+		 gridId.registerFunc(arrList,"clearGridImageList");
+		 gridId.clearGridImageList();
+	 }
+	 
+	 /*************************************************************
+		 * set grid image list size
+		 * @param gridId Object : GridOne object
+		 * @param url String : of image file
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function  setGridImageListSize(gridId, nWidth, nHeight)
+	 {
+		 gridId.registerFunc(arrList,"setGridImageListSize");
+		 gridId.setGridImageListSize(nWidth, nHeight);
+	 }
+	 
+	 /*************************************************************
+		 * remove grid
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function clearGrid(gridId)
+	 {
+		 gridId.registerFunc(arrList,"clearGrid");
+		 gridId.clearGrid();
+	 }
+	 
+	 /*************************************************************
+		 * set date format
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param value String : text formate (Ex : YYYY/MM/DD)
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setDateFormat(gridId, columnKey, value)
+	 {
+		 gridId.registerFunc(arrList,"setDateFormat");
+		 gridId.setDateFormat(columnKey, value);
+	 }
+	 
+	 /*************************************************************
+		 * Whether AdvancedDataGrid is tree mode 
+		 * @param gridId Object : GridOne object
+		 * @return Boolean : True if tree mode, False if not tree mode 
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getTreeMode(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getTreeMode");
+		 return gridId.getTreeMode(); 
+	 }
+	 
+	 /*************************************************************
+		 * Collapse all tree node
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function collapseTreeAll(gridId)
+	 {
+		 gridId.registerFunc(arrList,"collapseTreeAll");
+		 gridId.collapseTreeAll(); 
+	 }
+	 
+	 /*************************************************************
+		 * Expand all tree node
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function expandTreeAll(gridId)
+	 {
+		 gridId.registerFunc(arrList,"expandTreeAll");
+		 gridId.expandTreeAll();
+	 }
+	 
+	 /*************************************************************
+		 * Expand directly children node or all children node of tree 
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @param bAll Boolean : Is true if expand all children, Is false if expand only directly children
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function expandTreeNode(gridId, strTreeKey, bAll)
+	 {
+		 gridId.registerFunc(arrList,"expandTreeNode");
+		 gridId.expandTreeNode(strTreeKey, bAll);
+	 }
+	 
+	 /*************************************************************
+		 * Collapse tree node
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function collapseTreeNode(gridId, strTreeKey)
+	 {
+		 gridId.registerFunc(arrList,"collapseTreeNode");
+		 gridId.collapseTreeNode(strTreeKey);  
+	 }
+	 
+	 /*************************************************************
+		 * Delete tree node and all children of that
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function deleteTreeNode(gridId, strTreeKey)
+	 {
+		 gridId.registerFunc(arrList,"deleteTreeNode");
+		 gridId.deleteTreeNode(strTreeKey);   
+	 }
+	 
+	 /*************************************************************
+		 * Get row index from tree key
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @returns int : of row index 
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getRowIndexFromTreeKey(gridId, strTreeKey)
+	 {
+		 gridId.registerFunc(arrList,"getRowIndexFromTreeKey");
+		 return gridId.getRowIndexFromTreeKey(strTreeKey);  
+	 }
+	 
+	 /*************************************************************
+		 * Return the number of child node of the corresponding tree node if true is inputted as bAll value
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @param bAll Boolean : Is true if count all children, Is false if count only directly children
+		 * @returns Number : of child node in tree
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getTreeChildNodeCount(gridId, strTreeKey, bAll)
+	 {
+		 gridId.registerFunc(arrList,"getTreeChildNodeCount");
+		 return gridId.getTreeChildNodeCount(strTreeKey, bAll); 
+	 }
+	 
+	 /*************************************************************
+		 * Get the next child node key from the currently tree key
+		 * @param gridId Object : GridOne object 
+		 * @param strTreeKey String : Key of tree
+		 * @returns String : of tree child key node
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getTreeChildNodeKey(gridId, strTreeKey)
+	 {
+		 gridId.registerFunc(arrList,"getTreeChildNodeKey");
+		 return gridId.getTreeChildNodeKey(strTreeKey);  
+	 }
+	 
+	 /*************************************************************
+		 * Return the first node of tree
+		 * @param gridId Object : GridOne object
+		 * @return Object : The first node of tree
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getTreeFirstNodeKey(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getTreeFirstNodeKey");
+		 return gridId.getTreeFirstNodeKey(); 
+	 }
+	 
+	 /*************************************************************
+		 * Get tree key from row index
+		 * @param gridId Object : GridOne object
+		 * @param rowIndex int : row index
+		 * @return String : of tree key from row index
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getTreeKeyFromRowIndex(gridId, rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"getTreeKeyFromRowIndex");
+		 return gridId.getTreeKeyFromRowIndex(rowIndex); 
+	 }
+	 
+	 /*************************************************************
+		 * Get next key
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @param isInBranch Boolean : True = Next key is in branch with strTreeKey; False= Next key can be key of next branch
+		 * @return String : of the next key of strTreeKey
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getTreeNextNodeKey(gridId, strTreeKey, isInBranch)
+	 {
+		 gridId.registerFunc(arrList,"getTreeNextNodeKey");
+		 return gridId.getTreeNextNodeKey(strTreeKey, isInBranch);
+	 }
+	 
+	 /*************************************************************
+		 * Get depth of tree key
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @return int : the depth of strTreeKey
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getTreeNodeDepth(gridId, strTreeKey)
+	 {
+		 gridId.registerFunc(arrList,"getTreeNodeDepth");
+		 return gridId.getTreeNodeDepth(strTreeKey);
+	 }
+	 
+	 /*************************************************************
+		 * Get parent key of key
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @return String : The parent key of strTreeKey
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function  getTreeParentNodeKey(gridId, strTreeKey)
+	 {
+		 gridId.registerFunc(arrList,"getTreeParentNodeKey");
+		 return gridId.getTreeParentNodeKey(strTreeKey);
+	 }
+	 
+
+	/*************************************************************
+		 * Get previous key
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @param isInBranch Boolean : True: Previous key is in branch with strTreeKey; False: Previous key can be key of next branch
+		 * @return String : The previous key of strTreeKey
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getTreePrevNodeKey(gridId, strTreeKey, isInBranch)
+	 {
+		 gridId.registerFunc(arrList,"getTreePrevNodeKey");
+		 return gridId.getTreePrevNodeKey(strTreeKey, isInBranch);
+	 }
+	 
+	/*************************************************************
+		 * Return the summary of child node of the corresponding tree node
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @param strSummaryColumnKey String :  Summary applied ColumnKey
+		 * @param strFunc String : Function [ sum | count | avarage ] 
+		 * @param bAll Boolean :  Whether to apply all subordinate node
+		 * @return int : The Summary of child node of the corresponding tree node
+		 * @author  Thoeun Chheav hun
+		 *  */
+	 function getTreeSummaryValue(gridId, strTreeKey, strSummaryColumnKey, strFunc, bAll)
+	 {
+		 gridId.registerFunc(arrList,"getTreeSummaryValue");
+		 return  gridId.getTreeSummaryValue(strTreeKey, strSummaryColumnKey, strFunc, bAll); 
+	 }
+	 
+	 /*************************************************************
+		 * Check if the corresponding tree node has child node or not
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @return Boolean : Indicates whether node of strTreeKey has child 
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function hasTreeChildNode(gridId, strTreeKey)
+	 {
+		 gridId.registerFunc(arrList,"hasTreeChildNode");
+		 return gridId.hasTreeChildNode(strTreeKey); 
+	 }
+	 
+	 /*************************************************************
+		 * Check if the corresponding tree node has next node or not
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey Key of tree
+		 * @return Boolean : Indicates whether node of strTreeKey has next node
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function hasTreeNextNode(gridId, strTreeKey)
+	 {
+		 gridId.registerFunc(arrList,"hasTreeNextNode");
+		 return gridId.hasTreeNextNode(strTreeKey); 
+	 }
+	 
+	 /*************************************************************
+		 * Check if the corresponding tree node has parent node or not
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @return Boolean : Indicates whether node of strTreeKey has parent node
+		 * @author Thoeun Chheav hun
+		 * */
+	 function hasTreeParentNode(gridId, strTreeKey)
+	 {
+		 gridId.registerFunc(arrList,"hasTreeParentNode");
+		 return gridId.hasTreeParentNode(strTreeKey);
+	 }
+	 
+	 /*************************************************************
+		 * Check if the corresponding tree node has previous node or not
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @return Boolean : Indicates whether node of strTreeKey has previous node
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function hasTreePrevNode(gridId, strTreeKey)
+	 {
+		 gridId.registerFunc(arrList,"hasTreePrevNode");
+		 return gridId.hasTreePrevNode(strTreeKey); 
+	 }
+	 
+	 /*************************************************************
+		 * Insert tree node at last child node of parent node
+		 * @param gridId Object : GridOne object
+		 * @param strParentTreeKey String :  Parent key of inserted key
+		 * @param strTreeKey  String : Inserted key of tree
+		 * @param strText String : Value of tree data field
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function insertTreeNode(gridId, strParentTreeKey, strTreeKey, strText)
+	 {
+		 gridId.registerFunc(arrList,"insertTreeNode");
+		 gridId.insertTreeNode(strParentTreeKey, strTreeKey, strText);  
+	 }
+	 
+	 /*************************************************************
+		 * Check whether tree node is collapsed
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @return Boolean : True= tree node is collapsed; False= tree node is not collapsed 
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function isTreeNodeCollapse(gridId, strTreeKey)
+	 {
+		 gridId.registerFunc(arrList,"isTreeNodeCollapse");
+		 return gridId.isTreeNodeCollapse(strTreeKey); 
+	 }
+	 
+	 /*************************************************************
+		 * Check whether tree node is expanded
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @return Boolean : True= tree node is expanded; False= tree node is not expanded  
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function isTreeNodeExpand(gridId, strTreeKey)
+	 {
+		 gridId.registerFunc(arrList,"isTreeNodeExpand");
+		 return gridId.isTreeNodeExpand(strTreeKey); 
+	 }
+	 
+	 /*************************************************************
+		 * Check whether tree key is of tree node
+		 * @param gridId Object : GridOne object
+		 * @param strTreeKey String : Key of tree
+		 * @return Boolean : True= key is of tree node; False= key is not of tree node 
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function isTreeNodeKey(gridId, strTreeKey)
+	 {
+		 gridId.registerFunc(arrList,"isTreeNodeKey");
+		 return gridId.isTreeNodeKey(strTreeKey);
+	 }
+	 
+	 /*************************************************************
+		 * Move tree node to other parent
+		 * @param gridId Object : GridOne object
+		 * @param strParentTreeKey String : Parent key of moved key
+		 * @param strTreeKey String : Moved key of tree
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function moveTreeNode(gridId, strParentTreeKey, strTreeKey)
+	 {
+		 gridId.registerFunc(arrList,"moveTreeNode");
+		 gridId.moveTreeNode(strParentTreeKey, strTreeKey);
+	 }
+	 
+	 /*************************************************************
+		 * Whether DisclosureIcon on treecolumn is enable
+		 * @param gridId Object : GridOne object
+		 * @param bAction Boolean : True: if DisclosureIcon is enable; False: if DisclosureIcon is not enable
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setTreeClickAction(gridId, bAction)
+	 {
+		 gridId.registerFunc(arrList,"setTreeClickAction");
+		 gridId.setTreeClickAction(bAction);
+	 }
+	 
+	 /*************************************************************
+		 * Export AdvancedDataGrid to Excel
+		 * @param gridId Object : GridOne object
+		 * @param strPath String : path for save file
+		 * @param strListColumnKey String : columnKey name list for export (Ex: "id, name , dob")
+		 * @param bDataFormat Boolean : keep format date data or not
+		 * @param bHeaderOrdering Boolean : Keep column header in order or not
+		 * @param bColHideVisible Boolean : true allow hidden column include in excel export, bColHideVisible=false not allow hidden column include in excel export.
+		 * @param strExcelFileName String : set file name (Default file name="datagrid")
+		 * @param bCharset Boolean : keep charset or not. (Optional)
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function excelExport(gridId, strPath, strListColumnKey, bHeaderVisible, bDataFormat, bHeaderOrdering,bColHideVisible,strExcelFileName, bCharset)
+	 {
+		 gridId.registerFunc(arrList,"excelExport");
+		 gridId.excelExport(strPath, strListColumnKey, bHeaderVisible, bDataFormat, bHeaderOrdering,bColHideVisible,strExcelFileName, bCharset);
+	 }
+	 /*************************************************************
+		 * Export AdvancedDataGrid to Excel
+		 * @param gridId Object : GridOne object
+		 * @param strPath String : path for save file
+		 * @param strColumnKeyList String : columnKey name list for export (Ex: "id, name , dob")
+		 * @param strImportValidate String : set import validate
+		 * @param bIgnoreHeader Boolean : Whether ignore header or not
+		 * @param bTrimBottom Boolean : Whether trim bottom or not
+		 * @param bCharset Boolean : Whether charset or not (Optional)
+		 * @param dateInputFormat String : put data format if needed. (Optional)
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function excelImport(gridId, strPath, strColumnKeyList, strImportValidate, bIgnoreHeader, bTrimBottom, bCharset, dateInputFormat)
+	 {
+		 gridId.registerFunc(arrList,"excelImport");
+		 gridId.excelImport(strPath, strColumnKeyList, strImportValidate, bIgnoreHeader, bTrimBottom, bCharset, dateInputFormat);
+	 }
+	 
+	 /*************************************************************
+		 * Align text and image in image text renderer
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : columnKey name
+		 * @param strAlign String : set align (left, right ,center)
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setImagetextAlign(gridId, strColumnKey, strAlign)
+	 {
+		 gridId.registerFunc(arrList,"setImagetextAlign");
+		 gridId.setImagetextAlign(strColumnKey, strAlign);
+	 }
+	 
+	 /*************************************************************
+		 * set column cell font center line
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param bCenterLine boolean : whether center line or not
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setColCellFontCLine(gridId, columnKey, bCenterLine)
+	 {
+		 gridId.registerFunc(arrList,"setColCellFontCLine");
+		 gridId.setColCellFontCLine(columnKey, bCenterLine); 
+	 }
+	 
+
+	/*************************************************************
+		 * merge all cells inside column
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param bMerge boolean : Whether merge or not
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setColCellMerge(gridId, columnKey, bMerge)
+	 {
+		 gridId.registerFunc(arrList,"setColCellMerge");
+		 gridId.setColCellMerge(columnKey, bMerge);
+	 }
+	 
+	 /*************************************************************
+		 * Get max length of column
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getColMaxLength(gridId, columnKey)
+	 {
+		 gridId.registerFunc(arrList,"getColMaxLength");
+		 gridId.getColMaxLength(columnKey); 
+	 }
+	 
+	 /*************************************************************
+		 * set focus on cell. If selection mode is multiple row. It will auto change to selection mode is multiple cell.
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : columnKey name
+		 * @param nRow int : row index
+		 * @param bEditmode Boolean  : allow cell is edited or not. It belongs to editable of column
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setCellFocus(gridId, strColumnKey,nRow,bEditmode)
+	 {
+		 gridId.registerFunc(arrList,"setCellFocus");
+		 gridId.setCellFocus(strColumnKey,nRow,bEditmode); 
+	 }
+	 
+	 /*************************************************************
+		 * set group merge
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKeyList String : columnKey list
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setGroupMerge(gridId, strColumnKeyList)
+	 {
+		 gridId.registerFunc(arrList,"setGroupMerge");
+		 gridId.setGroupMerge(strColumnKeyList); 
+	 }
+	 
+	 /*************************************************************
+		 * clear group merge
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function clearGroupMerge(gridId)
+	 {
+		 gridId.registerFunc(arrList,"clearGroupMerge");
+		 gridId.clearGroupMerge();  
+	 }
+	 
+	 /*************************************************************
+		 * check column is merged or not
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @returns Boolean : true if column is group merge
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function isGroupMergeColumn(gridId, columnKey)
+	 {
+		 gridId.registerFunc(arrList,"isGroupMergeColumn");
+		 return gridId.isGroupMergeColumn(columnKey); 
+	 }
+	 
+	 /*******************************************************6******
+		 * check grid that has group merge or not
+		 * @param gridId Object : GridOne object
+		 * @returns Boolean : true if has group merge in DataGrid
+		 * @author Thoeun Chheav hun
+		 *   */
+	 function hasGroupMerge(gridId)
+	 {
+		 gridId.registerFunc(arrList,"hasGroupMerge");
+		 return gridId.hasGroupMerge();
+	 }
+	 
+	 /*************************************************************
+		 * add summary bar
+		 * @param gridId Object : GridOne object
+		 * @param strSummaryBarKey String : summaryBar key 
+		 * @param strText String : title of summery bar
+		 * @param strMergeColumn String : columnKey name of column merge
+		 * @param strFunc String : function type
+		 * @param strColumnList String : list of column will do calulation
+		 * @param position String : position of summary bar (top, bottom, right)
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function addSummaryBar(gridId, strSummaryBarKey, strText, strMergeColumn, strFunc, strColumnList,position )
+	 {
+		 gridId.registerFunc(arrList,"addSummaryBar");
+		 gridId.addSummaryBar(strSummaryBarKey, strText, strMergeColumn, strFunc, strColumnList,position );
+	 }
+	 
+	 /*************************************************************
+		 * clear summary bar
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function clearSummaryBar(gridId)
+	 {
+		 gridId.registerFunc(arrList,"clearSummaryBar");
+		 gridId.clearSummaryBar();
+	 }
+	 
+	 /*************************************************************
+		 * get summary bar value
+		 * @param gridId Object : GridOne object
+		 * @param strSummaryBarKey String : summaryBar key 
+		 * @param strColumnKey String : columnKey name
+		 * @param nMergeIndex Number: column merge Index number
+		 * @param bDataFormat Boolean : default value is true
+		 * @return String : of value that summaryBar
+		 * @author: Thoeun Chheav hun
+		 *  */
+	 function getSummaryBarValue(strSummaryBarKey, strColumnKey, nMergeIndex, bDataFormat)
+	 {
+		 gridId.registerFunc(arrList,"getSummaryBarValue");
+		 return gridId.getSummaryBarValue(strSummaryBarKey, strColumnKey, nMergeIndex, bDataFormat);
+	 }
+	 
+	 /*************************************************************
+		 * has summary bar
+		 * @param gridId Object : GridOne object
+		 * @return Boolean : true is has summary bar in DataGrid
+		 * author: Thoeun Chheav hun
+		 *  */
+	 function hasSummaryBar(gridId)
+	 {
+		 gridId.registerFunc(arrList,"hasSummaryBar");
+		 return  gridId.hasSummaryBar();
+	 }
+	 
+	 /*************************************************************
+		 * set summary bar color
+		 * @param gridId Object : GridOne object
+		 * @param strSummaryBarKey String : summaryBar key
+		 * @param strFgColor String : font color code
+		 * @param strBgColor String : background color code
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setSummaryBarColor(gridId, strSummaryBarKey, strFgColor, strBgColor)
+	 {
+		 gridId.registerFunc(arrList,"setSummaryBarColor");
+		 gridId.setSummaryBarColor(strSummaryBarKey, strFgColor, strBgColor);
+	 }
+	 
+	 /*************************************************************
+		 * set summary bar font
+		 * @param gridId Object : GridOne object
+		 * @param strSummaryBarKey String
+		 * @param strName String
+		 * @param nSize int 
+		 * @param bBold Boolean
+		 * @param bItalic Boolean
+		 * @param bUnderLine Boolean
+		 * @param bCenterLine Boolean
+		 * @param columnKey String : Default value is null
+		 * @author Thoeun Chheav hun
+		 * ***********************************************************/
+	 function  setSummaryBarFont(strSummaryBarKey , strName , nSize , bBold , bItalic , bUnderLine , bCenterLine , columnKey )
+	 {
+		 gridId.registerFunc(arrList,"setSummaryBarFont");
+		 gridId.setSummaryBarFont(strSummaryBarKey,strName,nSize,bBold,bItalic,bUnderLine,bCenterLine,columnKey);
+	 }
+	 
+	 /*************************************************************
+		 * set summary bar format
+		 * @param gridId Object : GridOne object
+		 * @param strSummaryBarKey String : summaryBar key
+		 * @param strColumnKey String : columnKey name
+		 * @param strFormat String : format
+		 * @author: Thoeun Chheav hun
+		 *  */
+	 function setSummaryBarFormat(gridId, strSummaryBarKey, strColumnKey, strFormat)
+	 {
+		 gridId.registerFunc(arrList,"setSummaryBarFormat");
+		 gridId.setSummaryBarFormat(strSummaryBarKey, strColumnKey, strFormat); 
+	 }
+	 
+	/*************************************************************
+		 * set summary bar function only work in case summary bar has CUSTOM value
+		 * @param gridId Object : GridOne object
+		 * @param strSummaryBarKey String : summaryBar Key
+		 * @param strColumnKey String : columnKey name
+		 * @param strFunc String : function name
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function  setSummaryBarFunction(gridId, strSummaryBarKey, strFunc, strColumnKey)
+	 {
+		 gridId.registerFunc(arrList,"setSummaryBarFunction");
+		 gridId.setSummaryBarFunction(strSummaryBarKey, strFunc, strColumnKey);
+	 }
+	 
+	 /*************************************************************
+		 * set summary bar text
+		 * @param gridId Object : GridOne object
+		 * @param strSummaryBarKey String : summaryBar Key
+		 * @param strText String: text title
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setSummaryBarText(gridId, strSummaryBarKey, strText)
+	 {
+		 gridId.registerFunc(arrList,"setSummaryBarText");
+		 gridId.setSummaryBarText(strSummaryBarKey, strText); 
+	 }
+	 
+	 /*************************************************************
+		 * set summary bar value only work in case summary bar has CUSTOM value 
+		 * @param gridId Object : GridOne object
+		 * @param strSummaryBarKey String : summaryBar Key
+		 * @param strColumnKey String : columnKey name
+		 * @param nMergeIndex int : column merge index
+		 * @param strValue String : value
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setSummaryBarValue(gridId, strSummaryBarKey, strColumnKey, nMergeIndex, strValue)
+	 {
+		 gridId.registerFunc(arrList,"setSummaryBarValue");
+		 gridId.setSummaryBarValue(strSummaryBarKey, strColumnKey, nMergeIndex, strValue); 
+	 }
+	 
+	 /*************************************************************
+		 * Insert asterisk character in a specific column from index nStartIndex with nCount characters
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : Indicated the column will be inserted in asterisk character
+		 * @param nStartIndex int : Start index to insert asterisk character
+		 * @param nCount Number : of asterisk characters to insert
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setColCellExcelAsterisk(gridId, strColumnKey, nStartIndex, nCount)
+	 {
+		 gridId.registerFunc(arrList,"setColCellExcelAsterisk");
+		 gridId.setColCellExcelAsterisk(strColumnKey, nStartIndex, nCount);
+	 }
+	 
+	 /*************************************************************
+		 * Clear excel file info
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function clearExcelInfo(gridId)
+	 {
+		 gridId.registerFunc(arrList,"clearExcelInfo");
+		 gridId.clearExcelInfo();
+	 }
+	 
+	 /*************************************************************
+		 * Set footer excel file
+		 * @param gridId Object : GridOne object
+		 * @param strTitle String : Title of footer
+		 * @param nHeigh int : Heigh of footer
+		 * @param nFontSize int : Font size of footer
+		 * @param strAlign String : Alignment of footer
+		 * @author Thoeun Chheav hun
+		 * ***********************************************************/
+	 function setExcelFooter(gridId, strTitle, nHeigh, nFontSize, strAlign, strBottom)
+	 {
+		 gridId.registerFunc(arrList,"setExcelFooter");
+		 gridId.setExcelFooter(strTitle, nHeigh, nFontSize, strAlign, strBottom);
+	 }
+	 
+	 /*************************************************************
+		 * Set header excel file
+		 * @param gridId Object : GridOne object
+		 * @param strTitle String :  Title of header
+		 * @param nHeigh int : Heigh of header
+		 * @param nFontSize int : Font size of header
+		 * @param strAlign String : Alignment of header
+		 * @strBottom String : Content below header
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setExcelHeader(gridId, strTitle, nHeigh, nFontSize, strAlign, strBottom)
+	 {
+		 gridId.registerFunc(arrList,"setExcelHeader");
+		 gridId.setExcelHeader(strTitle, nHeigh, nFontSize, strAlign, strBottom);
+	 }
+	 
+	 /*************************************************************
+		 * Set strAccessReader for Accessibility function
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : Column key name
+		 * @param strAccReader String : of accessibility reader
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setAccessReader(gridId, strColumnKey, strAccReader)
+	 {
+		 gridId.registerFunc(arrList,"setAccessReader");
+		 gridId.setAccessReader(strColumnKey, strAccReader);
+	 }
+	 
+	 /*************************************************************
+		 * Set strAccessReaderHeader for Accessibility function
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : Column key name
+		 * @param strAccReaderHeader String : of accessibility reader
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setAccessReaderHeader(gridId, strColumnKey, strAccReaderHeader)
+	 {
+		 gridId.registerFunc(arrList,"setAccessReaderHeader");
+		 gridId.setAccessReaderHeader(strColumnKey, strAccReaderHeader);
+	 }
+	 
+	 /*************************************************************
+		 * Set column cell sort
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : columnKey name
+		 * @param strSort String : data of descending or ascending or none
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setColCellSort(gridId, strColumnKey, strSort)
+	 {
+		 gridId.registerFunc(arrList,"setColCellSort");
+		 gridId.setColCellSort(strColumnKey, strSort); 
+	 }
+	 
+	 /*************************************************************
+		 * set column index
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : The name of dataField column
+		 * @param index int : Index of column
+		 * @author Thoeun Chheav hun
+		 *  */	
+	 function setColIndex(gridId, columnKey, index)
+	 {
+		 gridId.registerFunc(arrList,"setColIndex");
+		 gridId.setColIndex(columnKey, index);
+	 }
+	 
+	 /*************************************************************
+		 * set column cell radio
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param bRadio Boolean : whether radio column or not
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setColCellRadio(gridId, columnKey, bRadio)
+	 {
+		 gridId.registerFunc(arrList,"setColCellRadio");
+		 gridId.setColCellRadio(columnKey, bRadio); 
+	 }
+	 
+	 /*************************************************************
+		 * clear data in datagrid
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function clearData(gridId)
+	 {
+		 gridId.registerFunc(arrList,"clearData");
+		 gridId.clearData(); 
+	 }
+	 
+	 /*************************************************************
+		 * show busy bar
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function showBusyBar(gridId)
+	 {
+		 gridId.registerFunc(arrList,"showBusyBar");
+		 gridId.showBusyBar();
+	 }
+	 
+	 /*************************************************************
+		 * close busy bar
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 *  */
+     function closeBusyBar(gridId)
+     {
+    	 gridId.registerFunc(arrList,"closeBusyBar");
+		 gridId.closeBusyBar();
+     }
+     
+     /*************************************************************
+		 * add event for GridOne.
+		 * @param gridId Object : GridOne object
+		 * @param type String : type of event likes itemClick, dataChange, addRow,....
+		 * @param listener Function : name of function for listening event
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function addEvent(gridId, type, listener)
+	 {
+		 gridId.registerFunc(arrList,"addEvent");
+		 gridId.addEvent(type, listener);
+	 }
+	 
+	 /*************************************************************
+		 * remove event for GridOne
+		 * @param gridId Object : GridOne object
+		 * @param type String :  type of event likes itemClick, dataChange, addRow,....
+		 * @param listener Function : name of function for listening event
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function removeEvent(gridId, type, listener)
+	 {
+		 gridId.registerFunc(arrList,"removeEvent");
+		 gridId.removeEvent(type, listener); 
+	 }
+	 
+	 /*************************************************************
+		 * set datagrid lose focus
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function loseFocus(gridId)
+	 {
+		 gridId.registerFunc(arrList,"loseFocus");
+		 gridId.loseFocus(); 
+	 }
+	 
+	 /*************************************************************
+		 * get data from grid with protocol format
+		 * @param gridId Object : GridOne object 
+		 * @param selectedField Object : selected column (Optional)
+		 * @returns String : of data
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getDataObject(gridId, selectedField)
+	 {
+		 gridId.registerFunc(arrList,"getDataObject");
+		 return gridId.getDataObject(selectedField);  
+	 }
+	 
+	 
+	 /*************************************************************
+		 * set data from grid with protocol format
+		 * @param gridId Object : GridOne object
+		 * @param selectedField Object : selected column (Optional)
+		 * @returns String : of data
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getProtocolData(gridId, selectedField)
+	 {
+		 gridId.registerFunc(arrList,"getProtocolData");
+		 return gridId.getProtocolData(selectedField);  
+	 }
+	 
+	 /*************************************************************
+		 * add XML data
+		 * @param gridId Object : GridOne object
+		 * @param path String : path of xml file from javascript
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setXMLData(gridId,path)
+	 {
+		 gridId.registerFunc(arrList,"setXMLData");
+		 gridId.setXMLData(path);  
+	 }
+	 
+	 /*************************************************************
+		 * get XML data
+		 * @param gridId Object : GridOne object
+		 * @returns String : of data
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getXMLData(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getXMLData");
+		 return gridId.getXMLData();  
+	 }
+	 
+	 /*************************************************************
+		 * add footer into grid
+		 * @param gridId Object : GridOne object
+		 * @param strFooterKey String : footer Key
+		 * @param strFunc String : function name
+		 * @param strColumnList String : columnKey list 
+		 * @param isFooter Boolean : whether footer or not .  (Default =true) (Optional)
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function addFooter(gridId, strFooterKey, strFunc, strColumnList, isFooter)
+	 {
+		 gridId.registerFunc(arrList,"addFooter");
+		 gridId.addFooter(strFooterKey, strFunc, strColumnList, isFooter); 
+	 }
+	 
+	 /*************************************************************
+		 * remove footer bar from datagrid
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function clearFooter(gridId)
+	 {
+		 gridId.registerFunc(arrList,"clearFooter");
+		 gridId.clearFooter(); 
+	 }
+	 
+	 /*************************************************************
+		 * verify datagrid has footer bar or not
+		 * @param gridId Object : GridOne object
+		 * @return Boolean
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function hasFooter(gridId)
+	 {
+		 gridId.registerFunc(arrList,"hasFooter");
+		 return gridId.hasFooter(); 
+	 }
+	 
+	 /*************************************************************
+		 * Setting the status code to tranfer to Server
+		 * @param gridId Object : GridOne object
+		 * @param strStatus String : Value of status
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setStatus(gridId, strStatus)
+	 {
+		 gridId.registerFunc(arrList,"setStatus");
+		 gridId.setStatus(strStatus); 
+	 }
+	 
+	 /*************************************************************
+		 * Get the status code transferred from Server
+		 * @param gridId Object : GridOne object
+		 * @returns String : of status
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getStatus(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getStatus");
+		 return gridId.getStatus();
+	 }
+	 
+	 /*************************************************************
+		 * Set parameters for passing them to server page
+		 * @param gridId Object : GridOne object
+		 * @param key String
+		 * @param value String
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function setParams(gridId, key, value)
+	 {
+		 gridId.registerFunc(arrList,"setParams");
+		 gridId.setParams(key, value);
+	 }
+	 
+	 /*************************************************************
+		 * Get parameters when passing them to server page
+		 * @param gridId Object : GridOne object
+		 * @param key String
+		 * @returns String : of params
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getParams(gridId,key)
+	 {
+		 gridId.registerFunc(arrList,"getParams");
+		 return  gridId.getParams(gridId);
+	 }
+	 
+	 /*************************************************************
+		 * Count number of param when parsing them to server page
+		 * @param gridId Object : GridOne object
+		 * @returns int : number of params
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getParamCount(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getParamCount");
+		 return gridId.getParamCount(gridId);
+	 }
+	 
+	 /*************************************************************
+		 * Get param key
+		 * @param gridId Object : GridOne object
+		 * @param index int
+		 * @returns String : of params key
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getParamKey(gridId,index)
+	 {
+		 gridId.registerFunc(arrList,"getParamKey");
+		 return gridId.getParamKey(index);
+	 }
+	 
+	 /*************************************************************
+		 * Set the message transferred from Server
+		 * @param gridId Object : GridOne object
+		 * @author Thoeun Chheav hun
+		 * */
+	 function setMessage(gridId,value)
+	 {
+		 gridId.registerFunc(arrList,"setMessage");
+		 gridId.setMessage(value); 
+	 }
+	 
+	 /*************************************************************
+		 * Get the message transferred from Server
+		 * @param gridId Object : GridOne object
+		 * @returns String : of message
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function getMessage(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getMessage");
+		 return gridId.getMessage();
+	 }
+	 
+	 /*************************************************************
+		 * The function sends parameteres to server page using URL parameter and do query based on action parameter.
+		 * @param gridId Object : GridOne object
+		 * @param urlStr String : URL string of server page likes JSP, ASP.
+		 * @param objQuery Object : A string of column key or array of row indexes (optional)
+		 * @param validationCheck Boolean : indicate whether data is checked or not (Default =true). (optional)
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function doQuery(gridId, urlStr, objQuery, validationCheck)
+	 {
+		 gridId.registerFunc(arrList,"doQuery");
+		 gridId.doQuery(urlStr, objQuery, validationCheck);
+	 }
+	 
+	 /*************************************************************
+		 * ICompia: Indicate whether connection between server and client is checking or not
+		 * @param gridId Object : GridOne object
+		 * @returns Boolean
+		 * @author Thoeun Chheav hun
+		 *  */
+	 function isDoQuery(gridId)
+	 {
+		 gridId.registerFunc(arrList,"isDoQuery");
+		 return gridId.isDoQuery( );
+	 }
+	 
+	 /*************************************************************
+		 * add json data into comboBox 
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param strText String : label key (Ex: "label")
+		 * @param strValue String : value key (Ex : "value")
+		 * @param jsonData Object : data array object for combo
+		 * @athor: Thoeun Chheav hun
+		 *  */
+	 function addComboListJson(gridId,columnKey,strText,strValue,jsonData)
+	 {
+		 gridId.registerFunc(arrList,"addComboListJson");
+		 gridId.addComboListJson(columnKey,strText,strValue,jsonData); 
+	 }
+	 
+	 /*************************************************************
+		 * get row index of checked checkbox
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @returns array : of checked rows index
+		 * @athor: Chheav Hun
+		 *  */
+	 function getCheckedRowsIndex(gridId,columnKey)
+	 {
+		 gridId.registerFunc(arrList,"getCheckedRowsIndex");
+		 return gridId.getCheckedRowsIndex(columnKey); 
+	 }
+	 
+	 /*************************************************************
+		 * set json data in combobox through httpService 
+		 * @param gridId Object : GridOne object
+		 * @param dataField String : columnKey name
+		 * @param urlStr String : url of combo data file
+		 * @athor: Chheav Hun
+		 *  */
+	 function setComboJSONData(gridId,dataField, urlStr)
+	 {
+		 gridId.registerFunc(arrList,"setComboJSONData");
+		 gridId.setComboJSONData(dataField, urlStr); 
+	 }
+	 
+	 /*************************************************************
+		 * it will refresh Grid 
+		 * @param gridId Object : GridOne object
+		 * @athor: Chheav Hun
+		 *  */
+	 function refreshGrid(gridId)
+	 {
+		 gridId.registerFunc(arrList,"refreshGrid");
+		 gridId.refreshGrid();  
+	 }
+	 
+	 /*************************************************************
+		 * set image for column imagetext
+		 * @param gridId Object : GridOne object 
+		 * @param columnKey String :  columnKey name
+		 * @index: index int : of image
+		 * @athor: Chheav Hun
+		 *  */
+	 function setColCellImage(gridId,columnKey, index)
+	 {
+		 gridId.registerFunc(arrList,"setColCellImage");
+		 gridId.setColCellImage(columnKey, index); 
+	 }
+	 
+	 /*************************************************************
+		 * set image for column imagetext
+		 * @param gridId Object : GridOne object 
+		 * @param dataField String :  columnKey name
+		 * @returns Object : of column with data
+		 * @athor: Chheav Hun
+		 *  */
+	 function getColumn(gridId,dataField)
+	 {
+		 gridId.registerFunc(arrList,"getColumn");
+		 return  gridId.getColumn(dataField);  
+	 }
+	 
+	 /*************************************************************
+		 * insert header in to DataGrid 
+		 * @param gridId Object : GridOne object
+		 * @param params Object : that is defined with multiple properties to create columns likes  .
+		 * @athor: Chheav Hun
+		 *  */
+	 function insertHeader(gridId,params)
+	 {
+		 gridId.registerFunc(arrList,"insertHeader");
+		 gridId.insertHeader(params); 
+	 }
+	 
+	 /*************************************************************
+		 * add header as array 
+		 * @param gridId Object : GridOne object
+		 * @param arrheaders Array : header object as array
+		 * @athor: Chheav Hun
+		 *  */
+	 function addHeaders(gridId,arrheaders)
+	 {
+		 gridId.registerFunc(arrList,"addHeaders");
+		 gridId.addHeaders(arrheaders);
+	 }
+	 
+	 /*************************************************************
+		 * create group column  
+		 * @param gridId Object : GridOne object
+		 * @param groupKey String : group Key
+		 * @param groupName String : group title
+		 * @athor: Chheav Hun
+		 *  */
+	 function createGroup(gridId,groupKey, groupName)
+	 {
+		 gridId.registerFunc(arrList,"createGroup");
+		 gridId.createGroup(groupKey, groupName);
+	 }
+	 
+	 /*************************************************************
+		 * get column index   
+		 * @param gridId Object : GridOne object
+		 * @param dataField String : columnKey name
+		 * @returns int : column index
+		 * @athor: Chheav Hun
+		 *  */
+	 function getColumnIndex(gridId,dataField)
+	 {
+		 gridId.registerFunc(arrList,"getColumnIndex");
+		 gridId.getColumnIndex(dataField);
+	 }
+	 
+	 /*************************************************************
+		 * get column type from dataField
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @athor: Chheav Hun
+		 *  */
+	 function getColumnType(gridId,columnKey)
+	 {
+		 gridId.registerFunc(arrList,"getColumnType");
+		 gridId.getColumnType(columnKey); 
+	 }
+	 
+	 /*************************************************************
+		 * set image waiting logo
+		 * @param gridId Object : GridOne object
+		 * @param logoUrl String : url
+		 * @param logoWidth Number : width number (Default =200)
+		 * @param logoHeight Number : height number (Default =50)
+		 * @athor: Chheav Hun
+		 *  */
+	 function setWaitingLogoValue(gridId, logoUrl, logoWidth, logoHeight)
+	 {
+		 gridId.registerFunc(arrList,"setWaitingLogoValue");
+		 gridId.setWaitingLogoValue(logoUrl, logoWidth, logoHeight); 
+	 }
+	 
+	 /*************************************************************
+		 * show image logo   
+		 * @param gridId Object : GridOne object
+		 * @athor: Chheav Hun
+		 *  */
+	 function showWaitingLogo(gridId)
+	 {
+		 gridId.registerFunc(arrList,"showWaitingLogo");
+		 gridId.showWaitingLogo();
+	 }
+	 
+	 /*************************************************************
+		 * hige image logo  
+		 * @param gridId Object : GridOne object 
+		 * @athor: Chheav Hun
+		 *  */
+	 function hideWaitingLogo(gridId)
+	 {
+		 gridId.registerFunc(arrList,"hideWaitingLogo");
+		 gridId.hideWaitingLogo(); 
+	 }
+	 
+	 /*************************************************************
+		 * add data to combo box with a specific columnKey and set data as string.
+		 * @param gridId Object : GridOne object 
+		 * @param colKey String : columnKey name
+		 * @param sComboData String : text data format (ex: "TH|Thailand%%,VN|Vietnam%%,CBD|Cambodia")
+		 * @athor: Chheav Hun
+		 *  */
+	 function addComboDataAtColumn(gridId,colKey, sComboData)
+	 {
+		 gridId.registerFunc(arrList,"addComboDataAtColumn");
+		 gridId.addComboDataAtColumn(colKey, sComboData); 
+	 }
+	 
+	 /*************************************************************
+		 * add data to combo box with a specific column index and set data as string.
+		 * @param gridId Object : GridOne object 
+		 * @param colIndex  int : column index
+		 * @sComboData: text data format (ex: "TH|Thailand%%,VN|Vietnam%%,CBD|Cambodia")
+		 * @athor: Chheav Hun
+		 *  */
+	 function addComboDataAtColumnIndex(gridId,colIndex, sComboData)
+	 {
+		 gridId.registerFunc(arrList,"addComboDataAtColumnIndex");
+		 gridId.addComboDataAtColumnIndex(colIndex, sComboData); 
+	 }
+	 
+	 /*************************************************************
+		 * destroy event listerner   
+		 * @param gridId Object : GridOne object 
+		 * @param type String : event name
+		 * @athor: Chheav Hun
+		 *  */
+	 function destroyEventListener(gridId,type)
+	 {
+		 gridId.registerFunc(arrList,"destroyEventListener");
+		 gridId.destroyEventListener(type); 
+	 }
+	 
+	 /*************************************************************
+		 * change row separator 
+		 * @param gridId Object : GridOne object 
+		 * @param sep String :  separator  
+		 * @athor: Chheav Hun
+		 *  */
+	 function changeRowSeparator(sep)
+	 {
+		 gridId.registerFunc(arrList,"changeRowSeparator");
+		 gridId.changeRowSeparator(sep); 
+	 }
+	 
+	 /*************************************************************
+		 * set text data by service 
+		 * @param gridId Object : GridOne object
+		 * @param  path : server path url of text data
+		 * @author Chheav Hun
+		 *  */
+	 function setTextDataByService(gridId,path)
+	 {
+		 gridId.registerFunc(arrList,"setTextDataByService");
+		 gridId.setTextDataByService(path); 
+	 }
+	 
+	 /*************************************************************
+		 *get all data from datagrid as Object
+		 * @param gridId Object : GridOne object
+		 * @returns Object : of data
+		 * @author Chheav Hun
+		 *  */
+	 function getAllData(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getAllData");
+		 return gridId.getAllData(); 
+	 }
+	 
+	 /*************************************************************
+		 * romove all data in dataGrid  
+		 * @param gridId Object : GridOne object 
+		 * @author: Chheav Hun
+		 *  */
+	 function removeAllData(gridId)
+	 {
+		 gridId.registerFunc(arrList,"removeAllData");
+		 gridId.removeAllData(); 
+	 }
+	 
+	 /*************************************************************
+		 * delete multi rows which selected or (shift + selected) in DataGrid's row.
+		 * Before call this function, must set "selectCell=false", "strCellClickAction=rowselect", and "allowMultipleSelection=true".
+		 * @param gridId Object : GridOne object 
+		 * @param columnKey String : columnKey name
+		 * @param index int :  index of image
+		 * @author Chheav Hun
+		 *  */
+	 function  deleteRows(gridId)
+	 {
+		 gridId.registerFunc(arrList,"deleteRows");
+		 gridId.deleteRows();
+	 }
+	 
+	 /*************************************************************
+		 * It will be called before getting data from server			 
+		 * Return true: without getting data from server or otherwise
+		 * @param gridId Object : GridOne object
+		 * @param useLoadingBar Boolean : use loading bar or not (Default =true)
+		 * @author Chheav Hun
+		 *  */
+	 function doStartQuery(gridId,useLoadingBar)
+	 {
+		 gridId.registerFunc(arrList,"doStartQuery");
+		 gridId.doStartQuery(useLoadingBar);
+	 }
+	 
+	 /*************************************************************
+		 * set grid data by httpService to get string
+		 * @param gridId Object : GridOne object
+		 * @author Chheav Hun
+		 *  */
+	 function getGridProtocolText(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getGridProtocolText");
+		 gridId.getGridProtocolText( );
+	 }
+	 
+	 /*************************************************************
+		 * load data text into DataGrid by httpService
+		 * @param gridId Object : GridOne object
+		 * @param  url String : url server path			 
+		 * @Author:Chheav Hun
+		 *  */
+	 function loadGridData(gridId,url)
+	 {
+		 gridId.registerFunc(arrList,"loadGridData");
+		 gridId.loadGridData(url);
+	 }
+	 
+	/*************************************************************
+		 * load data text into DataGrid by httpService
+		 * @param gridId Object : GridOne object
+		 * @param urlStr String : url server path		 
+		 * @author Chheav Hun
+		 *  */
+	 function queryTextData(gridId,urlStr)
+	 {
+		 gridId.registerFunc(arrList,"queryTextData");
+		 gridId.queryTextData(urlStr);
+	 }
+	 
+	 /*************************************************************
+		 * The function get data with text format to bind to combodata
+		 * @param gridId Object : GridOne object
+		 * @param urlStr String : URL string of server page likes JSP, ASP.
+		 * @author  Chheav Hun
+		 *  */
+	 function queryComboTextData(gridId,dataField, urlStr)
+	 {
+		 gridId.registerFunc(arrList,"queryComboTextData");
+		 gridId.queryComboTextData(dataField, urlStr);
+	 }
+	 
+	 /*************************************************************
+		 * get data from one cell as string by setting specific rowIndex and columnKey
+		 * @param gridId Object : GridOne object
+		 * @param  rowIndex int : Row index   
+		 * @param  columKey String : columnKey name	
+		 * @param  bname Boolean : in case column type is combo, whether get combo label or value. (Default = false get combo label).
+		 * @returns String : of cell value
+		 * @author  Chheav Hun
+		 *  */
+	 function getCell(gridId,rowIndex, columKey,bname)
+	 {
+		 gridId.registerFunc(arrList,"getCell");
+		 return gridId.getCell(rowIndex, columKey,bname);
+	 }
+	 
+	 /*************************************************************
+		 * get data from more than one cell in one row as Array by setting specific rowIndex and columnKey list (ex: "name,nation")
+		 * @param gridId Object : GridOne object
+		 * @param  listColumKey String : the list of choosing columnKey as string (ex: "name,nation")  
+		 * @param  nRow int : row index 
+		 * @returns Array : of cells value
+		 * @author  Chheav Hun
+		 *  */
+	 function getCellValues(gridId,listColumKey, nRow)
+	 {
+		 gridId.registerFunc(arrList,"getCellValues");
+		 gridId.getCellValues(listColumKey, nRow);
+	 }
+	 
+	 /*************************************************************
+		 * set button column in a specific row to visible or not visible. 
+		 * @param gridId Object : GridOne object
+		 * @param  strColKey String :  ColumnKey name
+		 * @param  nRow int : The row index 
+		 * @param bVisible Boolean : true=visible or false=not visible
+		 * @author  Chheav Hun
+		 *  */
+	 function setButtonVisible(gridId,strColKey, nRow, bVisible)
+	 {
+		 gridId.registerFunc(arrList,"setButtonVisible");
+		 gridId.setButtonVisible(strColKey, nRow, bVisible); 
+	 }
+	 
+	 /*************************************************************
+		 * set checkbox column in a specific row to visible or not visible. 
+		 * @param gridId Object : GridOne object
+		 * @param  strColKey String : ColumnKey
+		 * @param  nRow int : The row index 
+		 * @param bVisible Boolean : true=visible or false=not visible
+		 * @author  Chheav Hun
+		 *  */
+	 function setCheckBoxVisible(gridId,strColKey, nRow, bVisible)
+	 {
+		 gridId.registerFunc(arrList,"setCheckBoxVisible");
+		 gridId.setCheckBoxVisible(strColKey, nRow, bVisible); 
+	 }
+	 
+	 /*************************************************************
+		 * set checkbox column in a specific row to visible or not visible. 
+		 * @param gridId Object : GridOne object
+		 * @param  strColKey String : ColumnKey
+		 * @param  nRow int : The row index 
+		 * @returns String : of color
+		 * @author  Chheav Hun
+		 *  */
+	 function getCellBackgroundColor(gridId,strColKey, nRow)
+	 {
+		 gridId.registerFunc(arrList,"getCellBackgroundColor");
+		 return gridId.getCellBackgroundColor(strColKey, nRow); 
+	 }
+	 
+	 /*************************************************************
+		 * set hide column in specific column index; 
+		 * @param gridId Object : GridOne object
+		 * @param  colIndex int :  column index
+		 * @author  Chheav Hun
+		 *  */
+	 function hideColumnIndex(gridId,colIndex)
+	 {
+		 gridId.registerFunc(arrList,"hideColumnIndex");
+		 gridId.hideColumnIndex(colIndex); 
+	 }
+	 
+	 /*************************************************************
+		 * set show of hide column in specific column index; 
+		 * @param gridId Object : GridOne object
+		 * @param  colIndex  String : column index
+		 * @author  Chheav Hun
+		 *  */
+	 function showColumnIndex(gridId,colIndex)
+	 {
+		 gridId.registerFunc(arrList,"showColumnIndex");
+		 gridId.showColumnIndex(colIndex);
+	 }
+	 
+	 /*************************************************************
+		 * get value of property of specified column.
+		 * @param gridId Object : GridOne object
+		 * @param colField String : it can be a string object for DataField column or integer object for index column.
+		 * @param property String : name of property.
+		 * @return Object : value of property 
+         * @author  Chheav Hun
+		 *  */
+	 function getColumnProperty(gridId,colField, property)
+	 {
+		 gridId.registerFunc(arrList,"getColumnProperty");
+		 return gridId.getColumnProperty(colField, property);
+	 }
+	 
+	 /*************************************************************
+		 * get name of a cell which using commbo box renderer.
+		 * @param gridId Object : GridOne object
+		 * @param colname String : column fied name.
+		 * @param rowIndex int : row index of the cell.
+		 * @return String : displaying name of the cell.
+		 * @author  Chheav Hun
+		 *  */
+	 function getComboNameAtColumn(gridId,colname, rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"getComboNameAtColumn");
+		 return gridId.getComboNameAtColumn(colname, rowIndex);  
+	 }
+	 
+	 /*************************************************************
+		 * get name of a cell which using commbo box renderer.
+		 * @param gridId Object : GridOne object
+		 * @param colIndex String : column index. if index is not for combobox column, this function still work with the input column index.
+		 * @param rowIndex int :  row index of the cell.
+		 * @return String : displaying name of the cell.
+		 * @author  Chheav Hun
+		 *  */
+	 function getComboNameAtColumnIndex(gridId,colIndex, rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"getComboNameAtColumnIndex");
+		 return gridId.getComboNameAtColumnIndex(colIndex, rowIndex); 
+	 }
+	 
+
+	/*************************************************************
+		 * get data of datagrid in HTML format.
+		 * @param gridId Object : GridOne object
+		 * @return String of data in HTML format.
+		 * @author  Chheav Hun
+		 *  */
+	 function getDataGridString(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getDataGridString");
+		 return gridId.getDataGridString(); 
+	 }
+	 
+	 /*************************************************************
+		 * get rows deleted by user.
+		 * @param gridId Object : GridOne object
+		 * @return Array : of deleted rows.
+		 * @author  Chheav Hun
+		 *  */
+	 function getDeletedRows(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getDeletedRows");
+		 return gridId.getDeletedRows();
+	 }
+	 
+	 /*************************************************************
+		 * get inserted rows by user.
+		 * @param gridId Object : GridOne object
+		 * @return Array : of inserted rows.
+		 * @author  Chheav Hun
+		 *  */
+	 function getInsertedRows(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getInsertedRows");
+		 return gridId.getInsertedRows();
+	 }
+	 
+	 /*************************************************************
+		 * get rows at row index by user.
+		 * @param gridId Object : GridOne object
+		 * @return Object :  of row item
+		 * @author  Chheav Hun
+		 *  */
+	 function getRow(gridId,rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"getRow");
+		 return gridId.getRow(rowIndex);
+	 }
+	 
+	 /*************************************************************
+		 * get update rows by user. it will collect all update rows in crud column. 
+		 * @param gridId Object : GridOne object
+		 * @return  Array : of rows
+		 * @author  Chheav Hun
+		 *  */
+	 function getUpdatedRows(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getUpdatedRows");
+		 return gridId.getUpdatedRows();
+	 }
+	 
+	 /*************************************************************
+		 * get current page index
+		 * @param gridId Object : GridOne object
+		 * @return  int : of page
+		 * @author  Chheav Hun
+		 *  */
+	 function getCurrentPage(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getCurrentPage");
+		 return gridId.getCurrentPage();  
+	 }
+	 
+	 /*************************************************************
+		 * get page total 
+		 * @param gridId Object : GridOne object 
+		 * @return  Number : of pages
+		 * @author  Chheav Hun
+		 *  */
+	 function getPageTotal()
+	 {
+		 gridId.registerFunc(arrList,"getPageTotal");
+		 return gridId.getPageTotal(); 
+	 }
+	 
+	 /*************************************************************
+		 * get page count
+		 * @param gridId Object : GridOne object 
+		 * @return  Number : of page
+		 * @author  Chheav Hun
+		 *  */
+	 function getPagingCount(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getPagingCount");
+		 return gridId.getPagingCount();  
+	 }
+	 
+	 /*************************************************************
+		 * set scroll to row index
+		 * @param gridId Object : GridOne object 
+		 * @param rowIndex int : row index
+		 * @author  Chheav Hun
+		 *  */
+	 function scrollToRow(gridId,rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"scrollToRow");
+		 gridId.scrollToRow(rowIndex);  
+	 }
+	 
+	 /*************************************************************
+		 * set cell value 
+		 * @param gridId Object : GridOne object 
+		 * @param value Object : data object
+		 * @param rowIndex int : row index
+		 * @param fieldName String : columnKey name
+		 * @author  Chheav Hun
+		 *  */
+	 function setCell(gridId,value, rowIndex, fieldName)
+	 {
+		 gridId.registerFunc(arrList,"setCell");
+		 gridId.setCell(value, rowIndex, fieldName); 
+	 }
+	 
+	 /*************************************************************
+		 * get multiple cell index
+		 * @param gridId Object : GridOne object
+		 * @param: value Object :  value object of cell
+		 * @param: fieldName String : columnKey name
+		 * @param: returnFieldName String :  is the columnKey which result we want to get the value of it.
+		 * @returns Array : cells index
+		 * @author  Chheav Hun
+		 *  */
+	 function getCellIndexArray(gridId,value, fieldName, returnFieldName)
+	 {
+		 gridId.registerFunc(arrList,"getCellIndexArray");
+		 return gridId.getCellIndexArray(valueArray, rowIndexArray, fieldName); 
+	 }
+	 
+	 /*************************************************************
+		 * set value to multiple cells in one specific column.
+		 * the valueArray and rowIndexArray have to set in order and same length size. 
+		 * Ex: valueArray[1] must put in rowIndexArray[1].
+		 * @param gridId Object : GridOne object
+		 * @param valueArray Array :  values will be set
+		 * @param rowIndexArray Array : rows index will be get value
+		 * @param fieldName String : columnKey name
+		 * @author  Chheav Hun
+		 *  */
+	 function setCellArray(gridId,valueArray, rowIndexArray, fieldName)
+	 {
+		 gridId.registerFunc(arrList,"setCellArray");
+		 gridId.setCellArray(valueArray, rowIndexArray, fieldName);
+	 }
+	 
+	 /*************************************************************
+		 * set  cell padding left 
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param nRow int : rows index 
+		 * @param padding number : padding number
+		 * @author  Chheav Hun
+		 *  */
+	 function setCellPaddingLeft(gridId,columnKey,nRow,padding)
+	 {
+		 gridId.registerFunc(arrList,"setCellPaddingLeft");
+		 gridId.setCellPaddingLeft(columnKey,nRow,padding);
+	 }
+	 
+	 /*************************************************************
+		 * set show progress bar
+		 * @param gridId Object : GridOne object
+		 * @author  Chheav Hun
+		 *  */
+	 function showProgressBar(gridId)
+	 {
+		 gridId.registerFunc(arrList,"showProgressBar");
+		 gridId.showProgressBar( );
+	 }
+	 
+	 /*************************************************************
+		 * set hide progress bar
+		 * @param gridId Object : GridOne object
+		 * @author  Chheav Hun
+		 *  */
+	 function hideProgressBar(gridId)
+	 {
+		 gridId.registerFunc(arrList,"hideProgressBar");
+		 gridId.hideProgressBar( ); 
+	 }
+	 
+	 /*************************************************************
+		 * set hide progress bar
+		 * @param gridId Object : GridOne object
+		 * @returns String : of version
+		 * @author  Chheav Hun
+		 *  */
+	 function getVersion(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getVersion");
+		 return gridId.getVersion();
+	 }
+	 
+	 /*************************************************************
+		 * get selected items. work when "selectrow"=true 
+		 * @param gridId Object : GridOne object
+		 * @returns int : index of selected
+		 * @author  Chheav Hun
+		 *  */
+	 function getSelectedIndex(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getSelectedIndex");
+		 return  gridId.getSelectedIndex();
+	 }
+	 
+	 /*************************************************************
+		 * get selected item. work when "selectrow"=true 
+		 * @param gridId Object : GridOne object
+		 * @returns Object : of row data
+		 * @author  Chheav Hun
+		 *  */
+	 function getSelectedItem(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getSelectedItem");
+		 return gridId.getSelectedItem();
+	 }
+	 
+	 /*************************************************************
+		 * get all columns in dataGrid as array include some properties values, such as dataField,headerText,width.
+		 * @param gridId Object : GridOne object
+		 * @returns Array : of columns
+		 * @author  Chheav Hun
+		 *  */
+	 function getColumns(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getColumns");
+		 return gridId.getColumns();
+	 }
+	 
+	 /*************************************************************
+		 * getColCount: The number of columns to be displayed in a TileList control 
+		 * 				or items in a HorizontalList control. For the data grids, 
+		 * 				specifies the number of visible columns. 
+		 * @param gridId Object : GridOne object
+		 * @returns int : number of columns
+		 * @author  Chheav Hun
+		 *  */	
+	 function getColumnCount(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getColumnCount");
+		 return gridId.getColumnCount(); 
+	 }
+	 
+	 /*************************************************************
+		 * Add combo header value
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : ColumnKey name
+		 * @param label  String : label key
+		 * @param value  String : value  
+		 * @author  Chheav Hun
+		 *  */
+	 function addComboHeaderValue(gridId,columnKey, label, value)
+	 {
+		 gridId.registerFunc(arrList,"addComboHeaderValue");
+		 gridId.addComboHeaderValue(columnKey, label, value); 
+	 }
+	 
+	 /*************************************************************
+		 * import excel by active X
+		 * @param gridId Object : GridOne object
+		 * @param strData String : of data
+		 * @author  Chheav Hun
+		 *  */
+	 function importExcelByActiveX(gridId,strData)
+	 {
+		 gridId.registerFunc(arrList,"importExcelByActiveX");
+		 gridId.importExcelByActiveX(str); 
+	 }
+	 
+	 /*************************************************************
+		 * export excel by active X
+		 * @param gridId Object : GridOne object
+		 * @author  Chheav Hun
+		 *  */
+	 function exportExcelByActiveX(gridId)
+	 {
+		 gridId.registerFunc(arrList,"exportExcelByActiveX");
+		 gridId.exportExcelByActiveX();  
+	 }
+	 
+	 /*************************************************************
+		 * set data into grid with protocol format
+		 * @param gridId Object : GridOne object
+		 * @param protocolData String : protocal data
+		 * @author  Chheav Hun
+		 *  */
+	 function setDataObject(gridId,protocolData)
+	 {
+		 gridId.registerFunc(arrList,"setDataObject");
+		 gridId.setDataObject(protocolData);  
+	 }
+	 
+	 /*************************************************************
+		 * get data from grid with protocol format
+		 * @param gridId Object : GridOne object
+		 * @param selectedField Object : selected object (Optional)
+		 * @returns String : of data
+		 * @author  Chheav Hun
+		 *  */
+	 function getDataObject(gridId,selectedField)
+	 {
+		 gridId.registerFunc(arrList,"getDataObject");
+		 return gridId.getDataObject(selectedField); 
+	 }
+	 
+
+	 /*************************************************************
+		 * get data from grid with protocol format
+		 * @param gridId Object : GridOne object
+		 * @param protocolData String  :  protocal data
+		 * @author  Chheav Hun
+		 *  */
+	 function setProtocolData(gridId,protocolData)
+	 {
+		 gridId.registerFunc(arrList,"setProtocolData");
+		 gridId.setProtocolData(protocolData);  
+	 }
+	 
+	 /*************************************************************
+		 * set data from grid with protocol format
+		 * @param gridId Object : GridOne object
+		 * @param selectedField Object : selected object (Optional)
+		 * @author  Chheav Hun
+		 *  */
+	 function getProtocolData(gridId,selectedField)
+	 {
+		 gridId.registerFunc(arrList,"getProtocolData");
+		 return gridId.getProtocolData(selectedField); 
+	 }
+	 
+	 /*************************************************************
+		 * It will be called after getting data from the server
+		 * @param gridId Object : GridOne object
+		 * @author  Chheav Hun
+		 *  */
+	 function doEndQuery(gridId)
+	 {
+		 gridId.registerFunc(arrList,"doEndQuery");
+		 gridId.doEndQuery();  
+	 }
+	 
+	/*************************************************************
+		 * set activation for specified cell
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : columnKey name
+		 * @param nRow int : row index
+		 * @param strActivation String : activation key 
+		 * @author Chheav Hun
+		 *  */
+	 function setCellActivation(gridId,strColumnKey, nRow, strActivation)
+	 {
+		 gridId.registerFunc(arrList,"setCellActivation");
+		 gridId.setCellActivation(strColumnKey, nRow, strActivation);  
+	 }
+	 
+	 /*************************************************************
+		 * get activation for specified cell
+		 * @param gridId Object : GridOne object
+		 * @param strColumnKey String : columnKey name
+		 * @param nRow int : row index
+		 * @returns String :  activation key 
+		 * @author Chheav Hun
+		 *  */
+	 function getCellActivation(gridId,strColumnKey, nRow)
+	 {
+		 gridId.registerFunc(arrList,"getCellActivation");
+		 return gridId.getCellActivation(strColumnKey, nRow); 	 
+	 }
+	 
+
+	/*************************************************************
+		 * get text data
+		 * @param gridId Object : GridOne object
+		 * @param bhasColumnDataField Boolean : has column data field (Default = true)
+		 * @author Chheav Hun
+		 *  */
+	 function getTextData(gridId,bhasColumnDataField)
+	 {
+		 gridId.registerFunc(arrList,"getTextData");
+		 return gridId.getTextData(bhasColumnDataField);  
+	 }
+	 
+	 /*************************************************************
+		 * catch mouse click in browser when user click out of GridOne
+		 * @param gridId Object : GridOne object
+		 * @author Chheav Hun
+		 *  */
+	 function handlePressOutOfGridOne(gridId)
+	 {
+		 gridId.registerFunc(arrList,"handlePressOutOfGridOne");
+		 gridId.handlePressOutOfGridOne(); 
+	 }
+	 
+	 /*************************************************************
+	 * create row data to test performance
+	 * @param gridId Object : GridOne object
+	 * @param numRows int : number of rows
+	 * @param numCols int : number of columns
+	 * @param bisNormal Boolean : Default = true
+	 * @author Chheav Hun
+	 *  */
+	 function generateTestData(gridId,numRows,numCols,bisNormal)
+	 {
+		 gridId.registerFunc(arrList,"generateTestData");
+		 gridId.generateTestData(numRows,numCols,bisNormal);
+	 }
+	 
+	 /************************************************
+		 * insert column for datagrid
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param columnText String : header text
+		 * @param columnType String : column type (Ex: combo, text, calendar...)
+		 * @param maxLength int :  length of text in a cell, or length of a number
+		 * @param columnWidth int : column width
+		 * @param editable Boolean :  indicate whether column is editable or not
+		 * @param parentDataField  String : dataField of parent in case added column has parent
+		 * @param insertAt String : (support in two cases)=>
+		 * 		- index (insert at index).
+		 * 		- dataField (insert before dataField).
+		 * @author Chheav Hun
+		 */
+	 function  insertColumn(gridId,columnKey, columnText, columnType, maxLength, columnwidth, editable,parentDataField,insertAt)
+	 {
+		 gridId.registerFunc(arrList,"insertColumn");
+		 gridId.insertColumn(columnKey, columnText, columnType, maxLength, columnwidth, editable,parentDataField,insertAt); 
+	 }
+	 
+	 /*************************************************************
+		 * The function get data of client grid .
+		 * @param gridId Object : GridOne object
+		 * @param type String :  kind of data which want to get.
+		 * 		A: all.
+		 * 		If it has CRUD mode, I: Insert ; U:Update; D:Delete.
+		 * 		Eg: Type can be "A" ; "A+I"; "I+U+D";...
+		 * @param visibleType String : the status of row.
+		 * 		A: all ( include visible and invisible rows).
+		 * 		I: invisible (include invisible rows).
+		 * 		V: visible (include visible rows).
+		 * @param dataType String :  kind of data which wants to return (text | json)
+		 * @author Chheav Hun
+		 *  */
+	 function getClientDataString(gridId,type,visibleType,dataType)
+	 {
+		 gridId.registerFunc(arrList,"getClientDataString");
+		 return gridId.getClientDataString(type,visibleType,dataType);
+	 }
+	 
+	 /*************************************************************
+		 * set visible row according to order of setRowHide is reverted
+		 * @param gridId Object : GridOne object
+		 * @author Chheav Hun
+		 *  */
+	 function undoRowHide(gridId)
+	 {
+		 gridId.registerFunc(arrList,"undoRowHide");
+		 gridId.undoRowHide();
+	 }
+	 
+	 /*************************************************************
+		 * set multi rows is hidden
+		 * @param gridId Object : GridOne object
+		 * @param strListHideIndex String :  contain list of index to be set invisible rows
+		 * @param bHide Boolean : hide or not
+		 * @param isHandleBkDp Boolean : handler as backup or not
+		 * @author Chheav Hun
+		 *  */
+	 function setMultiRowsHide(gridId,strListHideIndex,bHide,isHandleBkDp)
+	 {
+		 gridId.registerFunc(arrList,"setMultiRowsHide");
+		 gridId.setMultiRowsHide(strListHideIndex,bHide,isHandleBkDp);
+	 }
+	 
+	 /*************************************************************
+		 * import array data into datagrid
+		 * @param gridId Object : GridOne object
+		 * @param arrData Array : of data
+		 * @param bValidate Boolean :  
+		 *       -true: get data from _bkdata
+		 *       -false: get data from dataprovider 
+		 * @author Chheav Hun
+		 *  */
+	 function setArrayData(gridId,arrData,bValidate)
+	 {
+		 gridId.registerFunc(arrList,"setArrayData");
+		 gridId.setArrayData(arrData,bValidate);
+	 }
+	 
+	 /*************************************************************
+		 * get data all datagrid as array 
+		 * @param gridId Object : GridOne object
+		 * @param isBackup Boolean : from backup or not (Default is false). (Optional)
+		 * @returns Array : of data object
+		 * @author Chheav Hun
+		 *  */
+	 function getArrayData(gridId,isBackup)
+	 {
+		 gridId.registerFunc(arrList,"getArrayData");
+		 return gridId.getArrayData(isBackup); 
+	 }
+	 
+	 /*************************************************************
+		 * get data from datagrid at row index
+		 * @param gridId Object : GridOne object
+		 * @param  rowIndex int : row index
+		 * @return Object :  item of that row index
+		 * @author Chheav Hun
+		 *  */
+	 function getItemAt(gridId,rowIndex)
+	 {
+		 gridId.registerFunc(arrList,"getItemAt");
+		 return gridId.getItemAt(rowIndex); 
+	 }
+	 
+	 /*************************************************************
+		 * set data 1 row into datagrid at row index
+		 * @param gridId Object : GridOne object
+		 * @param item  Object : data row
+		 * @param rIndex int :  row index
+		 * @author Chheav Hun
+		 *  */
+	 function setItemAt(gridId,item,rIndex)
+	 {
+		 gridId.registerFunc(arrList,"setItemAt");
+		 gridId.setItemAt(gridId,item,rIndex);  
+	 }
+	 
+	 /*************************************************************
+		 * get value from checkbox. it related to checkboxTrueValue, and checkboxFalseValue property setting.
+		 * User will get value  of checkbox based on what they set. (Ex: yes/no, 1/0, Y/N, T/F, true/false...)
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String :  columnKey name
+		 * @return String : checkbox value (Default 0 or 1). 
+		 * @author:Chheav Hun
+		 *  */
+	 function getCheckBoxValue(gridId,columnKey)
+	 {
+		 gridId.registerFunc(arrList,"getCheckBoxValue");
+		 return gridId.getCheckBoxValue(columnKey);  
+	 }
+	 
+	 /*************************************************************
+		 * get multiple selected items. work when "selectrow"=true 
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String :  columnKey name
+		 * @returns Array : of data selected rows
+		 * @author:Chheav Hun
+		 *  */
+	 function getSelectedIndexs(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getSelectedIndexs");
+		 return gridId.getSelectedIndexs();  
+	 }
+	 
+	 /*******************************************************6******
+		 * get group cell merge infor
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String : columnKey name
+		 * @param row int : row index
+		 * @returns Array : cell informations
+		 * @author: Chheav hun
+		 *  */
+	 function  getCellGroupMergeInfo(gridId,columnKey,row)
+	 {
+		 gridId.registerFunc(arrList,"getCellGroupMergeInfo");
+		 return gridId.getCellGroupMergeInfo(columnKey,row); 
+	 }
+	 
+	 /*************************************************************
+		 * dispatch event mouse up and down
+		 * @param gridId Object : GridOne object
+		 * @param funcName String :  can be "mouseUp", or "mouseDown"
+		 * @author Chheav Hun
+		 *  */
+	 function dispatchCustomEvent(gridId,funcName)
+	 {
+		 gridId.registerFunc(arrList,"dispatchCustomEvent");
+		 gridId.dispatchCustomEvent(funcName);  
+	 }
+	 
+	 /*************************************************************
+		 * set content for header GridOne 
+		 * @param gridId Object : GridOne object
+		 * @param imgurl String :  url of image. it must be path of server.
+		 * @param strText String :  is the title text of GridOne header 
+		 * @author Chheav Hun
+		 *  */
+	 function setHeaderContent(gridId,imgurl,strText)
+	 {
+		 gridId.registerFunc(arrList,"setHeaderContent");
+		 gridId.setHeaderContent(imgurl,strText);   
+	 }
+	 
+	 /*************************************************************
+		 * add  data into dynamic comboBox 
+		 * @param gridId Object : GridOne object
+		 * @param columnKey String: columnKey name
+		 * @param strText String : label key 
+		 * @param strValue String : value key
+		 * @param jsonData Object : data json for combo
+		 * @author: Chheav Hun
+		 *  */
+	 function addDynamicComboList(gridId,columnKey,strText,strValue,jsonData)
+	 {
+		 gridId.registerFunc(arrList,"addDynamicComboList");
+		 gridId.addDynamicComboList(columnKey,strText,strValue,jsonData);   
+	 }
+	 
+	 /*************************************************************
+		 * set visible of GridOne header
+		 * @param gridId Object : GridOne object
+		 * @param bHeader Boolean : allow visible header for GridOne or not (Default =false)
+		 * @author Chheav Hun
+		 *  */
+	 function setGridOneHeaderVisible(gridId,bHeader)
+	 {
+		 gridId.registerFunc(arrList,"setGridOneHeaderVisible");
+		 gridId.setGridOneHeaderVisible(bHeader);  
+	 }
+	 
+	 /*************************************************************
+		 * set gridone header image by url
+		 * @param gridId Object : GridOne object
+		 * @param url String : is path image at server
+		 * @author Chheav Hun
+		 *  */
+	 function setGridOneHeaderImage(gridId,url)
+	 {
+		 gridId.registerFunc(arrList,"setGridOneHeaderImage");
+		 gridId.setGridOneHeaderImage(url); 
+	 }
+	 
+	 /*************************************************************
+		 * set gridone header title  
+		 * @param gridId Object : GridOne object
+		 * @param strheader String :  is text that will be display on header of GridOne.
+		 * @param strHeaderTitle String : set text header titler for GridOne
+		 * @author Chheav Hun
+		 *  */
+	 function setGridOneHeaderTitle(gridId,strHeaderTitle)
+	 {
+		 gridId.registerFunc(arrList,"setGridOneHeaderTitle");
+		 gridId.setGridOneHeaderTitle(strHeaderTitle); 
+	 }
+	 
+	 /*************************************************************
+		 * get dataField index
+		 * @param gridId Object : GridOne object 
+		 * @author Chheav Hun
+		 *  */
+	 function getDataFieldIndex(gridId)
+	 {
+		 gridId.registerFunc(arrList,"getDataFieldIndex");
+		 return gridId.getDataFieldIndex(); 
+	 }
+	 
+	 /*************************************************************
+		 * allow itemEditor release and update datagrid
+		 * @param gridId Object : GridOne object 
+		 * @param strReason String : put reason for end edit (Default =null). (Optional)
+		 * @author Chheav Hun
+		 *  */
+	 function endEditWithReason(gridId,strReason)
+	 {
+		 gridId.registerFunc(arrList,"endEditWithReason");
+		 gridId.endEditWithReason(strReason);
+	 }
+ 
+	 /*************************************************************
+		 * Set the column is visible or not
+		 * @param gridId Object : GridOne object 
+		 * @param columnKey String :  columnKey name
+		 * @param isHide Boolean :  Is true if visible; is false if invisible 
+		 * @author Chheav Hun
+		 *  */		
+	 function setColHide(gridId,columnKey,isHide)
+	 {    
+		 gridId.registerFunc(arrList,"setColHide");
+		 gridId.setColHide(columnKey,isHide);
+	 }
+	 
+	 /*************************************************************
+		 * set row height. this property will apply to all rows in datagrid.
+		 * @param gridId Object : GridOne object 
+		 * @param nHeight Number :  row height
+		 * @author Chheav Hun
+		 *  */	
+	 function setRowHeight(gridId,nHeight)
+	 {
+		 gridId.registerFunc(arrList,"setRowHeight");
+		 gridId.setRowHeight(nHeight);
+	 }
+	 
+	 /*************************************************************
+		 * allow enable data grid option.
+		 * @param gridId Object : GridOne object 
+		 * @param bEnable Boolean : true = enable, false = not enable to work with.
+		 * @author Chheav Hun
+		 *  */	
+	 function enableDataGrid(gridId,bEnable)
+	 {
+		 gridId.registerFunc(arrList,"enableDataGrid");
+		 gridId.enableDataGrid(bEnable);
+	 }
+	 
+	 /*************************************************************
+		 * setColCellFgColor: Set foreground color to column
+		 * @param gridId Object : GridOne object 
+		 * @param columnKey The name of dataField column
+		 * @author Chheav Hun
+		 *  */			
+	 function  setColCellFgColor(gridId, columnKey , color ) 
+	 {
+		 gridId.setColCellFgColor(columnKey, color);			
+	 }	
+     
+     

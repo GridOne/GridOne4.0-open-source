@@ -1,0 +1,335 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+package kr.co.actsone.itemRenderers
+{
+	import flash.display.DisplayObject;
+	import flash.events.MouseEvent;
+	import flash.text.TextLineMetrics;
+	
+	import kr.co.actsone.common.Global;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridListData;
+	
+	import mx.controls.PopUpMenuButton;
+	import mx.controls.listClasses.BaseListData;
+	import mx.core.IUITextField;
+	import mx.core.UITextField;
+	import mx.events.FlexEvent;
+	import mx.events.MenuEvent;
+	
+	public class MultiComboRenderer extends ExUIComponent
+	{
+		protected var popupMenuBtn:PopUpMenuButton;
+		protected var label:IUITextField;
+		
+		[Bindable]
+		private var items:Array=[];
+		
+		[Bindable]
+		public var isStrikeThrough:Boolean;
+		
+		public var strOldValue:String="";
+		
+		private var _maxRowCount:int = 0;
+		
+		public function MultiComboRenderer()
+		{
+			super();
+			tabEnabled = false;
+		}
+		
+		/******************************************************************************************
+		 * Create child objects of the component.
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override protected function createChildren():void
+		{
+			super.createChildren();
+			if (!popupMenuBtn)
+			{
+				popupMenuBtn = new PopUpMenuButton();
+				this.popupMenuBtn.openAlways = true;
+				this.popupMenuBtn.styleName = this;
+				popupMenuBtn.addEventListener(MenuEvent.ITEM_CLICK, itemClickHandler);
+				addChild(DisplayObject(popupMenuBtn));
+			}
+			
+			if (!label)
+			{
+				label = IUITextField(createInFontContext(UITextField));
+				label.styleName = this;
+				addChild(DisplayObject(label));
+			}
+		}
+		
+		/******************************************************************************************
+		 * Handle item click handler
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		protected function itemClickHandler(event:MenuEvent):void
+		{
+			var originalText:String = label.text;
+			var provider:Array=this.column.multiComboArr;
+			var isStop:Boolean = false;
+			for each(var item:Object in provider)
+			{
+				for each(var child:Object in item.children)
+				{
+					if(child.value ==  event.item.value)
+					{
+						popupMenuBtn.label =  item.label.toString()+"-"+child.label.toString();
+						label.text = popupMenuBtn.label;
+						isStop = true;
+						break;
+					}
+				}
+				if(isStop)
+					break;
+			}
+			if(originalText != label.text)
+			{
+				data[dataField] = child.value;
+				if(strike.parent)
+					this.removeChild(strike);
+				drawStrikeThrough(this.label);
+			}
+		}
+		
+		/******************************************************************************************
+		 * Processes the properties set on the component
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override protected function commitProperties():void
+		{
+			super.commitProperties();
+			if(this.listData)
+			{
+				var activation:String=this.listOwner.getCellProperty('activation',data[Global.ACTSONE_INTERNAL],dataField);
+				if(activation == null)
+					activation = column.cellActivation;
+				var showCombo:Boolean=(listOwner.strCellClickAction != Global.ROWSELECT) && (activation==Global.EDIT);
+				
+				label.visible=!showCombo;
+				label.includeInLayout=!showCombo;	
+				this.popupMenuBtn.visible = showCombo;
+				this.popupMenuBtn.includeInLayout = showCombo;
+				this.popupMenuBtn.dataProvider=column.multiComboArr;
+				
+				_isStrikeThrough = isStrikeThroughText();
+				label.text = "";
+				var provider:Array=this.column.multiComboArr;
+				var isStop:Boolean = false;
+				for each(var item:Object in provider)
+				{
+					for each(var child:Object in item.children)
+					{
+						if(child.value ==  data[dataField])
+						{
+							popupMenuBtn.label =  item.label.toString()+"-"+child.label.toString();
+							label.text = popupMenuBtn.label;
+							isStop = true;
+							break;
+						}
+					}
+					if(isStop)
+						break;
+				}
+				var dataTips:Boolean = listOwner.showDataTips;
+				if (column.showDataTips == true)
+					dataTips = true;
+				if (column.showDataTips == false)
+					dataTips = false;
+				if (dataTips)
+				{
+					if (!(data is ExAdvancedDataGridColumn) && (column.dataTipFunction || column.dataTipField 
+						|| listOwner.dataTipFunction || listOwner.dataTipField))
+					{
+						toolTip = column.itemToLabel(data,true);
+					}
+					else
+					{
+						toolTip = null;
+					}
+				}
+				else
+				{
+					toolTip = null;
+				}
+			}
+			invalidateDisplayList();
+		}
+		
+		/******************************************************************************************
+		 * Draws the object and/or sizes and positions its children.
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+		{
+			super.updateDisplayList(unscaledWidth, unscaledHeight);
+			if(popupMenuBtn.visible && popupMenuBtn.includeInLayout)
+			{
+				this.popupMenuBtn.move(0,0);
+				this.popupMenuBtn.setActualSize(unscaledWidth,unscaledHeight);
+				
+				if(listOwner.nCellPadding)
+					this.popupMenuBtn.setStyle('textIndent',listOwner.nCellPadding);
+				
+				drawStrikeThrough(this.popupMenuBtn);
+			}
+			if(label.visible && label.includeInLayout)
+			{
+				this.label.move(0,0);
+				var startX:Number = 0;
+				if(this.listOwner && this.listOwner.nCellPadding)
+				{
+					startX += this.listOwner.nCellPadding;
+				}
+
+				this.label.setActualSize(unscaledWidth - startX, unscaledHeight);
+				
+				var textAlign:String = getStyle("textAlign");
+				if (textAlign == "left")
+				{
+					label.x = startX;
+				}
+				else if (textAlign == "right")
+				{
+					label.x = unscaledWidth - startX - label.width + 2; // 2 for gutter
+				}
+				else
+				{
+					label.x = (unscaledWidth - label.width) / 2  - startX;
+				}
+				
+				drawStrikeThrough(this.label);
+			}
+			//because some reason, this style is cleaned. We need to re-set it again.
+			this.setStyle('textDecoration',column.getStyle('textDecoration'));
+		}
+		
+		/******************************************************************************************
+		 * override to draw strike through text in case combobox
+		 * in case label still keeps parent method to draw 
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override public function drawStrikeThrough(appObj:*):void
+		{
+			if(!strike.parent)
+				this.addChild(strike);
+			this.strike.graphics.clear();
+			var align:String=this.popupMenuBtn.getStyle("textAlign");
+			var y:int=0;
+			var x:int=0;
+			var i:int=0;
+			var metrics:TextLineMetrics;
+			if(popupMenuBtn.visible && popupMenuBtn.includeInLayout)
+			{
+				if (_isStrikeThrough && this.label.text != "" && this.label)
+				{
+					this.strike.graphics.moveTo(0, 0);
+					this.strike.graphics.lineStyle(1, this.getStyle("color"), 1);
+					if(align=="center")
+					{
+						x=this.width/2-this.label.textWidth/2-this.popupMenuBtn.getStyle('arrowButtonWidth')/2 + 1;
+						if(listOwner.nCellPadding)
+							x += listOwner.nCellPadding;
+					}
+					else if(align=="right")
+					{
+						x=this.width-this.label.textWidth-2;
+					}
+					else
+					{
+						x = 2;
+						if(listOwner.nCellPadding)
+							x += listOwner.nCellPadding;
+					}
+					for (i=0; i < this.label.numLines; i++)
+					{
+						metrics=this.label.getLineMetrics(i);
+						if (i == 0)
+						{
+							y+=(metrics.ascent * 0.66) + 2 + 2;
+						}
+						else
+						{
+							y+=metrics.height+2;
+						}
+						this.strike.graphics.moveTo(x, y);
+						this.strike.graphics.lineTo(x+metrics.width-1, y);
+					}
+				}
+			}
+			else if (label.visible && label.includeInLayout)
+			{
+				super.drawStrikeThrough(this.label);
+			}
+		}
+		
+		/******************************************************************************************
+		 * Apply color of cell
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override public function validateNow():void
+		{
+			super.validateNow();
+			if(popupMenuBtn.visible && popupMenuBtn.includeInLayout)
+			{
+				applyColor(this.popupMenuBtn,this.getStyle('color'));
+			}
+			if(label.visible && label.includeInLayout)
+			{
+				if (data && parent)
+				{
+					var newColor:Number = getCurentColor();
+					var oldColor:* = label.textColor;
+					if (oldColor != newColor)
+					{
+						label.setColor(newColor);
+						invalidateDisplayList();
+					}
+				}
+			}
+		}
+		
+		/******************************************************************************************
+		 * Get accessibility name for screen reader
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override public function getAccessibilityName():String
+		{
+			//return "Component is Multi Combo. Value is " + this.label.text;
+			
+			var strReader:String = this.column.strAccessReader;
+			
+			if (strReader && strReader.length > 0) // Parse value in strAccessReader 
+			{
+				if (strReader.indexOf(Global.ACCESS_READER_CONTROLTYPE) > -1)
+				{
+					strReader = strReader.replace(Global.ACCESS_READER_CONTROLTYPE, Global.ACCESS_READER_MULTICOMBOBOX);
+					if (strReader.indexOf(Global.ACCESS_READER_CELLVALUE) > -1)
+						strReader = strReader.replace(Global.ACCESS_READER_CELLVALUE, this.label.text);
+				}
+				else // don't have control type in strAccessReader
+				{
+					if (strReader.indexOf(Global.ACCESS_READER_CELLVALUE) > -1)
+						strReader = strReader.replace(Global.ACCESS_READER_CELLVALUE, this.label.text);
+				}
+				//				trace("Label Renderer strReader != null: " + strReader);
+			}
+			else // make column default information
+			{
+				strReader = Global.ACCESS_READER_COLUMN_DEFAULT + " " + Global.ACCESS_READER_CONTROL + " " + 
+					Global.ACCESS_READER_MULTICOMBOBOX + " " + Global.ACCESS_READER_CELL + " " + this.label.text;
+				//				trace("Label Renderer strReader == null: " + strReader);
+			}
+			return strReader;
+		}
+		
+	}
+}

@@ -1,0 +1,398 @@
+<!--////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+//	This program is free software: you can redistribute it and/or modify
+//	it under the terms of the GNU General Public License as published by
+//	the Free Software Foundation, either version 3 of the License, or
+//	(at your option) any later version.
+//
+//	This program is distributed in the hope that it will be useful,
+//	but WITHOUT ANY WARRANTY; without even the implied warranty of
+//	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//	GNU General Public License for more details.
+//
+//	You should have received a copy of the GNU General Public License
+//	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+////////////////////////////////////////////////////////////////////////////////-->
+
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"  
+		 verticalScrollPolicy="off" focusEnabled="true"
+		 horizontalScrollPolicy="off"
+		 verticalAlign="middle" horizontalAlign="center" verticalGap="0" backgroundAlpha="1"
+		 paddingTop="2" paddingBottom="2"
+		 implements="mx.controls.listClasses.IDropInListItemRenderer"
+		 creationComplete="creationCompleteHandler(event)"
+		 >
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import flash.utils.setTimeout;
+			
+			import kr.co.actsone.common.Global;
+			import kr.co.actsone.controls.ExAdvancedDataGrid;
+			import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+			import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridListData;
+			import kr.co.actsone.events.ExAdvancedDataGridEvent;
+			import kr.co.actsone.events.SAEvent;
+			
+			import mx.collections.ArrayList;
+			import mx.controls.listClasses.BaseListData;
+			import mx.core.FlexGlobals;
+			import mx.events.DropdownEvent;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			
+ 			[Bindable]
+ 			public var myComboString:Object;
+ 			
+			private var oldDataIndex:int;
+			private var oldDataValue:String="";
+			
+			private var _listData:ExAdvancedDataGridListData;
+			private var listOwner:ExAdvancedDataGrid;
+			private var column:ExAdvancedDataGridColumn;
+			[Bindable]
+			private var items:Array=[];
+			private var _maxRowCount:int = 3;
+			
+			private var _isfirstOpen:Boolean = true;
+			private var _dropdownRealHeight:int;	//save dropdown height at first open combo
+			
+			public function set listData(value:BaseListData):void
+			{
+				_listData = ExAdvancedDataGridListData(value);
+				if (_listData)
+				{
+					listOwner=this.listData.owner as ExAdvancedDataGrid;	
+					column=listOwner.columns[this.listData.columnIndex];	
+				}
+			}
+			
+			public function get listData():BaseListData
+			{
+				return _listData;
+			}
+			
+			/**************************************************************************
+			 * Get data field of column
+			 * @author Duong Pham 
+			 **************************************************************************/
+			public function get dataField():String
+			{
+				if(this.listData == null)
+					return null;
+				return listOwner.columns[this.listData.columnIndex].dataField;
+			}
+			
+			// Implement the drawFocus() method for the VBox.
+			//			override public function drawFocus(isFocus:Boolean):void 
+			//			{
+			//				super.drawFocus(isFocus);
+			//				if(isFocus)
+			//				{
+			//					combo.setFocus();
+			//				}
+			//			}
+			
+			override public function get data():Object 
+			{
+				return super.data;
+			}
+			
+			override public function set data(value:Object):void 
+			{		
+				super.data = value;
+				if(_listData)
+				{
+					if(data[dataField+Global.COMBO_KEY_CELL]!=null && data[dataField+Global.COMBO_KEY_CELL]!=undefined)
+					{
+						items=this.column.listCombo[this.column.indexComboKeyArr[data[dataField+Global.COMBO_KEY_CELL]]];
+					}
+					else
+					{
+						items=this.column.listCombo[this.column.comboKey];						
+					}
+					combo.dataProvider = items;
+					//					combo.data=value[_listData.dataField];
+					if (this.data[dataField] == null)
+					{
+						oldDataValue = this.data[dataField]="";
+					}
+					if (data[dataField + Global.SELECTED_COMBO_INDEX] == null)
+					{
+						if (data[dataField] != null && items != null)
+						{
+							for (var i:int=0; i < items.length; i++)
+							{
+								if (data[dataField] == items[i]["value"])
+								{
+									oldDataIndex = combo.selectedIndex=i;
+									data[dataField + Global.SELECTED_COMBO_INDEX]=i;
+									break;
+								}
+							}
+							if (i == items.length)
+								oldDataIndex =combo.selectedIndex=-1;
+						}
+					}
+					else
+					{
+						oldDataIndex = combo.selectedIndex=parseInt(data[dataField + Global.SELECTED_COMBO_INDEX]);
+						data[dataField]=combo.selectedItem!=null?combo.selectedItem["value"]:"";
+					}
+					oldDataValue = data[dataField];
+					if(this.column.comboRowCount<0){
+						_maxRowCount =(items!=null?items.length:0); 
+					}else{
+						_maxRowCount = this.column.comboRowCount>(items!=null?items.length:0)?(items!=null?items.length:0):this.column.comboRowCount;
+					}
+					this.width = column.width;
+					this.height = listOwner.rowHeight;
+					combo.rowCount = _maxRowCount;
+				}
+			}
+			
+			/******************************************************************************************
+			 * get index of a value in combo
+			 * @author Duong Pham
+			 ******************************************************************************************/
+			private function getIndexComboItem(value:Object):int
+			{
+				for (var i:int=0; i < this.combo.dataProvider.length; i++)
+				{
+					if (combo.dataProvider[i]!=null && combo.dataProvider[i].value == value)
+						return i;
+				}
+				return -1;
+			}
+			
+			/******************************************************************************************
+			 * Handler of dropdown event when closing combobox
+			 * @author Duong Pham
+			 ******************************************************************************************/
+			private function closeComboHandler(event:DropdownEvent):void
+			{
+				this.column.isOpenningCombo=false;
+				if (enabled && data && dataField != "")
+				{
+					this.data[this.dataField + Global.SELECTED_COMBO_INDEX]=event.currentTarget.selectedIndex;
+					
+					var saEvent:SAEvent=new SAEvent(SAEvent.ON_COMBO_CHANGE, true);
+					saEvent.strOldValue=data[dataField];
+					saEvent.oldIndex=getIndexComboItem(data[dataField]);
+					saEvent.newIndex=this.combo.selectedIndex;
+					saEvent.strNewValue = combo.selectedItem!=null?combo.selectedItem.value:"";
+					saEvent.columnKey=dataField;
+					saEvent.nRow=this.listOwner.getItemIndex(this.data);
+					callLater(dispatchComboEvent,[saEvent]);
+					//					if (saEvent.strOldValue != saEvent.strNewValue)
+					//					{
+					//						saEvent.columnKey=dataField;
+					//						saEvent.nRow=this.listOwner.getItemIndex(this.data);
+					//						callLater(dispatchComboEvent,[saEvent]);
+					//						try
+					//						{
+					//							this.data[this.dataField + Global.SELECTED_COMBO_INDEX]=saEvent.newIndex;
+					//						}
+					//						catch (error:Error)
+					//						{
+					//						}
+					//					}
+				}
+			}
+			
+			/******************************************************************************************
+			 * dispatch event on combo change 
+			 * @author Duong Pham
+			 ******************************************************************************************/
+			private function dispatchComboEvent(event:SAEvent):void
+			{
+				this.listOwner.dispatchEvent(event);
+			}
+			
+			/******************************************************************************************
+			 * Handler of drop down event when opening combobox
+			 * @author Duong Pham
+			 ******************************************************************************************/
+			private function openComboHandler(event:DropdownEvent):void
+			{
+				this.column.isOpenningCombo=true;
+				//				dropdownSizeCheck();					//prevent case open the combo in the last row	
+			}
+			
+			/******************************************************************************************
+			 * handle for edit combo by keyboard event
+			 * @author Duong Pham
+			 ******************************************************************************************/
+			private function editComboByKeyBoardHandler(exEvent:ExAdvancedDataGridEvent):void
+			{
+				var event:KeyboardEvent=exEvent.keyEvent;
+				onKeyDownHandler(event);
+			}
+			
+			/******************************************************************************************
+			 * handle keydown event handler
+			 * @author Thuan
+			 ******************************************************************************************/		
+			private function onKeyDownHandler(event:KeyboardEvent):void
+			{
+				var vScrollIndex:int;
+				if(event.keyCode==Keyboard.F2)
+				{
+					if(this.combo.dropdown!=null && this.combo.dropdown.visible)
+						this.combo.close();
+					else
+						this.combo.open();
+				}
+				else if(this.combo.dropdown!=null && this.combo.dropdown.visible && event.keyCode.toString()=="40")
+				{
+					this.combo.dropdown.selectedIndex=this.combo.dropdown.selectedIndex+1<this.combo.dropdown.dataProvider.length?this.combo.dropdown.selectedIndex+1:this.combo.dropdown.selectedIndex;
+					vScrollIndex=this.combo.dropdown.selectedIndex-this.combo.dropdown.rowCount+1;
+					this.combo.dropdown.verticalScrollPosition=(vScrollIndex>0)?vScrollIndex:0;
+				}else if(this.combo.dropdown!=null && this.combo.dropdown.visible && event.keyCode.toString()=="38")
+				{
+					this.combo.dropdown.selectedIndex=this.combo.dropdown.selectedIndex-1>=0?this.combo.dropdown.selectedIndex-1:0;
+					vScrollIndex=this.combo.dropdown.selectedIndex-this.combo.dropdown.rowCount+1;
+					this.combo.dropdown.verticalScrollPosition=(vScrollIndex>0)?vScrollIndex:0;
+				}else if(this.combo.dropdown!=null && this.combo.dropdown.visible && event.keyCode.toString()=="13")
+				{
+					this.combo.close();
+				}
+				//dispatch event keyboard to outside perform function
+				if(event.keyCode==Keyboard.ESCAPE)
+				{
+					if(!this.listOwner.keepValueAfterESC)
+						data[dataField + Global.SELECTED_COMBO_INDEX] = oldDataIndex;
+					var kboardEvent:KeyboardEvent = new KeyboardEvent(KeyboardEvent.KEY_DOWN,true,false,event.charCode,event.keyCode,event.keyLocation,event.ctrlKey,event.altKey,event.shiftKey);
+					this.dispatchEvent(kboardEvent);
+				}
+				else if(event.keyCode == Keyboard.TAB && column.isOpenningCombo==true)
+				{
+					//keep old value
+					data[dataField + Global.SELECTED_COMBO_INDEX] = oldDataIndex;
+ 			    	data[dataField] = myComboString = oldDataValue;
+					data[dataField] = oldDataValue;
+					combo.selectedIndex = oldDataIndex;
+					combo.validateNow();
+				}
+				else if((event.keyCode == Keyboard.UP || event.keyCode == Keyboard.DOWN || event.keyCode == Keyboard.RIGHT || event.keyCode == Keyboard.LEFT)
+					&& column.isOpenningCombo==false)
+				{
+					listOwner.onKeyDownHandler(event);
+				}
+			}
+			
+			/******************************************************************************************
+			 * update size of combo when combo is opening
+			 * @author Duong Pham
+			 ******************************************************************************************/
+			private function dropdownSizeCheck():void{
+				if(_isfirstOpen){
+					_dropdownRealHeight = this.combo.dropdown.height;
+				}
+				
+				_isfirstOpen = false;
+				var _isDispRealHeight:Boolean = false;	//display real height or not
+				
+				var remainHeight:int = FlexGlobals.topLevelApplication.height- (this.listOwner.headerHeight+this.listOwner.rowHeight+this.y);
+				if(_dropdownRealHeight <= remainHeight){	//remainHeight is greater than or equal dropdown height.			
+					_isDispRealHeight = true;
+				}else if(_dropdownRealHeight > remainHeight && 
+					_dropdownRealHeight <= this.listOwner.headerHeight+this.y){	
+					//dropdown height is greater than remainHeight and 
+					//dropdown height is less than or equal top area height 
+					_isDispRealHeight = true;
+				}else{
+					_isDispRealHeight = false;
+				}
+				
+				if(!_isDispRealHeight){
+					var idx:int = Math.max(this.listOwner.headerHeight+this.y,remainHeight);
+					
+					if(this.combo.dropdown.y<0){	
+						this.combo.dropdown.y = 1;
+//												this.combo.rowCount = (this.exGrid.headerHeight+this.y -1)/20;
+					}else if(this.combo.dropdown.y < this.y){
+//												this.combo.rowCount = (this.exGrid.headerHeight+this.y -1)/20;
+					}
+					
+					if(remainHeight-1 < 20){
+						this.combo.rowCount = Math.min((this.listOwner.headerHeight+this.y -1)/20,_maxRowCount);
+						this.combo.dropdown.y = FlexGlobals.topLevelApplication.height - remainHeight - (this.combo.rowCount*20) - this.listOwner.rowHeight;
+					}else{
+						var rowCount:int = Math.min((remainHeight-1)/20,_maxRowCount);
+						if(rowCount != 1)
+							this.combo.rowCount = Math.min((remainHeight-1)/20,_maxRowCount);
+						else{
+							this.combo.rowCount = Math.max((remainHeight-1)/20,(FlexGlobals.topLevelApplication.height-remainHeight-this.listOwner.rowHeight)/20);
+							this.combo.dropdown.y = FlexGlobals.topLevelApplication.height - remainHeight - (this.combo.rowCount*this.combo.dropdown.rowHeight)-this.listOwner.rowHeight;
+						}
+					} 
+				}else{
+					if(remainHeight <= this.listOwner.headerHeight+this.y){
+						this.combo.rowCount = Math.min((this.listOwner.headerHeight+this.y -1)/20,_maxRowCount);						
+					}else{
+						this.combo.rowCount = Math.min((remainHeight-1)/20,_maxRowCount);
+					}
+					if(this.combo.rowCount == 1)
+						this.combo.dropdown.height = 20;
+					
+					if(remainHeight-1 < 20){
+						this.combo.dropdown.y = FlexGlobals.topLevelApplication.height - remainHeight - (this.combo.rowCount*20) - this.listOwner.rowHeight;
+					}
+				}
+			}
+			
+			/******************************************************************************************
+			 * handle create complete handler
+			 * @author Duong Pham
+			 ******************************************************************************************/
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+			//	this.addEventListener(ExAdvancedDataGridEvent.COMBO_KEY_DOWN,editComboByKeyBoardHandler);
+				combo.setFocus();
+				//draw focus for combo
+				//	combo.drawFocus(true);
+				//draw border color when cell is focus
+				//				this.graphics.lineStyle(0.3,listOwner.getStyle('focusColor'));
+				//				this.graphics.drawRect(-2,1,this.width+3,this.height-3);
+			}
+			
+			/******************************************************************************************
+			 * handle open combobox when pressing F2
+			 * It is refered from itemEditorItemEditBeginHandler in ExAdvancedDataGridBaseEx.
+			 * @author Duong Pham
+			 ******************************************************************************************/
+			public function openCombo():void
+			{
+				//				if(this.combo)
+				//				{
+				//					combo.open();
+				//					combo.setFocus();
+				//				}
+			}
+		]]>
+	</fx:Script>
+
+	<mx:ComboBox id="combo" editable="false" width="{this.width}" height="{this.height*0.83}"
+				 close="closeComboHandler(event)"
+				 open="openComboHandler(event)"
+				 keyDown="onKeyDownHandler(event)"  
+				 /> 
+	<!--
+	<s:ComboBox id="combo"  width="{this.width}" height="{this.height*0.83}">
+		<s:layout>
+			<s:VerticalLayout gap="0" horizontalAlign="left" requestedRowCount="3" requestedMaxRowCount="3" requestedMinRowCount="1" horizontalScrollPosition="0">
+			</s:VerticalLayout>
+		</s:layout>
+	</s:ComboBox>-->
+</mx:VBox>

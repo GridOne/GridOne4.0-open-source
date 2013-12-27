@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Demo </title> 
+<script type="text/javascript" src="jquery19.js"></script>
+<script type="text/javascript" src="GridOne.js"></script>
+<script type="text/javascript" src="dataJson.js"></script>
+<script type="text/javascript">
+		 $(document).ready(function () {
+	  	   //  clickevent_fade.Open();
+		 });
+	</script>
+	<script type="text/javascript">
+		 $(document).ready(function () {
+		 	//setAppDepart("app_depart", "1");
+		 // 	$("#SPAN_ENROL_DEPART select").kendoDropDownList();
+			
+		 });
+
+		var Grid1 = null;
+		var flatJSONData = null;
+		var SaveBit = 0;
+
+		function ONEinitializeHandler() {
+			Grid1 = document.GridOne1;
+			setHeader(Grid1);
+			Grid1.createEvent("boundHeaderComplete", "ONEboundHeaderCompleteHandler1");
+			Grid1.createEvent("onCellClick", "onCellClickHandler1");
+			Grid1.createEvent("onCellDblClick", "onCellDblClickHandler1");
+			Grid1.createEvent("onRowVisible","onRowVisibleHandler");
+		}
+        var nrow;
+		function onRowVisibleHandler(event)
+		{
+			nrow=event.totalRow;
+            document.getElementById("total1").innerHTML=nrow;
+			//alert("row count : " + event.totalRow);
+		}
+        
+		function setHeader(GridObj) {
+		    GridObj.addHeader("test","No","autonumber",50,50,false);
+			GridObj.addHeader("virnum", "NO", "text", 10, 50, false);
+			GridObj.addHeader("SR_IDX", "학적관리번호", "text", 200, 10, false);
+			GridObj.addHeader("GROUP_NAME", "계열", "text", 100, 90, false);
+			GridObj.addHeader("DEPART_NAME", "학과", "text", 100, 90, false);
+			GridObj.addHeader("ENROL_GRADE", "학년", "text", 100, 60, false, "center");
+			GridObj.addHeader("STUD_NO", "학번", "text", 100, 80, false, "center");
+			GridObj.addHeader("STUD_KOR_NAME", "성명", "text", 100, 80, false);
+			GridObj.addHeader("SERIAL_NUMBER", "주민번호", "text", 100, 100, false);
+			GridObj.addHeader("ENROL_STATE_NAME", "학적상태", "text", 100, 80, false, "center");
+
+			GridObj.addHeader("ENROL_GROUP", "계열", "text", 100, 90, false);
+			GridObj.addHeader("ENROL_DEPART", "학과", "text", 100, 90, false);
+
+			GridObj.addHeader("ENTRA_COMPLETION", "이수과정", "text", 100, 90, false);
+			GridObj.addHeader("COMPLETION", "이수과정명", "text", 100, 90, false);
+			GridObj.addHeader("ENTRA_COMP_DEPART", "이수과정학과", "text", 100, 90, false);
+			GridObj.addHeader("COMP_NAME", "이수과정학과명", "text", 100, 90, false);
+			GridObj.addHeader("STUD_CLASS_NAME", "반코드명", "text", 100, 90, false);
+			GridObj.addHeader("ENROL_STATE", "학적상태", "text", 100, 90, false);
+
+			GridObj.addHeader("GET_CREDIT_CNTI", "이수학점", "text", 100, 90, false);
+			GridObj.addHeader("SCORE_PER_CNTI", "빅분율성적(누적)", "text", 100, 90, false);
+			GridObj.addHeader("GPA_AVERAGE_CNTI", "평점평균(누적)", "text", 100, 90, false);
+
+			GridObj.addHeader("V_TARGET_NAME", "보훈대상자명", "text", 100, 90, false);
+			GridObj.addHeader("V_RELATION", "보훈대상자관계", "text", 100, 90, false);
+			GridObj.addHeader("V_NO", "보훈번호", "text", 100, 90, false);
+
+			GridObj.addHeader("IS_REGI", "등록상태", "text", 100, 90, false);
+
+			GridObj.addHeader("TMP", "", "text", 100, 1, false);
+
+			GridObj.boundHeader();
+
+			//GridObj.addImageList("SR_IDX", "/img/sub/bt_inquiry.gif");
+
+			setCommonProperties(GridObj);
+
+			GridObj.setColHide("SR_IDX", 1); /*hide*/
+			GridObj.setColHide("ENROL_GROUP", 1); /*hide*/
+			GridObj.setColHide("ENROL_DEPART", 1); /*hide*/
+
+			GridObj.setColHide("ENTRA_COMPLETION", 1); /*hide*/
+			GridObj.setColHide("COMPLETION", 1); /*hide*/
+			GridObj.setColHide("ENTRA_COMP_DEPART", 1); /*hide*/
+			GridObj.setColHide("COMP_NAME", 1); /*hide*/
+			GridObj.setColHide("STUD_CLASS_NAME", 1); /*hide*/
+			GridObj.setColHide("ENROL_STATE", 1); /*hide*/
+
+			GridObj.setColHide("GET_CREDIT_CNTI", 1); /*hide*/
+			GridObj.setColHide("SCORE_PER_CNTI", 1); /*hide*/
+			GridObj.setColHide("GPA_AVERAGE_CNTI", 1); /*hide*/
+
+			GridObj.setColHide("V_TARGET_NAME", 1); /*hide*/
+			GridObj.setColHide("V_RELATION", 1); /*hide*/
+			GridObj.setColHide("V_NO", 1); /*hide*/
+
+			GridObj.setColHide("IS_REGI", 1); /*hide*/
+
+			GridObj.setColCellAlign("virnum", "center");
+		}
+
+		
+		function ONEboundHeaderCompleteHandler1() {
+		  // 	loadData(Grid1);
+			 Grid1.setXMLData("http://localhost:8080/demo/GRIDONE_20131024201_getRowCount/oldLib/xmlData.xml");
+			setCommonProperties(Grid1);
+		}
+
+		function setCommonProperties(grid) {
+			
+			grid.setDataGridProperty("bCellFontItalic", "none");
+			grid.setDataGridProperty("bCellFontULine", false);
+			grid.setDataGridProperty("bCellFontBold", false);
+			grid.setDataGridProperty("strCellFontName", "dotum");
+			grid.setDataGridProperty("nCellFontSize", 11);
+			grid.setDataGridProperty("strCellFgColor", "#666666");
+
+			grid.setDataGridProperty("horizontalGridLines", true);
+			grid.setDataGridProperty("verticalGridLineColor", "#BDD1DF");
+			grid.setDataGridProperty("horizontalGridLineColor", "#BDD1DF");
+			grid.setDataGridProperty("strGridBorderColor", "#A5A5A5");
+			grid.setDataGridProperty("strGridBorderStyle", "solid");
+			grid.setDataGridProperty("strActiveRowBgColor", "#FABD16"); 	
+			grid.setDataGridProperty("alternatingItemColors", "[#FFFFFF,#EDECE8]");
+			grid.setDataGridProperty("nRowHeight", 23);
+			grid.setDataGridProperty("nCellPadding", 3);
+			grid.setDataGridProperty("selectCell", true);
+		 
+			grid.setDataGridProperty("strCellClickAction", "edit");
+
+			grid.setDataGridProperty("rollOverColor", "#FFD666"); 	
+			grid.setDataGridProperty("borderColor", "#BDD1DF");
+
+			grid.setDataGridProperty("strHDFontName", "dotum");
+		 
+			grid.setDataGridProperty("nHDFontSize", 11);
+			grid.setDataGridProperty("bHDFontBold", false);
+		 
+			grid.setDataGridProperty("strHDBgColor", "#FFECB8"); 
+			grid.setDataGridProperty("strHDFgColor", "#4B4C52");
+			grid.setDataGridProperty("headerGridLineColor", "#BDD1DF");
+			grid.setDataGridProperty("nHDLineSize", 23);
+			grid.setDataGridProperty("bHDFontItalic", false);
+			grid.setDataGridProperty("bHDFontULine", false);
+			grid.setDataGridProperty("strHDAlign", "center");
+
+			grid.setProperty("fixedLastColumn", false);
+			grid.setProperty('allowResizeLastColumn', true);
+			grid.setProperty("bHDMoving", false);
+
+			grid.setProperty("showDataTips", true);  
+			grid.setProperty("bExternalScroll",true);
+		
+		}
+		function onCellClickHandler1(e) {
+			//alert(e.columnKey);
+			// $("#hid_row").val(e.nRow);
+			
+			 var data=Grid1.getCellValue("virnum",e.nRow);
+			 
+		}
+
+		function onCellDblClickHandler1(e) {
+			
+			alert(Grid1.getCellValue("virnum",e.nRow));
+//			opener.setStudInfo(Grid1, e.nRow);
+//			window.close();
+		}
+
+		function getStudInfo() {
+			if ($("#hid_row").val() == "") {
+				alert("학생을 선택해 주세요.");
+				return false;
+			}
+
+			opener.setStudInfo(Grid1, $("#hid_row").val());
+			window.close();
+		}
+        /************************************************************************
+		*  Test load json data from server. Please change url path
+		***********************************************************************/
+		function setData(Grid1) {
+			// doQuery1();
+		   $.ajax({
+			  type: "POST",
+			  url: "http://localhost:8080/demo/GRIDONE_20131024201_getRowCount/oldLib/dataJson.txt"
+			}).done(function( msg ) {
+				var data = jQuery.parseJSON(msg);
+			  Grid1.setJSonData(data);
+			})
+			.fail(function( msg ) {
+				alert(msg);
+			});
+		}
+		
+		function loadData(Grid1)
+		{
+		    Grid1.setJSonData(jsonData);
+		}
+
+		function setEndData1(mode, msg, result) {
+
+			if (mode == "SELECT") {
+
+			}
+
+			//SaveBit = 0;
+			if (flatJSONData != null) {
+				Grid1.setGridData(flatJSONData);
+				Grid1.setProperty("bHDMoving", false);
+
+				//var d = new Date();
+
+				//document.write(result + " <br />바인딩:" + d.getHours() + ' ' + d.getMinutes() + ' ' + d.getSeconds());
+			}
+
+			$("#total1").html(Grid1.getRowCount() + "건");
+
+			//clickevent_fade.Close();
+		}
+
+		function doQuery1() {
+
+		 	if ($("#ENROL_STATE.ClientID").val() == "") {
+				alert("학적상태를 선택해 주세요.");
+				return false;
+		 	}
+			var myData = JSON.parse("{}");
+
+		 	myData["ENROL_GROUP"] = $("#ENROL_GROUP.ClientID").val();
+		 	myData["ENROL_DEPART"] = $("#ENROL_DEPART").val();
+		 	myData["ENROL_STATE"] = $("#ENROL_STATE.ClientID").val();
+		 	myData["STUD_NO"] = $("#STUD_NO.ClientID").val();
+		 	myData["STUD_KOR_NAME"] = $("#STUD_KOR_NAME.ClientID").val();
+
+			doResult("SELECT", JSON.stringify(myData));
+
+			//clickevent_fade.Open();
+		}
+
+
+		function doResult(e1, e2) {
+			 alert(e1 + ' ' + e2);
+		 	$("#txt_data1.ClientID").val(e1);
+		 	$("#txt_data2.ClientID").val(e2);
+		 	$("#update_Button.ClientID").click();
+		
+		}
+
+		function Reset1() {
+			$("#total1").html("0건");
+
+			$("#ENROL_GROUP.ClientID").data("kendoDropDownList").value("");
+		 	$("#ENROL_DEPART").data("kendoDropDownList").value("");
+		 	$("#ENROL_STATE.ClientID").data("kendoDropDownList").value("");
+		 	$("#STUD_NO.ClientID").val("");
+		 	$("#STUD_KOR_NAME.ClientID").val("");
+
+			Grid1.removeAllData(); // 그리드 데이터 초기화
+		}
+
+		function setAppDepart(type, indextype) {
+
+			// 적용년도, 적용계열
+			 var app_year = 'app_year';
+			 var app_group = $("#ENROL_GROUP.ClientID").val();
+			var str = "type=" + type + "&indextype=" + indextype + "&app_year=" + app_year + "&app_group=" + app_group;
+
+			//alert(str);
+
+			jQuery.ajax({
+				type: "POST",                   //타입 GET , POST
+				datatype: "html",               //데이타타입 html, xml 등등
+				url: "/_ajax/staf/sfss/sscd/Select_Depart.aspx",     //경로
+				data: str,
+				async: false,                   //비동기 사용여부 true : 비동기, false : 동기
+				success: function (data) {
+					document.getElementById("SPAN_ENROL_DEPART").innerHTML = "<select name=\"ENROL_DEPART\" id=\"ENROL_DEPART\" >" + data + "</select>";
+				},    //성공시 실행할 함수
+				error: function () {
+					alert("문제가 발생했습니다. 관리자에게 문의하세요.");
+					return false;
+				}             //에러발생시 실행할 함수
+			});
+
+			 $("#SPAN_ENROL_DEPART select").kendoDropDownList();
+		}
+		
+		//request xml data
+		function setXML()
+		{
+		   Grid1 = document.GridOne1;
+		   Grid1.setXMLData("http://localhost:8080/demo/GRIDONE_20131024201_getRowCount/oldLib/xmlData.xml");
+		}
+		function loadJSON()
+		{
+		   Grid1 = document.GridOne1;
+		    setData(Grid1);
+		   
+		}
+		function getRowCount()
+		{
+	       Grid1 = document.GridOne1;
+		 //  alert(Grid1.getRowCount(true)); 
+//	       Grid1.deleteRow(1);
+// 	       Grid1.setRowHide(1,true,true);
+ 	       Grid1.addRow();
+//	       Grid1.undoRowHide();
+		}
+	</script>
+</head>
+<body>
+<!--<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">-->
+	<div style="display: none;">
+		<!--<asp:ScriptManager ID="ScriptManager1" runat="server">
+		</asp:ScriptManager>
+		<asp:UpdatePanel ID="UpdatePanel1" runat="server">
+			<ContentTemplate>
+				<asp:Button runat="server" ID="update_Button" OnClick="update_Button_Click" />
+				<asp:TextBox runat="server" ID="txt_data1"></asp:TextBox>
+				<asp:TextBox runat="server" ID="txt_data2"></asp:TextBox>
+			</ContentTemplate>
+		</asp:UpdatePanel>-->
+		<input type="button" id="update_Button" onClick="update_Button_Click"/>
+		<input type="text" id="txt_data1"/>
+		<input type="text" id="txt_data2"/>
+	</div>
+	<input type="hidden" id="hid_row" name="hid_row" />
+	<!--<asp:Literal ID="a" runat="server"></asp:Literal>-->
+	<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr>
+			<td align="left">
+				<h1>
+					학생 검색</h1>
+			</td>
+			<td align="right">
+				<button id="BTN_SEARCH" title="조회" onclick="doQuery1(); return false;">
+					조회</button>
+				<button id="BTN_RESET" title="초기화" onclick="Reset1(); return false;">
+					초기화</button>
+				<!--<button id="BTN_SELECT" title="선택" onclick="getStudInfo();">선택</button>-->
+				<button id="btn_close" title="닫기" onclick="window.close(); return false;">
+					닫기</button>
+			</td>
+		</tr>
+	</table>
+	<br />
+	<table width="100%" border="0" cellpadding="0" cellspacing="0" class="bar">
+		<tr>
+			<td align="left" class="first">
+				<span class="dot">계열</span>
+				<!--<asp:DropDownList ID="ENROL_GROUP" runat="server" onchange="javascript:setAppDepart('app_depart', '1');">
+				</asp:DropDownList>-->
+				<input type="button" onClick="setAppDepart('app_depart', '1');" value="setAppDepart"/>
+				<span class="dot">학과</span> <span id="SPAN_ENROL_DEPART"></span><span class="dot">학적상태</span>
+				<!--<asp:DropDownList ID="ENROL_STATE" runat="server">
+				</asp:DropDownList>-->
+			    <input type="button" id="ENROL_STATE" value="ENROL_STATE" />
+				<span class="dot">학번</span>
+				<input name="STUD_NO" type="text" id="STUD_NO" size="10" runat="server" onkeydown="javascript:if(event.keyCode==13) { doQuery1();return false; }" />
+				/ 이름
+				<input name="STUD_KOR_NAME" type="text" id="STUD_KOR_NAME" size="10" runat="server"
+					onkeydown="javascript:if(event.keyCode==13) { doQuery1();return false; }" /><br/><br/>
+				<input type="button" onClick="setXML();" value="setXMLData" />
+				<input type="button" onClick="loadJSON();" value="loadJSON" />
+				<input type="button" onClick="getRowCount();" value="getRowCount" />
+				
+			</td>
+		</tr>
+	</table>
+<table width="100%" border="0" cellspacing="0" cellpadding="3">
+		<tr>
+			<td align="left">
+				<img src="/img/ico_list.gif" align="middle" />
+				<span id="total1"> </span> 건 이 조회되었습니다.
+			</td>
+		</tr>
+		<tr>
+			<td height="350" valign="top">
+				<script type="text/javascript">
+					initGridOne(500, 350, 'GridOne1', 'flash', "","A0B0C0C6-000148-156641", 'false', "fast","ONE");
+				</script>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>

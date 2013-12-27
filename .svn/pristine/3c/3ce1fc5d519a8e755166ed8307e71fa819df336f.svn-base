@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/********************************************************************************
+*
+*  ACTSONE COMPANY
+*  Copyright 2012 Actsone 
+*  All Rights Reserved.
+*
+*	This program is free software: you can redistribute it and/or modify
+*	it under the terms of the GNU General Public License as published by
+*	the Free Software Foundation, either version 3 of the License, or
+*	(at your option) any later version.
+*
+*	This program is distributed in the hope that it will be useful,
+*	but WITHOUT ANY WARRANTY; without even the implied warranty of
+*	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*	GNU General Public License for more details.
+*
+*	You should have received a copy of the GNU General Public License
+*	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* 
+***********************************************************************************/
+-->
+<mx:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   width="255" 
+			   height="145" 
+			   title="Search" 
+			   close="closeHandler(event)"
+			   backgroundColor="0xC3CDE3"
+			   verticalScrollPolicy="off"
+			   horizontalScrollPolicy="off" creationComplete="createCompleteHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import kr.co.actsone.common.Global;
+			import kr.co.actsone.events.SAEvent;
+			
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			private var strOldText:String = "";
+			
+			[Bindable]
+			public var labchkCaseSensitive:String="";
+			[Bindable]
+			public var labbtnSearch:String="";
+			[Bindable]
+			public var labbtnClose:String="";
+			
+			/**
+			 * two kinds of search
+			 * value = all : search all cells of all columns
+			 * value = dataField of column : search a specified column when user right click
+			*/
+			public var kindOfSearch:String;				
+			
+			private function searchHandler():void
+			{
+				var sendData:Object = new Object();
+				sendData["oldCondition"] = strOldText;
+				sendData["newCondition"] = txtCondtion.text;
+				sendData["sensitive"] = chkCaseSensitive.selected;
+				sendData["kindOfSearch"] = kindOfSearch;
+				var popEvent:SAEvent = new SAEvent(SAEvent.POP_SEARCH_DATA);
+				popEvent.data = sendData;
+				dispatchEvent(popEvent);	
+				strOldText = txtCondtion.text;
+			}
+			
+			private function closeHandler(event:CloseEvent=null):void
+			{
+				PopUpManager.removePopUp(this);
+			}
+			
+			public function createCompleteHandler(event:FlexEvent):void
+			{
+				var f:Global;
+				if (Global.DEFAULT_LANG=="KR")
+				{
+					labchkCaseSensitive="대/소문자 구분";
+					labbtnSearch="다음찾기";
+					labbtnClose="닫기";
+				}
+				else if (Global.DEFAULT_LANG=="CH")
+				{
+					labchkCaseSensitive="支架/区分大小写";
+					labbtnSearch="查找下一个";
+					labbtnClose="关闭";
+				}
+				else
+				{
+					labchkCaseSensitive="Stand / case-sensitive";
+					labbtnSearch="Find Next";
+					labbtnClose="Close";
+				}
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<mx:VBox>
+		<mx:Grid width="95%" height="80%">					
+			<mx:GridRow width="100%" height="100%">						
+				<mx:GridItem colSpan="2" width="100%">
+					<mx:HBox width="100%" height="100%">
+						<mx:Label text="Search:"/>
+						<mx:TextInput id="txtCondtion" width="170" editable="true" enter="searchHandler()"/>
+					</mx:HBox>							
+				</mx:GridItem>									
+			</mx:GridRow>
+			<mx:GridRow width="250" height="100%">					
+				<mx:GridItem colSpan="2" width="100%">
+					<mx:HBox width="100%" height="100%" paddingLeft="38">
+						<mx:CheckBox id="chkCaseSensitive" selected="false" label="{labchkCaseSensitive}"/>
+					</mx:HBox>							
+				</mx:GridItem>									
+			</mx:GridRow>
+		</mx:Grid>
+		<mx:HBox width="100%" height="30" horizontalAlign="center" verticalAlign="middle">
+			<mx:Button id="btnSearch" cornerRadius="0" label="{labbtnSearch}" click="searchHandler()" enabled="{this.txtCondtion.text.length>0}" width="80"/>
+			<s:Spacer width="5">
+			</s:Spacer>
+			<mx:Button id="btnClose" cornerRadius="0" label="{labbtnClose}" click="closeHandler()" width="70"/>		
+		</mx:HBox>	
+	</mx:VBox>
+</mx:TitleWindow>

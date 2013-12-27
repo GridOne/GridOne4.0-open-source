@@ -1,0 +1,31 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+package kr.co.actsone.common
+{
+	public class RowStatus
+	{
+		public static const EXIST_ROW:int=0;
+		public static const ADD_ROW:int=1;
+
+		public static const STATUS_NOCHANGE:int=2;
+		public static const STATUS_EDIT:int=3;
+		public static const STATUS_DEL:int=4;
+		public static const STATUS_REPLACED:int=5;
+
+		public var _arrRDelete:Array=[];
+		public var _arrRAdd:Array=[];
+		public var _rIndex:int;
+		public var rowType:int=ADD_ROW;
+		public var currentStatus:int=STATUS_NOCHANGE;
+         
+		public function RowStatus()
+		{
+		}
+		 
+	}
+}

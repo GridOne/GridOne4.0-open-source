@@ -1,0 +1,309 @@
+/********************************************************************************
+ *
+ *  ACTSONE COMPANY
+ *  Copyright 2012 Actsone 
+ *  All Rights Reserved.
+ *
+ *	This program is free software: you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation, either version 3 of the License, or
+ *	(at your option) any later version.
+ *
+ *	This program is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ ***********************************************************************************/
+
+package kr.co.actsone.export
+{
+	import flash.net.URLRequest;
+	import flash.net.URLRequestMethod;
+	import flash.net.URLVariables;
+	import flash.net.navigateToURL;
+	import flash.system.Capabilities;
+	
+	import kr.co.actsone.controls.ExAdvancedDataGrid;
+ 
+	import mx.collections.ArrayCollection;
+	
+	public class ExportToExcelByXML
+	{
+		public static const EXPORT_ALL:String = "exportAll";
+		public static const EXPORT_VISIBLE:String = "exportVisible";
+		public static const EXPORT_SELECTED:String = "exportSelected"; 
+		private static var titleDate:String = '';
+		private static var titleNTE:String = '';
+		public static const TYPE_CSV:String = "typeCsv";
+		public static const TYPE_TSV:String = "typeTsv";
+		public static var data:String = "";
+		
+		private static function convertDGToHTMLTable(dg:ExAdvancedDataGrid ):String { 
+			//Set default values 
+			var font:String = dg.getStyle('fontFamily'); 
+			var size:String = dg.getStyle('fontSize'); 
+			var str:String = ''; 
+			var colors:String = ''; 
+			var style:String = 'style="font-family:'+font+';font-size:'+size+'pt;"'; 
+			var hcolor:Array; 
+			
+			//Retrieve the headercolor 
+			if(dg.getStyle("headerColor") != undefined) { 
+				hcolor = [dg.getStyle("headerColor")]; 
+			} else { 
+				hcolor = dg.getStyle("headerColors"); 
+			} 
+			
+			//Set the htmltabel based upon knowlegde from the datagrid 
+			str+= '<table><thead><tr width="'+dg.width+'" style="background-color:#1E90FF">'; 
+			
+			//Set the tableheader data (retrieves information from the datagrid header 
+			for(var i:int = 0;i<dg.columns.length;i++) { 
+				colors = dg.getStyle("themeColor"); 
+				
+				if(dg.columns[i].headerText != undefined) { 
+					str+="<th "+style+">"+dg.columns[i].headerText+"</th>"; 
+				} else { 
+					str+= "<th "+style+">"+dg.columns[i].dataField+"</th>"; 
+				} 
+			} 
+			str += "</tr></thead><tbody>"; 
+			colors = dg.getStyle("alternatingRowColors"); 
+			
+			//Loop through the records in the dataprovider and 
+			//insert the column information into the table 
+			if(dg.dataProvider != null ){
+				
+				for(var j:int =0;j<dg.dataProvider.length;j++) 
+				{ 
+					str+="<tr width=\""+Math.ceil(dg.width)+"\">"; 
+					
+					for(var k:int=0; k < dg.columns.length; k++)
+					{ 
+						
+						//Do we still have a valid item? 
+						if(dg.dataProvider.getItemAt(j) != undefined && dg.dataProvider.getItemAt(j) != null)
+						{ 
+							
+							//Check to see if the user specified a labelfunction which we must 
+							//use instead of the dataField 
+							if(dg.columns[k].labelFunction != undefined) 
+							{ 
+								str += "<td "+style+">"+dg.columns[k].labelFunction(dg.dataProvider.getItemAt(j),dg.columns[k].dataField)+"</td>"; 
+								
+							} else
+							{ 
+								str += "<td "+style+">"+dg.dataProvider.getItemAt(j)[dg.columns[k].dataField]+"</td>"; 
+							} 
+						} 
+					}
+					str += "</tr>"; 
+				} 
+			}
+			str+="</tbody></table>"; 
+			
+			return str; 
+		} 
+		
+		public static function getTitleAndDate(title:String , date:String):void
+		{
+			titleDate = '<p align="center"><font size = "4"><b>'+ title + '</b></font></p><p align= "right">' + date + '</p>'
+		}
+		public static function getTitle(title:String ):void
+		{
+			titleNTE = '<p align="center"><font size = "4"><b>'+ title + '</b></font></p>'
+		} 
+		
+		public static function loadExAdvancedDataGridInExcel( dataGrid:ExAdvancedDataGrid, dataGridNTE:ExAdvancedDataGrid = null ):void 
+		{
+			//Pass the htmltable in a variable so that it can be delivered
+			//to the backend script
+			if(dataGridNTE == null)
+			{
+				var variables:URLVariables = new URLVariables();
+				variables.htmlTable =titleDate + convertDGToHTMLTable(dataGrid);
+				var url:String = "export.jsp";
+				var u:URLRequest = new URLRequest( url );
+				u.data = variables; //Pass the variables
+				u.method = URLRequestMethod.POST; 
+				navigateToURL( u, "_self" );
+			}
+			else
+			{
+				var variable:URLVariables = new URLVariables();
+				variable.htmlTable =titleDate + convertDGToHTMLTable(dataGrid) + titleNTE + convertDGToHTMLTable(dataGridNTE);
+				var urlQ:String = "export.jsp";
+				var ur:URLRequest = new URLRequest( urlQ );
+				ur.data = variable; //Pass the variables
+				ur.method = URLRequestMethod.POST;
+				navigateToURL( ur, "_self" );
+			} 
+		}
+		
+		// Function For Converting into CSV String 
+		public static function copyData( dataGrid:ExAdvancedDataGrid, fileType:String, exportType:String ):String
+		{
+			var str:String = "";
+			var value:String = "";
+			var skipColumns:Array = [];
+			
+			for (var i:int = 0;i<dataGrid.columns.length;i++) 
+			{
+				if (dataGrid.columns[i].headerText != undefined) 
+				{
+					value = dataGrid.columns[i].headerText + "\n"; 
+				} 
+				else 
+				{
+					value = dataGrid.columns[i].dataField;
+				}
+				
+				// we won't include columns which don't have titles
+				if (value.length == 0)
+				{
+					skipColumns.push( i );
+					continue;
+				}
+				else
+				{
+					if (fileType == TYPE_CSV)
+					{
+						str += '"' + value + '"';
+					}
+					else
+					{
+						str += value;
+					}
+				}
+				
+				if (i < dataGrid.columns.length-1)
+				{
+					str += fileType == TYPE_CSV ? "," : "\t";
+				}
+			}
+			str += lineEnding; 
+			var data:Array;
+			
+			if (exportType == EXPORT_ALL)
+			{
+				data = ArrayCollection( dataGrid.dataProvider ).source;
+			}
+			else
+			{
+				data = dataGrid.selectedItems;
+			}
+			
+			for each (var item:Object in data)
+			{ 
+				for(var k:int=0; k < dataGrid.columns.length; k++) 
+				{
+					// check if we're skipping this column
+					if (skipColumns.indexOf( k ) >= 0)
+					{
+						continue;
+					}
+					//Check to see if the profile specified a labelfunction which we must
+					//use instead of the dataField
+					if (dataGrid.columns[k].labelFunction != undefined) 
+					{
+						value = dataGrid.columns[k].labelFunction(item, dataGrid.columns[k]); 
+					} 
+					else 
+					{
+						var dataField:String = dataGrid.columns[k].dataField;
+						value = item[ dataField ];
+					}
+					if (value)
+					{
+						var pattern:RegExp = /["]/g;
+						value = value.replace( pattern, "" );
+						
+						if (fileType == TYPE_CSV)
+						{
+							value = '"' + value + '"';
+						}
+					}
+					else
+					{
+						if (fileType == TYPE_CSV)
+						{
+							value = '""';
+						}
+					}
+					str += value;
+					if (k < dataGrid.columns.length - 1)
+					{
+						str += fileType == TYPE_CSV ? "," : "\t";
+					}
+				}
+				str += lineEnding;
+			}
+			setData(str);
+			
+			return str; 
+		}
+		
+		public static function setData( text:String ):void{
+			
+			data = text;
+		}
+		public static function getData( ):String{
+			
+			return data;
+		}
+		public static function getItemsFromText( text:String ):Array
+		{
+			var rows:Array = text.split( lineEnding );
+			if (rows.length > 0 && !rows[rows.length - 1])
+			{
+				rows.pop();
+			}
+			var itemsFromText:Array = [];
+			for each (var row:String in rows)
+			{
+				var fields:Array = row.split("\t");
+				var item:Object = {};
+				
+				for (var i:int = 0; i < fields.length; i++)
+				{
+					item["col" + (i+1)] = fields[i];
+				}
+				itemsFromText.push(item);
+			}
+			return itemsFromText;
+		}
+		
+		private static function get lineEnding():String
+		{
+			if (Capabilities.os == "Linux")
+			{
+				return "\n";
+			}
+			else if (Capabilities.os.indexOf( "Mac" ) >= 0)
+			{
+				return "\r";
+			}
+			else
+			{
+				return "\r\n";
+			}
+		}
+		
+		public static function loadExAdvancedDataGridCSVExcel( dataGrid:kr.co.actsone.controls.ExAdvancedDataGrid ):void 
+		{
+			var variables:URLVariables = new URLVariables(); 
+			variables.htmlTable = copyData( dataGrid, TYPE_CSV, EXPORT_ALL );
+			var url:String = "export.jsp";
+			var u:URLRequest = new URLRequest( url );
+			u.data = variables; 
+			u.method = URLRequestMethod.POST; 
+			navigateToURL( u, "_self" ); 
+		} 
+		
+	} 
+}
+

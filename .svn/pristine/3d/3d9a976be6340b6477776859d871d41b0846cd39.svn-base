@@ -1,0 +1,273 @@
+/********************************************************************************
+ *
+ *  ACTSONE COMPANY
+ *  Copyright 2012 Actsone 
+ *  All Rights Reserved.
+ *
+ *	This program is free software: you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation, either version 3 of the License, or
+ *	(at your option) any later version.
+ *
+ *	This program is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ ***********************************************************************************/
+
+package kr.co.actsone.controls
+{
+	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import flash.geom.Point;
+	
+	import kr.co.actsone.common.Global;
+	import kr.co.actsone.events.SAEvent;
+	
+	import mx.containers.HBox;
+	import mx.controls.VScrollBar;
+	import mx.controls.scrollClasses.ScrollBar;
+	import mx.core.IToolTip;
+	import mx.core.mx_internal;
+	import mx.events.FlexEvent;
+	import mx.events.ScrollEvent;
+	import mx.events.ScrollEventDetail;
+	import mx.managers.ToolTipManager;
+	
+	use namespace mx_internal;
+	
+	[Event(name="thumbMouseUp", type="kr.co.actsone.events.SAEvent")]
+	
+	public class ExVScrollBar extends VScrollBar
+	{
+		public var strRowScrollDragAction:String="syncscreen";
+		
+		/**
+		 *  A flag that indicates whether a tooltip should appear
+		 *  near the scroll thumb when it is being dragged.
+		 *  The default value is <code>false</code> to disable the tooltip.
+		 */
+		public var showScrollTips:Boolean = false;
+		
+		/**
+		 *  @private
+		 *  Instance of the scrollTip. (There can be only one.)
+		 */
+		private var scrollTip:IToolTip;
+		
+		/**
+		 *  @private
+		 *  Base position for the scrollTip.
+		 */
+		private var scrollThumbMidPoint:Number;
+		
+		/**
+		 *  @private
+		 *  Keep track of the whether the ToolTipManager was enabled
+		 *  before dealing with scroll tips.
+		 */
+		private var oldTTMEnabled:Boolean;
+		
+		public function ExVScrollBar()
+		{
+			super();
+			this.addEventListener(FlexEvent.CREATION_COMPLETE, creationCompleteHanlder);
+		}
+		
+		/*************************************************************
+		 * handle create complete event 
+		 * @author Duong Pham
+		 * ***********************************************************/
+		private function creationCompleteHanlder(event:FlexEvent):void
+		{
+			systemManager.addEventListener(MouseEvent.MOUSE_UP, scrollThumbMouseUpHandler);
+			this.addEventListener(MouseEvent.MOUSE_MOVE, scrollMoveHandler);
+			this.addEventListener(ScrollEvent.SCROLL, scrollTipHandler);
+			this.addEventListener(SAEvent.THUMB_MOUSE_MOVE, updateScrollTipsHandler);
+		}
+		
+		/*************************************************************
+		 * handle mouse move event to dispatch  tooltip when strRowScrollDragAction == "default"
+		 * @author Duong Pham
+		 * ***********************************************************/
+		protected function scrollMoveHandler(event:MouseEvent):void
+		{
+			var saEvent:SAEvent = new SAEvent(SAEvent.THUMB_MOUSE_MOVE);
+			saEvent.oldPosition=_saveOldPosition;
+			saEvent.detail=_detail;
+			this.dispatchEvent(saEvent);
+		}		
+		
+		/*************************************************************
+		 * handle scroll event handler when strRowScrollDragAction == "syncscreen"
+		 * @author Duong Pham
+		 * ***********************************************************/
+		public function scrollTipHandler(event:ScrollEvent):void
+		{
+			if (event is ScrollEvent)
+			{
+				if (!showScrollTips)
+					return;
+			 
+				if (ScrollEvent(event).detail == ScrollEventDetail.THUMB_POSITION)
+				{
+					if (scrollTip)
+					{
+						ToolTipManager.destroyToolTip(scrollTip);
+						scrollTip = null;
+						ToolTipManager.enabled = oldTTMEnabled;
+					}
+				}
+				else if (ScrollEvent(event).detail == ScrollEventDetail.THUMB_TRACK)
+				{
+					var scrollBar:ScrollBar = ScrollBar(event.target);
+					var isVertical:Boolean = true;
+					var dir:String = "vertical";
+					var pos:Number = scrollBar.scrollPosition;
+					
+					if (!scrollTip)
+					{
+						scrollTip = ToolTipManager.createToolTip("", 0, 0, null, this);
+						scrollThumbMidPoint = scrollBar.scrollThumb.height / 2;
+						oldTTMEnabled = ToolTipManager.enabled;
+						ToolTipManager.enabled = false;
+					}
+					
+					var tip:String = pos.toString();
+					
+					if (tip == "")
+					{
+						scrollTip.visible = false;
+					}
+					else
+					{
+						scrollTip.text = tip;
+						
+						ToolTipManager.sizeTip(scrollTip);
+						
+						var pt:Point = new Point();
+						if (isVertical)
+						{
+							pt.x = -3 - scrollTip.width;
+							pt.y = scrollBar.scrollThumb.y + scrollThumbMidPoint -
+								scrollTip.height / 2;
+						}
+						else
+						{
+							// The scrollbar is rotated so we kind of reverse things
+							// around with width and height.
+							pt.x = -3 - scrollTip.height;
+							pt.y = scrollBar.scrollThumb.y + scrollThumbMidPoint -
+								scrollTip.width / 2;
+						}
+						pt = scrollBar.localToGlobal(pt);
+						scrollTip.move(pt.x, pt.y);
+						
+						scrollTip.visible = true;
+					}
+				}
+			}
+		}
+		
+		/*************************************************************
+		 * handle scroll event handler when strRowScrollDragAction == "default"
+		 * @author Duong Pham
+		 * ***********************************************************/
+		protected function updateScrollTipsHandler(event:SAEvent):void
+		{
+			if (event is SAEvent)
+			{
+				if (!showScrollTips)
+					return;
+				
+				if (SAEvent(event).detail == ScrollEventDetail.THUMB_POSITION)
+				{
+					if (scrollTip)
+					{
+						ToolTipManager.destroyToolTip(scrollTip);
+						scrollTip = null;
+						ToolTipManager.enabled = oldTTMEnabled;
+					}
+				}
+				else if (SAEvent(event).detail == ScrollEventDetail.THUMB_TRACK)
+				{
+					var scrollBar:ScrollBar = ScrollBar(event.target);
+					var isVertical:Boolean = true;
+					var dir:String = "vertical";
+					var pos:Number = scrollBar.scrollPosition;
+					
+					if (!scrollTip)
+					{
+						scrollTip = ToolTipManager.createToolTip("", 0, 0, null, this);
+						scrollThumbMidPoint = scrollBar.scrollThumb.height / 2;
+						oldTTMEnabled = ToolTipManager.enabled;
+						ToolTipManager.enabled = false;
+					}
+					
+					var tip:String = pos.toString();
+					
+					if (tip == "")
+					{
+						scrollTip.visible = false;
+					}
+					else
+					{
+						scrollTip.text = tip;
+						
+						ToolTipManager.sizeTip(scrollTip);
+						
+						var pt:Point = new Point();
+						if (isVertical)
+						{
+							pt.x = -3 - scrollTip.width;
+							pt.y = scrollBar.scrollThumb.y + scrollThumbMidPoint -
+								scrollTip.height / 2;
+						}
+						else
+						{
+							// The scrollbar is rotated so we kind of reverse things
+							// around with width and height.
+							pt.x = -3 - scrollTip.height;
+							pt.y = scrollBar.scrollThumb.y + scrollThumbMidPoint -
+								scrollTip.width / 2;
+						}
+						pt = scrollBar.localToGlobal(pt);
+						scrollTip.move(pt.x, pt.y);
+						
+						scrollTip.visible = true;
+					}
+				}
+			}
+		}
+		
+		private var _saveOldPosition:Number=-1;
+		private var _detail:String="";
+		/*************************************************************
+		 * handle mouse up event when moving vertical scroll bar
+		 * @author Duong Pham
+		 * ***********************************************************/
+		private function scrollThumbMouseUpHandler(event:MouseEvent):void
+		{
+			if (strRowScrollDragAction == "default")
+			{
+				this.dispatchEvent(new SAEvent(SAEvent.THUMB_MOUSE_UP));
+			}
+		}
+		
+		/*************************************************************
+		 * handle dispatch scroll event belong to property strRowScrollDragAction
+		 * @author Duong Pham
+		 * ***********************************************************/
+		override mx_internal function dispatchScrollEvent(oldPosition:Number, detail:String):void
+		{
+			_saveOldPosition = oldPosition;
+			_detail=detail;
+			if (strRowScrollDragAction == "syncscreen")
+				super.dispatchScrollEvent(oldPosition, detail);
+		}
+	}
+}

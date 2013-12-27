@@ -1,0 +1,647 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   xmlns:actsone="kr.co.actsone.controls.*"  
+			   xmlns:advancedDataGridClasses="kr.co.actsone.controls.advancedDataGridClasses.*" 
+			   initialize="application1_initializeHandler(event)" 
+			   preinitialize="preinitializeHandler(event)"    
+			    
+			   creationComplete="creationCompleteHandler(event)"
+			   applicationComplete="applicationCompleteHandler(event)" 
+			   click="app_ClickHandler(event)">
+	<fx:Style source="assets/default.css"/> 
+	<fx:Script>
+		<![CDATA[
+			import com.adobe.serialization.json.JSON;
+			
+			import flash.utils.Timer;
+			
+			import kr.co.actsone.common.Activity;
+			import kr.co.actsone.common.DataGridManager;
+			import kr.co.actsone.common.Global;
+			import kr.co.actsone.common.GridOneImpl;
+			import kr.co.actsone.common.GridOneManager;
+			 
+			import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+			import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumnGroup;
+			import kr.co.actsone.events.SAEvent;
+			import kr.co.actsone.summarybar.SummaryBarManager;
+			import kr.co.actsone.utils.ErrorMessages;
+			import kr.co.actsone.utils.MouseWheelTrap;
+			import kr.co.actsone.utils.URLInfo;
+			
+			import mx.controls.Alert;
+			import mx.core.FlexGlobals;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			import mx.events.ResizeEvent;
+			import mx.events.ScrollEvent;
+			import mx.modules.IModuleInfo;
+			import mx.modules.ModuleManager;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.StringUtil;
+			import mx.utils.URLUtil;
+			
+			public var gridoneManager:GridOneManager;
+			public var gridoneImpl:GridOneImpl;
+			public var dgManager:DataGridManager;			
+			public var activity:Activity;
+			public var bridgeName:String;
+			
+			public var stackFun:Array=new Array();
+			
+			private var _title:String="";
+			private var err:ErrorMessages=new ErrorMessages();
+			[Bindable]
+			public var applicationWidth:Number;
+			
+			internal var comboColumnField:String="";
+			
+ 
+			/*************************************************************
+			 * Handler of preinitialize event
+			 * @param event FlexEvent 
+			 * ***********************************************************/
+			protected function preinitializeHandler(event:FlexEvent):void
+			{
+				if(activity == null)
+					activity = new Activity(this);
+ 
+			}
+ 
+			/************************************************
+			 * Handler of initialize event: init GridOne.
+			 * @param event FlexEvent.
+			 ***********************************************/
+			protected function application1_initializeHandler(event:FlexEvent):void
+			{
+ 
+				this.addEventListener(ResizeEvent.RESIZE,resizeApplicationHandler);
+				
+				Global.initCallback(this); 
+				
+			}
+ 	 
+			/************************************************
+			 * Handler of creationComplete event: init GridOne.
+			 *
+			 * @param event FlexEvent.
+			 ***********************************************/
+			protected function creationCompleteHandler(event:FlexEvent):void
+			{
+				 
+				
+				Global.DEFAULT_LANG = "KR";
+				
+				systemManager.addEventListener(MouseEvent.MOUSE_WHEEL,systemMouseWheelHandler);
+				
+				gridoneManager=new GridOneManager(this);
+				
+				dgManager=new DataGridManager(this);
+				gridoneImpl=new GridOneImpl(this);
+				MouseWheelTrap.setup();
+				MouseWheelTrap.gridoneId=this.id;
+				
+				this.datagrid.summaryBarManager = new SummaryBarManager(this);
+				
+				applicationWidth = FlexGlobals.topLevelApplication.width; 
+				
+				//improve performance
+ 		       var performanceMode:String = FlexGlobals.topLevelApplication.parameters.performanceMode;
+//				
+ 		      if(performanceMode && performanceMode.toLowerCase() == "fast")
+					datagrid.performanceMode = true;
+				else
+					datagrid.performanceMode = false;
+				
+				this.datagrid.columns=new Array();
+				
+				callLater(dispatchInitialEvent);
+				
+			}
+			
+			/*************************************************
+			 * After init GridOne completed: dispatch event
+			 *************************************************/
+			private function dispatchInitialEvent():void
+			{
+				gridoneManager.initJavaFunction();
+				this.datagrid.originalAppHeight = this.height;
+				this.datagrid.originalDgHeight = this.datagrid.height;
+				
+ 
+				var initialFunction:String=FlexGlobals.topLevelApplication.parameters.initialize;
+				ExternalInterface.call(initialFunction);
+				
+			}
+			
+			/*************************************************************
+			 * Handler of application complete event
+			 * @param event FlexEvent 
+			 * @author Duong Pham
+			 * ***********************************************************/
+			protected function applicationCompleteHandler(event:FlexEvent):void
+			{
+				if(datagrid.bExternalScroll)
+					datagrid.width = 0;
+				
+				registerEvents();
+				
+			}
+			
+			protected function  registerEvents():void
+			{
+ 
+				bridgeName = FlexGlobals.topLevelApplication.parameters.bridgeName;
+				//handle event in datagrid
+				this.dgManager.registerAdvancedDataGridEvents();
+				//handle event in gridone
+				this.gridoneManager.registerGridOneEvents();
+				
+				gridoneManager.createDefaultContextMenu();
+				
+				if(Global.BUILD_VERSION == Global.RELEASE_VERSION)
+				{
+					datagrid.setStyle("backgroundImage","");
+					this.hBoxLogo.visible=false;
+				}
+				
+				var serialKey:String=FlexGlobals.topLevelApplication.parameters.serialKey;	
+				if (serialKey != null)
+					this.hBoxLogo.includeInLayout=this.hBoxLogo.visible=!dgManager.checkValidate(serialKey);
+				// var bDebugMode:String=FlexGlobals.topLevelApplication.parameters.bDebugMode;
+				
+				if(Global.BUILD_VERSION == Global.RELEASE_VERSION)
+					setTimeout(saveURLInfo,500);
+ 
+			}
+			
+			/*************************************************************
+			 * save information of server which use GridOne
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function saveURLInfo():void
+			{
+				if(loaderInfo != null)
+				{			
+					var urlInfo:URLInfo = new URLInfo();
+					urlInfo.fullURL = loaderInfo.loaderURL;
+					urlInfo.serverName = URLUtil.getServerName(urlInfo.fullURL);
+					urlInfo.port = URLUtil.getPort(urlInfo.fullURL).toString();
+					urlInfo.protocol = URLUtil.getProtocol(urlInfo.fullURL);					
+					var mySO:SharedObject = SharedObject.getLocal("localData","/");		
+					var isStop:Boolean = false;
+					for(var i:int = 0 ; i<urlInfo.preventIPList.length; i++)
+					{
+						if(urlInfo.serverName.toLowerCase().search(urlInfo.preventIPList[i])>=0)
+						{
+							isStop = true;
+							break; 
+						}
+					}
+					if(!isStop)
+					{
+						if(mySO.data.serverName == undefined)						
+						{	//create new shared object																					
+							mySO.data.serverName = urlInfo.serverName;					
+							mySO.data.port = urlInfo.port;
+							mySO.data.protocol = urlInfo.protocol;
+							mySO.flush();
+							mySO.close();
+							remoteService.saveServerInfor(urlInfo.serverName,"Y",urlInfo.port,urlInfo.fullURL,urlInfo.protocol,'gridone3.0');									
+						}											
+						remoteService.getLicense(urlInfo.serverName);						
+					}
+				}
+			}
+			
+			/*************************************************************
+			 * event click of application 
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function app_ClickHandler(event:MouseEvent):void
+			{
+				this.gridoneManager.app_ClickHandler(event);
+			}
+			
+			/*************************************************************
+			 * Set property or style for DataGrid.
+			 * @param name String
+			 * @param value Object
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setProperty(name:String, value:Object):void
+			{
+				this.setDataGridProperty(name, value);
+			}
+			
+			/*************************************************************
+			 * Set property or style for DataGrid.
+			 * @param name string of name of property.
+			 * @param value object of value of property
+			 * ***********************************************************/
+			public function setDataGridProperty(name:String, value:Object):void
+			{
+				gridoneImpl.setDataGridProperty(name, value);
+				this.datagrid.invalidateList();	
+			}
+			/************************************************
+			 * Create column for datagrid
+			 *
+			 * @param columnKey column dataField 
+			 * @param columnText header text
+			 * @param columnType column type: combo, text, calendar...
+			 * @param maxLength length of text in a cell, or length of a number
+			 * @param columnWidth column width
+			 * @param editable indicate whether column is editable or not
+			 ***********************************************/
+			public function addHeader(columnKey:String, columnText:String, columnType:String, maxLength:String, columnwidth:String, editable:Boolean,textAlign:String=""):void
+			{
+				
+				gridoneImpl.createHeader(columnKey, columnText, columnType, maxLength, columnwidth, editable,textAlign);
+			}
+			/*************************************************************
+			 * Bound header after adding headers
+			 * ***********************************************************/
+			public function boundHeader():void
+			{
+				gridoneImpl.boundHeader();
+			}
+			
+			/*************************************************************
+			 * Set text data
+			 * @param data string data from javascript
+			 * @param bValidation indicate where validate data or not
+			 * @param isFormatDate indicate where format date column or not
+			 * @param isFormatDateTime indicate where validate date time column or not 
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function setTextData(data:String, bValidation:Boolean=false,isFormatDate:Boolean=false,isFormatDateTime:Boolean=false):void
+			{
+				this.activity.showBusyBar();
+				var provider:Array=gridoneManager.decodeTextData(data,isFormatDate,isFormatDateTime);
+				gridoneManager.checkDataProvider(provider, bValidation,"setTextData");
+			}
+			
+			/*************************************************************
+			 * Set json data
+			 * @param jsonData object Data from javascript
+			 * @param bValidation indicate where validate data or not
+			 * @author Duong Pham
+			 * ***********************************************************/			
+			public function setGridData(jsonData:Object, bValidation:Boolean=true):void
+			{
+				this.gridoneManager.setJsonData(jsonData,bValidation,"setGridData");
+			}
+			
+			/*************************************************************
+			 * Set property or style for column
+			 * @param dataField string of name of dataField column
+			 * @param name string of name of property.
+			 * @param value object of value of property
+			 * ***********************************************************/
+			public function setColumnProperty(dataField:String, name:String, value:Object):void
+			{
+				gridoneImpl.setColumnProperty(dataField, name, value);
+				this.datagrid.invalidateList();				
+			}
+			
+			/*************************************************************
+			 * control event according to  External Interface
+			 * @param type string event's name
+			 * @param type string function's name
+			 * ***********************************************************/
+			public function createEvent(type:String, listener:String):void
+			{				
+				this.datagrid.eventArr[type]=listener;
+			}
+			
+			/*************************************************************
+			 * add text data
+			 * @param data string data from javascript
+			 * @param bValidation indicate where validate data or not
+			 * @param isFormatDate indicate where format date column or not
+			 * @param isFormatDateTime indicate where validate date time column or not 
+			 * @author Duong Pham
+			 * ***********************************************************/
+			public function addTextData(data:String, bValidation:Boolean=false,isFormatDate:Boolean=false,isFormatDateTime:Boolean=false):void
+			{
+				this.activity.showBusyBar();
+				var provider:Array=gridoneManager.decodeTextData(data,isFormatDate,isFormatDateTime);
+				gridoneManager.checkDataProvider(provider, bValidation,"setTextData");
+			}
+			
+			/*************************************************************
+			 * handle resize event of application
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function resizeApplicationHandler(event:ResizeEvent):void
+			{
+				if(gridoneManager)
+					gridoneManager.resizeApplication(event);
+			}
+			
+			
+			/*************************************************************
+			 * handle mouse wheel when moving external vertical scroll bar
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function systemMouseWheelHandler(event:MouseEvent):void
+			{
+				dgManager.dg_onMouseWheelDGHandler(event);
+			}
+			
+			/*************************************************************
+			 * update external vertical scroll bar accroding to vertical scroll position of advanceddatagrid 
+			 * when moving external vertical scroll bar 
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function scrollHandler(event:ScrollEvent):void
+			{
+				dgManager.dg_scrollDatagridHandler(event);
+			}
+			
+			/*************************************************************
+			 * handle thump mouse up event of external vertical scroll bar
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function thumbMouseUpHandler():void
+			{
+				datagrid.verticalScrollPosition=vScroll.scrollPosition;
+			}
+			
+			/*************************************************************
+			 * go to actsone home
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function gotoGridOneHome():void
+			{
+				navigateToURL(new URLRequest(Global.grioneHomeURL));
+			}
+			
+			/*************************************************************
+			 * handle fault remote service when saving URL info to dev server
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function remoteServiceFaultHandler(event:FaultEvent):void 
+			{
+				//trace("remoteServiceFaultHandler: " + event.fault.toString());
+			}
+			
+			/*************************************************************
+			 * set json data in combobox  service result handler
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			private function comboServiceResult(event:ResultEvent):void
+			{
+				var dataObject:String=event.result as String;
+				var jsonArray:Array;
+				var jsonObj:Object=com.adobe.serialization.json.JSON.decode(dataObject);
+				jsonArray=(jsonObj as Array);
+				var comboColumn:ExAdvancedDataGridColumn=this.dgManager.getColumnByDataField(comboColumnField) as ExAdvancedDataGridColumn;
+				comboColumn.listCombo[Global.DEFAULT_COMBO_KEY]=jsonArray;
+				this.datagrid.invalidateList();
+			}
+			
+			
+			/*************************************************************
+			 * set json data in combobox  service fault handler
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			private function comboServiceFault(event:FaultEvent):void
+			{
+				
+			}
+			
+			
+			/*************************************************************
+			 * get value of property of DataGrid.
+			 * @param property name of property.
+			 * @return value of property as a object
+			 * ***********************************************************/
+			public function getDataGridProperty(property:String):Object
+			{
+				if (this.datagrid.hasOwnProperty(property))
+					return this.datagrid[property];
+				else
+					return this.datagrid.getStyle(property);
+			}
+			
+			/*************************************************************
+			 * refresh datagrid
+			 * @return  number of page
+			 * @Author:Chheav Hun
+			 * ***********************************************************/
+			public function refresh():void
+			{
+				this.datagrid.height -= 1;
+				this.datagrid.validateNow();
+				this.datagrid.height += 1;
+				this.datagrid.validateNow();
+			}
+			
+			public function handleWheel(event:Object):void
+			{
+				gridoneManager.handleMouseWheelHandler(this.stage, event);
+			}
+			
+			public function registerFunc(arrfun:Array,fun:String):void
+			{
+				
+				this.gridoneImpl.registerFunc(arrfun,fun);
+			}
+			
+			/*************************************************************
+			 * Set json data
+			 * @param jsonData object Data from javascript
+			 * @param bValidation indicate where validate data or not
+			 * @author Duong Pham
+			 * ***********************************************************/			
+			public function setJSonData(jsonData:Object, bValidation:Boolean=true):void
+			{
+				this.gridoneManager.setJsonData(jsonData, bValidation, "setJsonData");
+			}
+			
+			/*************************************************************
+			 * event focus of dataGrid. event name is "onDgFocus".
+			 * The result is bridgName.
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			public function datagrid_focusInHandler(event:FocusEvent):void
+			{
+				//Long add on 2013/07/23
+				if (Capabilities.hasIME)
+				{
+					try
+					{
+						IME.enabled = true;
+						//IME.conversionMode = IMEConversionMode.KOREAN;
+						//statusText.text = "Conversion mode is " + IME.conversionMode + ".";
+					}
+					catch (error:Error)
+					{
+						//statusText.text = "Unable to set conversion mode.\n" + error.message;
+					}
+				}
+				this.dgManager.datagrid_focusInHandler(event);
+				
+			}
+			
+			/*************************************************************
+			 * event data change of dataGrid. this event is work internally for row index status change.
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			protected function datagrid_changeHandler(event:ListEvent):void
+			{
+				this.lRowNum.text=(event.rowIndex +1) + "/" + this.datagrid.dataProvider.length + " Rows";
+				
+			}
+			
+			/*************************************************************
+			 * event data change of dataGrid. this event is work internally for row index status change.
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			protected function datagrid_dataChangeHandler(event:FlexEvent):void
+			{
+				this.lRowNum.text =(this.datagrid.selectedIndex +1) + "/" + this.datagrid.dataProvider.length + " Rows";
+				
+			}
+			
+			/*************************************************************
+			 * event data change of dataGrid. this event is work internally for row index status change.
+			 * @author Chheav Hun
+			 * ***********************************************************/
+			protected function collectionChange_handler(event:SAEvent):void
+			{
+				this.lRowNum.text=(this.datagrid.selectedIndex +1) + "/" + this.datagrid.dataProvider.length + " Rows";
+				
+			}
+			
+			/*************************************************************
+			 * handle result event when getting license info from dev server
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function getLicenseSuccessHandler(event:ResultEvent):void
+			{
+				var result:String = event.result as String;				
+				if(StringUtil.trim(result.toUpperCase()) == "N")
+				{
+					Alert.show("You do not have permission to access grid");
+					datagrid.visible = false;
+				}
+			}
+			
+			/*************************************************************
+			 * handle fault remote service when getting license info from dev server
+			 * @author Duong Pham
+			 * ***********************************************************/
+			private function getLicenseFaultHandler(event:FaultEvent):void 
+			{
+				//trace("getLicenseFaultHandler: " + event.fault.toString());
+			}
+			
+			/*************************************************************
+			 * add  data into dynamic comboBox 
+			 * @athor: Chheav Hun
+			 * ***********************************************************/
+			public function addDynamicComboList(columnKey:String,strText:String,strValue:String,jsonData:Object):void
+			{
+				this.gridoneImpl.addComboDynamicListJson(columnKey,strText,strValue,jsonData);
+				 
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	
+	
+	<fx:Declarations> 
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<mx:RemoteObject id="remoteService" source="GridOne.licenseGrid.ComGridOne" destination="ColdFusion" endpoint="http://dev.actsone.co.kr/flex2gateway/"
+						 fault="remoteServiceFaultHandler(event)">
+		 <mx:method name="getLicense" result="getLicenseSuccessHandler(event)" fault="getLicenseFaultHandler(event)"/> 
+			<mx:method name="insertLicense" />		
+		</mx:RemoteObject>
+		<s:HTTPService id="comboService" method="POST" result="comboServiceResult(event)" fault="comboServiceFault(event)" />
+		<fab:FABridge xmlns:fab="bridge.*" id="faBridge"/>
+	</fx:Declarations>
+	<mx:VBox id="subVbDg" width="100%" height="100%" verticalGap="0" horizontalGap="0">
+		<mx:HBox backgroundColor="#DFDFDF" horizontalGap="0"  
+				 width="100%"  height="25"  paddingBottom="0" paddingTop="0"
+				 id="hBoxHeader" includeInLayout="false" visible="false">
+			<mx:HBox id="hleft" horizontalAlign="left" width="50%" paddingLeft="2" paddingTop="2" horizontalGap="0" >
+				<mx:Image  buttonMode="true" id="imgHeader" width="18" scaleContent="false" maintainAspectRatio="false" />
+				<mx:Label  paddingTop="3" fontSize="12" fontWeight="normal" id="lHeadTitle" />
+			</mx:HBox>
+			<mx:HBox id="hright" horizontalAlign="right" width="50%" paddingRight="5" paddingTop="2">
+				<mx:Label  id="lRowNum" fontSize="12" fontWeight="normal"  paddingTop="2" />
+			</mx:HBox>
+		</mx:HBox>
+		<mx:HBox height="100%"
+				 id="mainContain"
+				 horizontalGap="0"  
+				 borderThickness="1"
+				 borderStyle="solid"
+				 verticalScrollPolicy="off"
+				 horizontalScrollPolicy="off" 
+				 creationPolicy="all"
+				 width="{applicationWidth}">
+			
+			<mx:HBox id="hbDg" 
+					 height="100%"
+					 width="{vScroll.visible?applicationWidth-18:applicationWidth}"
+					 horizontalGap="0"
+					 verticalScrollPolicy="off" 
+					 horizontalScrollPolicy="off" paddingBottom="0" scroll="scrollHandler(event);">
+				<actsone:ExAdvancedDataGrid id="datagrid" textAlign="left" rowHeight="25" 
+											editable="all" doubleClickEnabled="true" 
+											minWidth="{this.hbDg.width}"
+											height="100%"
+											horizontalScrollPolicy="auto"
+											verticalScrollPolicy="auto"
+											accessibilityEnabled="true"
+											accessibilityName="{Global.ACCESS_READER_GRIDONE_NAME}"
+											accessibilityDescription="{Global.ACCESS_READER_GRIDONE_NAME}"
+											sortExpertMode="true"
+											sortableColumns="true"
+											backgroundImage="@Embed(source='assets/images/bg2.png')" backgroundAlpha="0.2" 
+											liveScrolling="{datagrid.strRowScrollDragAction == 'syncscreen'? true : false}"
+											focusIn="datagrid_focusInHandler(event)" change="datagrid_changeHandler(event)" 
+											dataChange="datagrid_dataChangeHandler(event)" 
+											dgcollectionChange="collectionChange_handler(event)" 
+											/>		
+			</mx:HBox>
+			<actsone:ExVScrollBar width="16"
+								  height="100%"
+								  includeInLayout="{datagrid.bExternalScroll &amp;&amp; datagrid.maxVerticalScrollPosition > 0 &amp;&amp; ((!datagrid.bAllowResizeDgHeight) || (datagrid.bAllowResizeDgHeight &amp;&amp; datagrid.bResizeHeightByApp &amp;&amp; this.height == datagrid.originalAppHeight) || (datagrid.bAllowResizeDgHeight &amp;&amp; !datagrid.bResizeHeightByApp &amp;&amp; this.datagrid.height == datagrid.originalDgHeight))}"
+								  visible="{datagrid.bExternalScroll &amp;&amp; datagrid.maxVerticalScrollPosition > 0 &amp;&amp; ((!datagrid.bAllowResizeDgHeight) || (datagrid.bAllowResizeDgHeight &amp;&amp; datagrid.bResizeHeightByApp &amp;&amp; this.height == datagrid.originalAppHeight) || (datagrid.bAllowResizeDgHeight &amp;&amp; !datagrid.bResizeHeightByApp &amp;&amp; this.datagrid.height == datagrid.originalDgHeight))}"
+								  thumbMouseUp="thumbMouseUpHandler()"
+								  id="vScroll"
+								  scrollPosition="{this.datagrid.verticalScrollPosition}"
+								  minScrollPosition="0"
+								  maxScrollPosition="{datagrid.maxVerticalScrollPosition==0?0:datagrid.maxVerticalScrollPosition}"
+								  lineScrollSize="1"
+								  pageScrollSize="1"
+								  pageSize="1" 
+								  scroll="scrollHandler(event);" 
+								  />
+		</mx:HBox>  
+		<mx:HBox backgroundColor="#FFFFFF" horizontalGap="0" 
+				 width="100%"
+				 horizontalAlign="right"
+				 id="hBoxLogo">
+			<mx:Label text="Version {Global.CURRENT_VERSION}"
+					  paddingTop="5"/>
+			<mx:Label text="Powered by ActsOne"
+					  paddingTop="5"
+					  fontWeight="bold"/>
+			<mx:Image source="@Embed(source='assets/Logo.png')"
+					  click="gotoGridOneHome();"
+					  useHandCursor="true"
+					  buttonMode="true"/>
+		</mx:HBox>
+	</mx:VBox> 
+</s:Application>

@@ -1,0 +1,25 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.utils
+{
+	import mx.controls.List;
+
+	public class URLInfo
+	{
+		public var fullURL:String;
+		public var serverName:String;
+		public var port:String;
+		public var protocol:String;
+		public var preventIPList:Array;
+		public function URLInfo()
+		{			
+			preventIPList = ["localhost","192.168","file://","D:\\","C:\\"];
+		}		
+	}
+}

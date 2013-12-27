@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 implements = "mx.controls.listClasses.IDropInListItemRenderer"
+		 horizontalScrollPolicy="off" verticalScrollPolicy="off"
+		 width="100%" height="100%" verticalGap="0">
+	
+	<fx:Script>
+		<![CDATA[
+			import kr.co.actsone.utils.MenuConstants;
+			
+			import mx.controls.DataGrid;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.controls.listClasses.BaseListData;
+									
+			[Bindable]
+			public var textData:String = "";
+			[Bindable]
+			public var hLineStatus:Boolean = false;			
+			
+			private var grid : DataGrid;	
+			private var col : DataGridColumn;
+			[Bindable]
+			private var _isEnabled:Boolean = true;
+						
+			private var _listData:BaseListData;
+			public function get listData():BaseListData
+			{
+				return _listData;
+			}
+			
+			public function set listData(value:BaseListData):void
+			{
+				_listData = value;
+				if(_listData)
+				{
+					grid = DataGrid(this.listData.owner);
+					col = DataGridColumn(grid.columns[this.listData.columnIndex]);
+				}
+			}
+			
+			override public function set data(value:Object):void
+			{
+				super.data = value;
+				if(value.seperator || listData.rowIndex == grid.dataProvider.length -1)
+				{
+					hLineStatus = true;
+				}
+				textData = value.label;	
+				_isEnabled = value.isEnabled;
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<mx:HBox width="100%" height="100%" horizontalGap="0">
+		<s:Label text="{textData}" width="100%" height="100%" enabled="{_isEnabled}"/>
+	</mx:HBox>	
+	<mx:HRule id="hRule" includeInLayout="{hLineStatus}" visible="{hLineStatus}" width="100%"/>
+</mx:VBox>

@@ -1,0 +1,46 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  ACTSONE COMPANY
+//  Copyright 2012 Actsone 
+//  All Rights Reserved.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+package kr.co.actsone.importcsv
+{
+	import flash.events.Event;
+	import flash.events.IOErrorEvent;
+	import flash.net.FileReference;
+	import flash.net.URLRequest;
+	
+	import mx.controls.Alert;
+
+	public class DownLoadCSV
+	{
+		private var fileRef:FileReference;
+		private var urlReq: URLRequest;
+		
+		public function DownLoadCSV(fURL:String)
+		{
+			urlReq = new URLRequest(fURL);
+			fileRef = new FileReference();
+			fileRef.addEventListener(Event.CANCEL, doEvent);
+			fileRef.addEventListener(Event.COMPLETE, doEvent);
+			fileRef.addEventListener(Event.OPEN, doEvent);
+			fileRef.addEventListener(Event.SELECT, doEvent);
+			fileRef.addEventListener(IOErrorEvent.IO_ERROR, doEvent);
+		}
+		
+		public function execute():void
+		{
+			fileRef.download(urlReq);
+		}
+			
+		private function doEvent(evt:Event):void 
+		{
+			/* Create shortcut to the FileReference object. */
+			var fr:FileReference = evt.currentTarget as FileReference;
+			Alert.show("Save successfully", "Information", Alert.OK);
+		}
+	}
+}

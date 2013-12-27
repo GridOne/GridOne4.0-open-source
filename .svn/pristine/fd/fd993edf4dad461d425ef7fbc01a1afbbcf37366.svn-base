@@ -1,0 +1,279 @@
+/********************************************************************************
+ *
+ *  ACTSONE COMPANY
+ *  Copyright 2012 Actsone 
+ *  All Rights Reserved.
+ *
+ *	This program is free software: you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation, either version 3 of the License, or
+ *	(at your option) any later version.
+ *
+ *	This program is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ ***********************************************************************************/
+
+package kr.co.actsone.itemRenderers
+{
+	import flash.display.DisplayObject;
+	import flash.geom.Rectangle;
+	
+	import kr.co.actsone.common.Global;
+	import kr.co.actsone.controls.ExAdvancedDataGrid;
+	import kr.co.actsone.controls.advancedDataGridClasses.ExAdvancedDataGridColumn;
+	
+	import mx.core.IUITextField;
+	import mx.core.UITextField;
+	import mx.formatters.NumberFormatter;
+	
+	public class NumberItemRenderer extends ExUIComponent
+	{
+		protected var label:IUITextField;
+		
+		public function NumberItemRenderer()
+		{
+			super();
+			tabEnabled = false;
+			this.setStyle('verticalAlign','middle');
+		}
+
+		/******************************************************************************************
+		 * create children
+		 ******************************************************************************************/
+		override protected function createChildren():void
+		{
+			super.createChildren();
+			
+			createLabel(-1);
+		}
+		
+		/******************************************************************************************
+		 * create label 
+		 ******************************************************************************************/
+		protected function createLabel(childIndex:int):void
+		{
+			if (!label)
+			{
+				label = IUITextField(createInFontContext(UITextField));
+				label.styleName = this;
+				
+				if (childIndex == -1)
+					addChild(DisplayObject(label));
+				else 
+					addChildAt(DisplayObject(label), childIndex);
+			}
+		}
+		
+		/******************************************************************************************
+		 * remove label
+		 ******************************************************************************************/
+		protected function removeLabel():void
+		{
+			if (label != null)
+			{
+				removeChild(DisplayObject(label));
+				label = null;
+			}
+		}
+		
+		/******************************************************************************************
+		 * commit properties
+		 ******************************************************************************************/
+		override protected function commitProperties():void
+		{
+			super.commitProperties();
+
+			if(this.label)
+			{
+				if (data && column)
+				{
+					var activation:String=this.listOwner.getCellProperty('activation',data[Global.ACTSONE_INTERNAL],dataField);
+					if(activation == null)
+						activation = column.cellActivation;				
+					if(activation != null)
+					{
+						if (activation == Global.ACTIVATE_DISABLE)
+						{
+							this.label.enabled = false;
+						}
+						else if (activation == Global.ACTIVATE_EDIT)
+						{					
+							this.label.enabled = true;
+						}
+					}
+					else if(!this.label.enabled)
+					{
+						this.label.enabled= true;
+					}
+					
+					if(listOwner.nCellPadding)
+						label.width=column.width - listOwner.nCellPadding;
+					else
+						label.width=column.width;
+					
+					if(data[this.dataField] == null)
+						data[this.dataField] = "";
+					if(column.labelFunction == null)
+					{
+						this.label.text = data[this.dataField];
+					}
+					else
+					{
+						this.label.text = column.itemToLabel(data);
+					}	
+					var dataTips:Boolean = listOwner.showDataTips;
+					if (column.showDataTips == true)
+						dataTips = true;
+					if (column.showDataTips == false)
+						dataTips = false;
+					if (dataTips)
+					{
+						if (!(data is ExAdvancedDataGridColumn) && (label.textWidth > label.width
+							|| column.dataTipFunction || column.dataTipField 
+							|| listOwner.dataTipFunction || listOwner.dataTipField))
+						{
+							toolTip = column.itemToDataTip(data);
+						}
+						else
+						{
+							toolTip = null;
+						}
+					}
+					else if (listOwner.toolTipData !="" && column.toolTipData !="")
+					{
+						toolTip = listOwner.toolTipData;
+					}
+					else
+					{
+						toolTip = null;
+					}
+				}
+				else
+				{
+					label.text = " ";
+					toolTip = null;
+				}
+			}
+			invalidateDisplayList();
+		}
+		
+		/******************************************************************************************
+		 * update display list
+		 ******************************************************************************************/
+		override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+		{
+			this.label.move(0,0);
+			
+			var startX:Number = 0;
+			if(this.listOwner && this.listOwner.nCellPadding)
+			{
+				startX += this.listOwner.nCellPadding;
+			}
+			
+			var t:String = getMinimumText(label.text);
+			var textFieldBounds:Rectangle = measureTextFieldBounds(t);
+			label.height = textFieldBounds.height;
+			label.setActualSize(unscaledWidth - startX, label.height);
+
+			var textAlign:String = getStyle("textAlign");
+			if (textAlign == "left")
+			{
+				label.x = startX;
+			}
+			else if (textAlign == "right")
+			{
+				label.x = unscaledWidth - startX - label.width + 2; // 2 for gutter
+			}
+			else
+			{
+				label.x = (unscaledWidth - label.width) / 2 - startX;
+			}
+			
+			var verticalAlign:String = getStyle("verticalAlign");
+			if (verticalAlign == "top")
+			{
+				label.y = 0;
+			}
+			else if (verticalAlign == "bottom")
+			{
+				label.y = unscaledHeight - label.height + 2; // 2 for gutter
+			}
+			else
+			{
+				label.y = (unscaledHeight - label.height) / 2;
+			}
+			
+			var truncated:Boolean;
+			truncated = label.truncateToFit();				
+			
+			if (!toolTipSet)
+				super.toolTip = truncated ? this.label.text : null;
+			
+			super.updateDisplayList(unscaledWidth, unscaledHeight);
+			
+			drawStrikeThrough(this.label);
+			
+			//because some reason, this style is cleaned. We need to re-set it again.
+			this.setStyle('textDecoration',column.getStyle('textDecoration'));
+		}
+		
+		/******************************************************************************************
+		 * Apply color of cell
+		 * @author Duong Pham
+		 ******************************************************************************************/
+		override public function validateNow():void
+		{
+			super.validateNow();
+			if (data && parent)
+			{
+				var newColor:Number = getCurentColor();
+				var oldColor:* = label.textColor;
+				if (oldColor != newColor)
+				{
+					label.setColor(newColor);
+					invalidateDisplayList();
+				}
+			}
+		}
+		
+		/******************************************************************************************
+		 * Get accessibility name for screen reader
+		 * @author Thuan
+		 ******************************************************************************************/
+		override public function getAccessibilityName():String
+		{
+			//return "Component is Number. Value is " + this.label.text;
+			
+			var strReader:String = this.column.strAccessReader;
+			
+			if (strReader && strReader.length > 0) // Parse value in strAccessReader 
+			{
+				if (strReader.indexOf(Global.ACCESS_READER_CONTROLTYPE) > -1)
+				{
+					strReader = strReader.replace(Global.ACCESS_READER_CONTROLTYPE, Global.ACCESS_READER_NUMBER);
+					if (strReader.indexOf(Global.ACCESS_READER_CELLVALUE) > -1)
+						strReader = strReader.replace(Global.ACCESS_READER_CELLVALUE, this.label.text);
+				}
+				else // don't have control type in strAccessReader
+				{
+					if (strReader.indexOf(Global.ACCESS_READER_CELLVALUE) > -1)
+						strReader = strReader.replace(Global.ACCESS_READER_CELLVALUE, this.label.text);
+				}
+				//				trace("Label Renderer strReader != null: " + strReader);
+			}
+			else // make column default information
+			{
+				strReader = Global.ACCESS_READER_COLUMN_DEFAULT + " " + Global.ACCESS_READER_CONTROL + " " + 
+					Global.ACCESS_READER_NUMBER + " " + Global.ACCESS_READER_CELL + " " + this.label.text;
+				//				trace("Label Renderer strReader == null: " + strReader);
+			}
+			return strReader;
+		}
+	}
+}
