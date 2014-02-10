@@ -18,3 +18,5 @@ GridOne4.0 is the web flex application with developed in flash builder 4.6 versi
 ==> try to run GridOne.mxml
 
 =====================================================================================================================
+If you meet any problem with installation, please contact me: chheavhun@actsone.co.kr
+ 
